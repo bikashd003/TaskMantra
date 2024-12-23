@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 
 export default function Hero() {
     return (
-        <section className="py-20 text-center">
+        <section className="py-20 text-center text-white">
             <motion.h1
                 className="text-5xl font-bold mb-6"
                 initial={{ opacity: 0, y: -20 }}

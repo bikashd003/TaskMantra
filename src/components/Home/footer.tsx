@@ -3,7 +3,7 @@ export default function Footer() {
         <footer className="py-6 border-t">
             <div className="container mx-auto px-4 text-center">
                 <p className="text-muted-foreground">
-                    © {new Date().getFullYear()} ProjectPro. All rights reserved.
+                    © {new Date().getFullYear()} TaskMantra. All rights reserved.
                 </p>
             </div>
         </footer>

@@ -8,7 +8,7 @@ import Testimonials from "@/components/Home/testimonials";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-800">
+    <main className="min-h-screen bg-[#0F0E0E] text-white">
       <Header />
       <Hero />
       <Features />
