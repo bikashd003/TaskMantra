@@ -1,15 +1,12 @@
 'use client'
 
 import { TrendingUp } from 'lucide-react'
-import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis } from 'recharts'
 
 import {
     Card,
     CardContent,
-    CardDescription,
     CardFooter,
-    CardHeader,
-    CardTitle,
 } from '@/components/ui/card'
 import {
     ChartConfig,
@@ -42,48 +39,47 @@ const chartConfig = {
 
 export function ActivityChart() {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Bar Chart - Stacked + Legend</CardTitle>
-                <CardDescription>January - June 2024</CardDescription>
-            </CardHeader>
-            <CardContent>
+        <Card className="shadow-lg rounded-lg w-full">
+            <CardContent className="p-2">
                 <ChartContainer config={chartConfig}>
-                    <BarChart accessibilityLayer data={chartData}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                            dataKey="month"
-                            tickLine={false}
-                            tickMargin={10}
-                            axisLine={false}
-                            tickFormatter={value => value.slice(0, 3)}
-                        />
-                        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                        <ChartLegend content={<ChartLegendContent />} />
-                        <Bar
-                            dataKey="desktop"
-                            stackId="a"
-                            fill="var(--color-desktop)"
-                            radius={[0, 0, 4, 4]}
-                        />
-                        <Bar
-                            dataKey="mobile"
-                            stackId="a"
-                            fill="var(--color-mobile)"
-                            radius={[4, 4, 0, 0]}
-                        />
-                    </BarChart>
+                    <ResponsiveContainer width="100%">
+                        <BarChart data={chartData}>
+                            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                            <XAxis
+                                dataKey="month"
+                                tickLine={false}
+                                tickMargin={8}
+                                axisLine={false}
+                                tickFormatter={(value) => value.slice(0, 3)}
+                                fontSize={12}
+                                fontWeight={500}
+                            />
+                            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                            <ChartLegend content={<ChartLegendContent />} />
+                            <Bar
+                                dataKey="desktop"
+                                stackId="a"
+                                fill="var(--color-desktop)"
+                                radius={[0, 0, 4, 4]}
+                            />
+                            <Bar
+                                dataKey="mobile"
+                                stackId="a"
+                                fill="var(--color-mobile)"
+                                radius={[4, 4, 0, 0]}
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
                 </ChartContainer>
             </CardContent>
-            <CardFooter className="flex-col items-start gap-2 text-sm">
-                <div className="flex gap-2 font-medium leading-none">
+            <CardFooter className="flex flex-col items-start gap-2 text-sm">
+                <div className="flex items-center gap-2 font-medium leading-none text-primary">
                     Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
                 </div>
-                <div className="leading-none text-muted-foreground">
+                <div className="leading-none text-muted-foreground text-xs">
                     Showing total visitors for the last 6 months
                 </div>
             </CardFooter>
         </Card>
     )
 }
-
