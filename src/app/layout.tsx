@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import Providers from "@/components/Providers/query-provider";
 
+const inter = Inter({ subsets: ['latin'] });
 
-const inter = Inter({ subsets: ['latin'] })
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: "TaskMantra",
@@ -19,10 +24,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.className} antialiased`}
+        className={`${inter.className} ${outfit.variable} antialiased`}
       >
         <Providers>
-        {children}
+          {children}
         </Providers>
       </body>
     </html>
