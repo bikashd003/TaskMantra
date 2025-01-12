@@ -1,30 +1,35 @@
-// ProjectContext.tsx
 import { createContext, useContext, useState } from 'react';
 
-// Define detailed interfaces based on the data structure
 interface Subtask {
-    id: number;
+    id: string;
     name: string;
     completed: boolean;
 }
 
 interface Attachment {
+    id: string;
     filename: string;
     url: string;
 }
 
 interface Comment {
-    userId: number;
+    userId: User;
     text: string;
     timestamp: string;
     attachments: Attachment[];
 }
 
+interface User {
+    id: string;
+    name: string;
+    role: string;
+}
+
 interface Task {
-    id: number;
+    id: string;
     name: string;
     description: string;
-    assignedTo: number[];
+    assignedTo: [User];
     status: 'To Do' | 'In Progress' | 'Review' | 'Completed';
     priority: 'High' | 'Medium' | 'Low';
     dueDate: string;
@@ -35,43 +40,6 @@ interface Task {
     subtasks: Subtask[];
     comments: Comment[];
 }
-
-interface Project {
-    id: number;
-    name: string;
-    description: string;
-    status: 'Planning' | 'In Progress' | 'Completed' | 'On Hold' | 'Cancelled';
-    priority: 'High' | 'Medium' | 'Low';
-    tasks: Task[];
-}
-
-interface User {
-    id: number;
-    name: string;
-    role: string;
-    availability: Record<string, boolean>;
-}
-
-interface File {
-    id: number;
-    name: string;
-    url: string;
-}
-
-interface CalendarEvent {
-    taskId?: number;
-    type: 'deadline' | 'meeting';
-    title?: string;
-    startTime?: string;
-    endTime?: string;
-    participants?: number[];
-}
-
-interface CalendarDay {
-    date: string;
-    events: CalendarEvent[];
-}
-
 interface ActivityLogEntry {
     timestamp: string;
     userId: number;
@@ -79,47 +47,41 @@ interface ActivityLogEntry {
     details: Record<string, string | number | boolean | null>;
 }
 
-interface ProjectManagementData {
-    projects: Project[];
-    users: User[];
-    files: File[];
-    calendar: CalendarDay[];
-    activityLog: ActivityLogEntry[];
+
+interface Project {
+    id: string;
+    name: string;
+    description: string;
+    status: 'Planning' | 'In Progress' | 'Completed' | 'On Hold' | 'Cancelled';
+    priority: 'High' | 'Medium' | 'Low';
+    tasks: Task[];
+    history: [ActivityLogEntry]
 }
 
-// Create the context with the new interface
-const ProjectContext = createContext<{
-    projectData: ProjectManagementData;
-    updateProjectData: (section: keyof ProjectManagementData, data: unknown) => void;
-}>({
-    projectData: {
-        projects: [],
-        users: [],
-        files: [],
-        calendar: [],
-        activityLog: []
-    },
-    updateProjectData: () => { }
-});
+
+
+
+interface ProjectContextType {
+    projectData: Project | null;
+    setProjectData: (project: Project | null) => void;
+    createProject: (project: Project) => void;
+    currentStep: number;
+    setCurrentStep: (step: number) => void;
+}
+
+export const ProjectContext = createContext<ProjectContextType | null>(null);
 
 export const ProjectProvider = ({ children }: { children: React.ReactNode }) => {
-    const [projectData, setProjectData] = useState<ProjectManagementData>({
-        projects: [],
-        users: [],
-        files: [],
-        calendar: [],
-        activityLog: []
-    });
+    const [projectData, setProjectData] = useState<Project | null>(null);
+    const [currentStep, setCurrentStep] = useState(1);
 
-    const updateProjectData = (section: keyof ProjectManagementData, data: unknown) => {
-        setProjectData(prev => ({
-            ...prev,
-            [section]: data
-        }));
-    };
+    const createProject = (project: Project) => {
+        setProjectData(project);
+    }
+
 
     return (
-        <ProjectContext.Provider value={{ projectData, updateProjectData }}>
+        <ProjectContext.Provider value={{ projectData, setProjectData, createProject, currentStep, setCurrentStep }}>
             {children}
         </ProjectContext.Provider>
     );
