@@ -5,13 +5,11 @@ import { yupResolver } from '@hookform/resolvers/yup'
 
 
 interface Subtask {
-    id: string;
     name: string;
     completed: boolean;
 }
 
 interface Attachment {
-    id: string;
     filename: string;
     url: string;
 }
@@ -24,16 +22,14 @@ interface Comment {
 }
 
 interface User {
-    id: string;
     name: string;
     role: string;
 }
 
 interface Task {
-    id: string;
     name: string;
     description: string;
-    assignedTo: [User];
+    assignedTo: User[];
     status: 'To Do' | 'In Progress' | 'Review' | 'Completed';
     priority: 'High' | 'Medium' | 'Low';
     dueDate: string;
@@ -94,15 +90,29 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
             description: '',
             priority: 'Medium',
             status: 'Planning',
-            tasks: [],
-            history: []
+            tasks: [
+                {
+                    name: '',
+                    description: '',
+                    assignedTo: [],
+                    status: 'To Do',
+                    priority: 'Medium',
+                    dueDate: '',
+                    startDate: '',
+                    estimatedTime: 0,
+                    loggedTime: 0,
+                    dependencies: [],
+                    subtasks: [],
+                    comments: [],
+                },
+            ],
+            history: [],
         },
     });
     const onSubmit = async (data: Project) => {
         try {
             console.log('Submitting project:', data);
             setProjectData((prevData) => prevData ? { ...prevData, ...data } : data);
-            setCurrentStep((prev) => prev + 1);
         } catch (error) {
             console.error('Error submitting project:', error);
         }

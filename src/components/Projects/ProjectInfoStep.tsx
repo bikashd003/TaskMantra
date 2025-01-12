@@ -30,7 +30,7 @@ const ProjectInfoStep = () => {
     return (
       <div className="w-full">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+          <CardTitle className="text-2xl font-bold text-blue-700 flex items-center gap-2">
             <Folder className="w-6 h-6" /> Project Information
           </CardTitle>
           <CardDescription>Fill in the details of your new project</CardDescription>
@@ -38,7 +38,7 @@ const ProjectInfoStep = () => {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-secondary-foreground flex items-center gap-1">
+              <label className="text-sm font-medium text-blue-700 flex items-center gap-1">
                 <Info className="w-4 h-4" /> Project Name
               </label>
               <Controller
@@ -58,7 +58,7 @@ const ProjectInfoStep = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-secondary-foreground flex items-center gap-1">
+              <label className="text-sm font-medium text-blue-700 flex items-center gap-1">
                 <Info className="w-4 h-4" /> Description
               </label>
               <Controller
@@ -80,7 +80,7 @@ const ProjectInfoStep = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-secondary-foreground flex items-center gap-1">
+                <label className="text-sm font-medium text-blue-700 flex items-center gap-1">
                   <AlertTriangle className="w-4 h-4" /> Priority
                 </label>
                 <Controller
@@ -108,7 +108,7 @@ const ProjectInfoStep = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-secondary-foreground flex items-center gap-1">
+                <label className="text-sm font-medium text-blue-700 flex items-center gap-1">
                   <Clock className="w-4 h-4" /> Status
                 </label>
                 <Controller

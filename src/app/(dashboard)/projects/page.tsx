@@ -5,7 +5,7 @@ import TasksStep from "@/components/Projects/TasksStep"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ProjectProvider, useProject } from "@/context/ProjectContext"
-import { FileUp, Layers, FolderPlus } from 'lucide-react'
+import { FileUp, Layers, FolderPlus, ArrowLeft, CheckCircle, ArrowRight } from 'lucide-react'
 
 const steps = [
     { id: 1, title: 'Project Info', icon: <FolderPlus className="w-6 h-6" /> },
@@ -53,19 +53,32 @@ const PageContent = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 p-8">
-            <Card className="w-full">{renderStepContent()}</Card>
+            <Card className="w-full h-full overflow-y-auto">{renderStepContent()}</Card>
             <div className="flex justify-between mt-6">
                 <Button
-                    variant="ghost"
+                    variant="outline"
                     disabled={currentStep === 1}
                     onClick={() => setCurrentStep(currentStep - 1)}
+                    className="flex items-center gap-2 transition-all hover:translate-x-[-4px]"
                 >
+                    <ArrowLeft className="w-4 h-4" />
                     Previous
                 </Button>
                 <Button
                     onClick={handleNext}
+                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all hover:translate-x-[4px]"
                 >
-                    {currentStep === steps.length ? 'Finish' : 'Next'}
+                    {currentStep === steps.length ? (
+                        <>
+                            Finish
+                            <CheckCircle className="w-4 h-4" />
+                        </>
+                    ) : (
+                        <>
+                            Next
+                            <ArrowRight className="w-4 h-4" />
+                        </>
+                    )}
                 </Button>
             </div>
         </div>
