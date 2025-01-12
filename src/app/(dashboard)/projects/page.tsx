@@ -14,7 +14,7 @@ const steps = [
 ]
 
 const PageContent = () => {
-    const { currentStep, setCurrentStep } = useProject()!;
+    const { currentStep, setCurrentStep, trigger, handleSubmit, onSubmit } = useProject()!;
 
     const renderStepContent = () => {
         switch (currentStep) {
@@ -30,23 +30,30 @@ const PageContent = () => {
     };
 
     const handleNext = async () => {
+        let isValid = true;
+
         switch (currentStep) {
             case 1:
-                // ProjectInfoStep validation will be handled by the component
+                isValid = await trigger(['name', 'description', 'priority', 'status']);
                 break;
             case 2:
-                // Add validation for TasksStep
                 break;
             case 3:
-                // Add validation for FilesStep
                 break;
         }
-        setCurrentStep(currentStep + 1);
+
+        if (isValid) {
+            if (currentStep === steps.length) {
+                handleSubmit(onSubmit)();
+            } else {
+                setCurrentStep(currentStep + 1);
+            }
+        }
     };
 
     return (
         <div className="min-h-screen bg-gray-50 p-8">
-            <Card className="shadow-lg p-6">{renderStepContent()}</Card>
+            <Card className="w-full">{renderStepContent()}</Card>
             <div className="flex justify-between mt-6">
                 <Button
                     variant="ghost"
@@ -57,7 +64,6 @@ const PageContent = () => {
                 </Button>
                 <Button
                     onClick={handleNext}
-                    disabled={currentStep === steps.length}
                 >
                     {currentStep === steps.length ? 'Finish' : 'Next'}
                 </Button>
@@ -65,6 +71,7 @@ const PageContent = () => {
         </div>
     );
 };
+
 
 const Page = () => {
     return (

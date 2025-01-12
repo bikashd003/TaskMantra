@@ -27,7 +27,7 @@ export default function DashboardLayout({
                 isMobileOpen={isMobileOpen}
                 onMobileClose={() => setIsMobileOpen(false)}
             />
-            <div className="flex-1 min-w-0 overflow-hidden md:ml-auto transition-all duration-300 ">
+            <div className="flex-1 min-w-0 overflow-hidden md:ml-0 ml-auto transition-all duration-300 ">
                 <Header />
 
                 <main className="overflow-hidden h-[calc(100vh-64px)]">
