@@ -15,13 +15,14 @@ interface Attachment {
 }
 
 interface Comment {
-    userId: User;
+    userId: string;
     text: string;
     timestamp: string;
     attachments: Attachment[];
 }
 
-interface User {
+export interface User {
+    id: string;
     name: string;
     role: string;
 }
@@ -36,13 +37,12 @@ interface Task {
     startDate: string;
     estimatedTime: number;
     loggedTime: number;
-    dependencies: number[];
     subtasks: Subtask[];
     comments: Comment[];
 }
 interface ActivityLogEntry {
     timestamp: string;
-    userId: number;
+    userId: string;
     action: string;
     details: Record<string, string | number | boolean | null>;
 }
@@ -101,7 +101,6 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
                     startDate: '',
                     estimatedTime: 0,
                     loggedTime: 0,
-                    dependencies: [],
                     subtasks: [],
                     comments: [],
                 },

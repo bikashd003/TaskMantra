@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/Dashboard/Sidebar';
-import Header from '@/components/Dashboard/Header';
+// import Header from '@/components/Dashboard/Header';
 import { Menu } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -28,7 +28,7 @@ export default function DashboardLayout({
                 onMobileClose={() => setIsMobileOpen(false)}
             />
             <div className="flex-1 min-w-0 overflow-hidden md:ml-0 ml-auto transition-all duration-300 ">
-                <Header />
+                {/* <Header /> */}
 
                 <main className="overflow-hidden h-[calc(100vh-64px)]">
                     {children}
