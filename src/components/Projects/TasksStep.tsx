@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useProject, User } from '@/context/ProjectContext';
+import ReusableSelect from '../Global/ReactSelect';
 
 const TasksStep: React.FC = () => {
   const { control, errors } = useProject()!;
@@ -59,116 +60,195 @@ const TasksStep: React.FC = () => {
           });
 
           return (
-          <div
-            key={task.id}
-            className="p-4 border border-gray-200 rounded-lg shadow-sm relative bg-white"
-          >
+            <div
+              key={task.id}
+              className="p-4 border border-gray-200 rounded-lg shadow-sm relative bg-white"
+            >
               {taskIndex > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute top-2 right-2 text-red-500"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 text-red-500"
                   onClick={() => remove(taskIndex)}
-              >
-                <Trash2 className="w-5 h-5" />
-              </Button>
-            )}
-            <div className="mb-4">
-              <label className="text-sm font-medium text-blue-700">Task Name</label>
-              <Input
+                >
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              )}
+              <div className="mb-4">
+                <label className="text-sm font-medium text-blue-700">Task Name</label>
+                <Input
                   {...control.register(`tasks.${taskIndex}.name`)}
-                placeholder="Enter task name"
+                  placeholder="Enter task name"
                   className={`mt-1 ${errors.tasks?.[taskIndex]?.name ? 'border-red-500' : 'border-gray-300'}`}
-              />
+                />
                 {errors.tasks?.[taskIndex]?.name && (
                   <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].name.message}</p>
-              )}
-            </div>
-            <div className="mb-4">
-              <label className="text-sm font-medium text-blue-700">Description</label>
-              <Textarea
+                )}
+              </div>
+              <div className="mb-4">
+                <label className="text-sm font-medium text-blue-700">Description</label>
+                <Textarea
                   {...control.register(`tasks.${taskIndex}.description`)}
-                placeholder="Enter task description"
-                rows={3}
+                  placeholder="Enter task description"
+                  rows={3}
                   className={`mt-1 ${errors.tasks?.[taskIndex]?.description ? 'border-red-500' : 'border-gray-300'}`}
-              />
+                />
                 {errors.tasks?.[taskIndex]?.description && (
-                <p className="text-red-500 text-sm mt-1">
+                  <p className="text-red-500 text-sm mt-1">
                     {errors.tasks[taskIndex].description.message}
-                </p>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="text-sm font-medium text-blue-700">Priority</label>
-                <Controller
+                  </p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="text-sm font-medium text-blue-700">Priority</label>
+                  <Controller
                     name={`tasks.${taskIndex}.priority`}
                     control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="High">High</SelectItem>
-                          <SelectItem value="Medium">Medium</SelectItem>
-                          <SelectItem value="Low">Low</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="High">High</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="Low">Low</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.tasks?.[taskIndex]?.priority && (
+                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].priority.message}</p>
                   )}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-blue-700">Status</label>
-                <Controller
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-blue-700">Status</label>
+                  <Controller
                     name={`tasks.${taskIndex}.status`}
                     control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="To Do">To Do</SelectItem>
-                          <SelectItem value="In Progress">In Progress</SelectItem>
-                          <SelectItem value="Review">Review</SelectItem>
-                          <SelectItem value="Completed">Completed</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="To Do">To Do</SelectItem>
+                            <SelectItem value="In Progress">In Progress</SelectItem>
+                            <SelectItem value="Review">Review</SelectItem>
+                            <SelectItem value="Completed">Completed</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.tasks?.[taskIndex]?.status && (
+                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].status.message}</p>
                   )}
-                />
+                </div>
               </div>
-            </div>
-              <div className="mb-4">
-                <label className="text-sm font-medium text-blue-700">Assigned To</label>
-                <Controller
-                  name={`tasks.${taskIndex}.assignedTo`}
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      onValueChange={(value) => field.onChange([...field.value, value])}
-                      value={field.value}
-                      multiple
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select team members" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.name} ({user.role})
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="text-sm font-medium text-blue-700">Due Date</label>
+                  <Controller
+                    name={`tasks.${taskIndex}.dueDate`}
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        placeholder="Enter due date"
+                        className={`mt-1 ${errors.tasks?.[taskIndex]?.dueDate ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                      />
+                    )}
+                  />
+                  {errors.tasks?.[taskIndex]?.dueDate && (
+                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].dueDate.message}</p>
                   )}
-                />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-blue-700">Start Date</label>
+                  <Controller
+                    name={`tasks.${taskIndex}.startDate`}
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        placeholder="Enter start date"
+                        className={`mt-1 ${errors.tasks?.[taskIndex]?.startDate ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                      />
+                    )}
+                  />
+                  {errors.tasks?.[taskIndex]?.startDate && (
+                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].startDate.message}</p>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-blue-700">Assigned To</label>
+                  <Controller
+                    name={`tasks.${taskIndex}.assignedTo`}
+                    control={control}
+                    render={({ field }) => {
+                      const options = users.map((user) => ({
+                        value: user.id,
+                        label: `${user.name} (${user.role})`,
+                      }));
+                      const selectedValues = options.filter((option) =>
+                        Array.isArray(field.value)
+                          ? field.value.some((user: User) => user.id === option.value)
+                          : (field.value as User | undefined)?.id === option.value
+                      );
+
+                      const handleChange = (newValue: any) => {
+                        if (Array.isArray(newValue)) {
+                          field.onChange(newValue.map((opt) => users.find((user) => user.id === opt.value)));
+                        } else if (newValue) {
+                          field.onChange(users.find((user) => user.id === newValue.value) || null);
+                        } else {
+                          field.onChange([]);
+                        }
+                      };
+
+                      return (
+                        <ReusableSelect
+                          options={options}
+                          value={selectedValues}
+                          onChange={handleChange}
+                          placeholder="Select team members"
+                          isMulti={true}
+                        />
+                      );
+                    }}
+                  />
+                  {errors.tasks?.[taskIndex]?.assignedTo && (
+                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].assignedTo.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-blue-700">Estimated Time</label>
+                  <Controller
+                    name={`tasks.${taskIndex}.estimatedTime`}
+                    control={control}
+                    defaultValue={0}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        placeholder="Enter estimated time"
+                        className={`mt-1 ${errors.tasks?.[taskIndex]?.estimatedTime ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                      />
+                    )}
+                  />
+                  {errors.tasks?.[taskIndex]?.estimatedTime && (
+                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].estimatedTime.message}</p>
+                  )}
+                </div>
               </div>
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-blue-700 mb-2">Subtasks</h3>
@@ -178,11 +258,11 @@ const TasksStep: React.FC = () => {
                       key={subtask.id}
                       className="p-3 border border-gray-300 rounded-md bg-gray-50"
                     >
-                      {subtaskIndex > 0 && (
+                      {subtaskFields.length > 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute top-2 right-2 text-red-500"
+                          className="text-red-500"
                           onClick={() => removeSubtask(subtaskIndex)}
                         >
                           <Trash2 className="w-4 h-4" />

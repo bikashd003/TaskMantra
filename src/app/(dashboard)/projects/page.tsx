@@ -37,6 +37,7 @@ const PageContent = () => {
                 isValid = await trigger(['name', 'description', 'priority', 'status']);
                 break;
             case 2:
+                isValid = await trigger('tasks');
                 break;
             case 3:
                 break;

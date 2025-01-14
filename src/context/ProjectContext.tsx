@@ -1,6 +1,7 @@
+/* eslint-disable no-unused-vars */
 import React, { createContext, useContext, useState } from 'react';
 import { projectInfoSchema } from "@/app/Schemas/ProjectInfo"
-import { useForm, Control, FieldErrors, UseFormHandleSubmit, UseFormTrigger } from 'react-hook-form'
+import { useForm, Control, FieldErrors, UseFormHandleSubmit, UseFormTrigger, Resolver } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 
 
@@ -29,7 +30,7 @@ export interface User {
 
 interface Task {
     name: string;
-    description: string;
+    description?: string;
     assignedTo: User[];
     status: 'To Do' | 'In Progress' | 'Review' | 'Completed';
     priority: 'High' | 'Medium' | 'Low';
@@ -50,7 +51,7 @@ interface ActivityLogEntry {
 
 export interface Project {
     name: string;
-    description: string;
+    description?: string;
     status: 'Planning' | 'In Progress' | 'Completed' | 'On Hold' | 'Cancelled';
     priority: 'High' | 'Medium' | 'Low';
     tasks: Task[];
@@ -78,13 +79,8 @@ export const ProjectContext = createContext<ProjectContextType | null>(null);
 export const ProjectProvider = ({ children }: { children: React.ReactNode }) => {
     const [projectData, setProjectData] = useState<Project | null>(null);
     const [currentStep, setCurrentStep] = useState(1);
-    const {
-        control,
-        handleSubmit,
-        formState: { errors },
-        trigger,
-    } = useForm<Project>({
-        resolver: yupResolver(projectInfoSchema),
+    const { control, handleSubmit, formState: { errors }, trigger } = useForm<Project>({
+        resolver: yupResolver(projectInfoSchema) as Resolver<Project>,
         defaultValues: {
             name: '',
             description: '',
@@ -108,6 +104,7 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
             history: [],
         },
     });
+
     const onSubmit = async (data: Project) => {
         try {
             console.log('Submitting project:', data);
