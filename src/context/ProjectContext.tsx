@@ -5,10 +5,7 @@ import { useForm, Control, FieldErrors, UseFormHandleSubmit, UseFormTrigger, Res
 import { yupResolver } from '@hookform/resolvers/yup'
 
 
-interface Subtask {
-    name: string;
-    completed: boolean;
-}
+
 
 interface Attachment {
     filename: string;
@@ -26,6 +23,10 @@ export interface User {
     id: string;
     name: string;
     role: string;
+}
+interface Subtask {
+    name: string;
+    completed: boolean;
 }
 
 interface Task {
@@ -56,6 +57,7 @@ export interface Project {
     priority: 'High' | 'Medium' | 'Low';
     tasks: Task[];
     history: ActivityLogEntry[]
+    files: File[];
 }
 
 

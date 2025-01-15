@@ -21,13 +21,9 @@ export const projectInfoSchema = yup.object().shape({
         startDate: yup.string().required('Start date is required'),
         estimatedTime: yup.number().min(0, 'Estimated time cannot be negative').required('Estimated time is required'),
         loggedTime: yup.number().min(0, 'Logged time cannot be negative'),
-        subtasks: yup.array().of(
-            yup.object().shape({
-                name: yup.string().required('Subtask name is required'),
-                completed: yup.boolean(),
-            })
-        ).default([]),
+        subtasks: yup.array().default([]),
         comments: yup.array().default([]),
     })).default([]),
-    history: yup.array().default([])
+    history: yup.array().default([]),
+    files: yup.array().default([])
 })

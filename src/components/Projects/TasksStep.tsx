@@ -16,7 +16,7 @@ import { useProject, User } from '@/context/ProjectContext';
 import ReusableSelect from '../Global/ReactSelect';
 
 const TasksStep: React.FC = () => {
-  const { control, errors } = useProject()!;
+  const { control, errors, trigger } = useProject()!;
   const users: User[] = [
     { id: "001", name: 'Alice', role: 'Developer' },
     { id: "002", name: 'Bob', role: 'Designer' },
@@ -29,7 +29,12 @@ const TasksStep: React.FC = () => {
     keyName: 'id',
   });
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
+
+    const isValid = await trigger(['tasks']);
+    if (!isValid) {
+      return;
+    }
     append({
       name: '',
       description: '',
@@ -43,21 +48,45 @@ const TasksStep: React.FC = () => {
       subtasks: [],
       comments: []
     });
-  };
 
+  };
+  const handleAddSubtask = (taskIndex: number) => {
+    const currentTasks = [...fields];
+    const currentTask = currentTasks[taskIndex];
+
+    if (!currentTask.subtasks) {
+      currentTask.subtasks = [];
+    }
+
+    currentTask.subtasks.push({
+      name: '',
+      completed: false
+    });
+
+    // Update the entire tasks array
+    remove(taskIndex);
+    append(currentTask);
+  };
+  const handleRemoveSubtask = (taskIndex: number, subtaskIndex: number) => {
+    const currentTasks = [...fields];
+    const currentTask = currentTasks[taskIndex];
+
+    if (currentTask.subtasks) {
+      currentTask.subtasks = currentTask.subtasks.filter((_, index) => index !== subtaskIndex);
+
+      // Update the entire tasks array
+      remove(taskIndex);
+      append(currentTask);
+    }
+  };
   return (
     <div className="p-6 max-h-[75vh] overflow-y-auto">
       <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center gap-2">
         Add Tasks
       </h2>
       <div className="space-y-6">
+
         {fields.map((task, taskIndex) => {
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const { fields: subtaskFields, append: addSubtask, remove: removeSubtask } = useFieldArray({
-            control,
-            name: `tasks.${taskIndex}.subtasks`,
-            keyName: 'id',
-          });
 
           return (
             <div
@@ -160,6 +189,7 @@ const TasksStep: React.FC = () => {
                       <Input
                         {...field}
                         placeholder="Enter due date"
+                        type='date'
                         className={`mt-1 ${errors.tasks?.[taskIndex]?.dueDate ? 'border-red-500' : 'border-gray-300'
                           }`}
                       />
@@ -178,6 +208,7 @@ const TasksStep: React.FC = () => {
                       <Input
                         {...field}
                         placeholder="Enter start date"
+                        type='date'
                         className={`mt-1 ${errors.tasks?.[taskIndex]?.startDate ? 'border-red-500' : 'border-gray-300'
                           }`}
                       />
@@ -253,17 +284,17 @@ const TasksStep: React.FC = () => {
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-blue-700 mb-2">Subtasks</h3>
                 <div className="space-y-4">
-                  {subtaskFields.map((subtask, subtaskIndex) => (
+                  {(task.subtasks || []).map((_, subtaskIndex) => (
                     <div
-                      key={subtask.id}
+                      key={subtaskIndex}
                       className="p-3 border border-gray-300 rounded-md bg-gray-50"
                     >
-                      {subtaskFields.length > 0 && (
+                      {task.subtasks.length > 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-red-500"
-                          onClick={() => removeSubtask(subtaskIndex)}
+                          onClick={() => handleRemoveSubtask(taskIndex, subtaskIndex)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -309,12 +340,7 @@ const TasksStep: React.FC = () => {
                   variant="outline"
                   size="sm"
                   className="mt-2 flex items-center gap-2"
-                  onClick={() =>
-                    addSubtask({
-                      name: '',
-                      completed: false,
-                    })
-                  }
+                  onClick={() => handleAddSubtask(taskIndex)}
                 >
                   <PlusCircle className="w-5 h-5" /> Add Subtask
                 </Button>
