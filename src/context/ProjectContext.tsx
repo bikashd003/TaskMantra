@@ -109,9 +109,10 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
 
     const onSubmit = async (data: Project) => {
         try {
-            console.log('Submitting project:', data);
+            // console.log('Submitting project:', data);
             setProjectData((prevData) => prevData ? { ...prevData, ...data } : data);
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Error submitting project:', error);
         }
     };

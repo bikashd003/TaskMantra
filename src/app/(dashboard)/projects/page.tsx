@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import { ProjectProvider, useProject } from "@/context/ProjectContext"
 import { FileUp, Layers, FolderPlus, ArrowLeft, CheckCircle, ArrowRight } from 'lucide-react'
 
+
 const steps = [
     { id: 1, title: 'Project Info', icon: <FolderPlus className="w-6 h-6" /> },
     { id: 2, title: 'Tasks', icon: <Layers className="w-5 h-5" /> },
