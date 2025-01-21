@@ -1,5 +1,4 @@
 import React from "react";
-import 'reflect-metadata';
 import type { Metadata } from "next";
 import "./globals.css";
 import { Inter, Outfit } from "next/font/google";
