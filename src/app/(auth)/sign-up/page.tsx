@@ -1,8 +1,13 @@
 "use client";
 import { useFormik } from "formik";
 import { signUpSchema } from "@/app/Schemas/auth";
+import { FcGoogle } from "react-icons/fc";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const SignUp = () => {
+    const router = useRouter();
+
     const formik = useFormik({
         initialValues: {
             name: '',
@@ -11,10 +16,42 @@ const SignUp = () => {
             confirmPassword: '',
         },
         validationSchema: signUpSchema,
-        onSubmit: values => {
-            console.log(values);
+        onSubmit: async (values) => {
+            try {
+                // Regular sign up
+                const response = await fetch('/api/auth/sign-up', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: values.name,
+                        email: values.email,
+                        password: values.password,
+                    }),
+                });
+
+                if (response.ok) {
+                    // Sign in the user after successful registration
+                    const result = await signIn('credentials', {
+                        email: values.email,
+                        password: values.password,
+                        redirect: false,
+                    });
+
+                    if (result?.ok) {
+                        router.push('/home'); // Redirect to dashboard
+                    }
+                }
+            } catch (error) {
+                console.error('Registration failed:', error);
+            }
         },
     });
+
+    const handleGoogleSignIn = () => {
+        signIn('google', { callbackUrl: '/dashboard' });
+    };
 
     const { errors, touched, values, handleChange, handleSubmit } = formik;
 
@@ -83,6 +120,16 @@ const SignUp = () => {
                         Submit
                     </button>
                 </form>
+                {/* google signup  */}
+                <div className="flex flex-col items-center justify-center mt-4">
+                    <p className="text-gray-300">or sign up via google</p>
+                    <button
+                        onClick={handleGoogleSignIn}
+                        className="mt-2 p-2 border rounded-full hover:bg-gray-100 transition duration-300"
+                    >
+                        <FcGoogle size={30} />
+                    </button>
+                </div>
             </div>
         </div>
     );

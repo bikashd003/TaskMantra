@@ -1,16 +1,29 @@
 "use client";
 import { useFormik } from "formik";
 import { signInSchema } from "@/app/Schemas/auth";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function SignIn() {
+    const router = useRouter();
     const formik = useFormik({
         initialValues: {
             email: '',
             password: '',
         },
         validationSchema: signInSchema,
-        onSubmit: values => {
-            console.log(values);
+        onSubmit: async (values) => {
+            const result = await signIn("credentials", {
+                redirect: false,
+                email: values.email,
+                password: values.password,
+            });
+
+            if (result?.error) {
+                alert(result.error); // Display error to user
+            } else {
+                router.push("/home"); // Redirect to home after successful login
+            }
         },
     });
 
