@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter, Outfit } from "next/font/google";
 import Providers from "@/components/Providers/query-provider";
+import { NextUiProviders } from "@/context/HeroUiProvider";
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -26,10 +28,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.className} ${outfit.variable} antialiased`}
+
       >
-        <Providers>
-          {children}
-        </Providers>
+        <NextUiProviders>
+          <Providers>
+            <main className="dark text-foreground bg-background">
+              {children}
+            </main>
+            <Toaster />
+          </Providers>
+        </NextUiProviders>
       </body>
     </html>
   );

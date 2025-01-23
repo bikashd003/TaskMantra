@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import React from "react";
 
 export default function AuthLayout({
     children,
@@ -7,8 +8,8 @@ export default function AuthLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-200">
-            <div className="bg-white shadow-xl rounded-xl p-8 max-w-md w-full backdrop-blur-sm border border-gray-100">
+        <div className="flex items-center justify-center min-h-screen dark text-foreground bg-background">
+            <div className="rounded-xl p-8 max-w-md w-full backdrop-blur-sm border border-gray-100">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-center text-gray-800">Welcome Back</h1>
                     <p className="text-center text-gray-600 mt-2">Please sign in to continue</p>
