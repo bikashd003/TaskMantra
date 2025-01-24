@@ -60,7 +60,7 @@ const SignUp = () => {
     });
 
     const handleGoogleSignIn = () => {
-        signIn("google", { callbackUrl: "/dashboard" });
+        signIn("google", { callbackUrl: "/home" });
     };
 
     const { errors, touched, values, handleChange, handleSubmit } = formik;

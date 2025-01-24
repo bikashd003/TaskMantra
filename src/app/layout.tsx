@@ -5,6 +5,7 @@ import { Inter, Outfit } from "next/font/google";
 import Providers from "@/components/Providers/query-provider";
 import { NextUiProviders } from "@/context/HeroUiProvider";
 import { Toaster } from "@/components/ui/sonner"
+import ClientProviders from "@/context/ClientProviders";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -26,6 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <ClientProviders>
       <body
         className={`${inter.className} ${outfit.variable} antialiased`}
 
@@ -35,10 +37,11 @@ export default function RootLayout({
             <main className="dark text-foreground bg-background">
               {children}
             </main>
-            <Toaster />
+              <Toaster richColors />
           </Providers>
         </NextUiProviders>
       </body>
+      </ClientProviders>
     </html>
   );
 }
