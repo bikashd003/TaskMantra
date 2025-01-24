@@ -3,6 +3,7 @@ import { useFormik } from "formik";
 import { signInSchema } from "@/app/Schemas/auth";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function SignIn() {
     const router = useRouter();
@@ -20,9 +21,10 @@ export default function SignIn() {
             });
 
             if (result?.error) {
-                alert(result.error); // Display error to user
+                toast.error(result.error);
             } else {
-                router.push("/home"); // Redirect to home after successful login
+                toast.success("Login successful");
+                router.push("/home");
             }
         },
     });
