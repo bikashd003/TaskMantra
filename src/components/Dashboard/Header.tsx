@@ -1,11 +1,12 @@
 import { Bell, UserPlus, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthProvider';
-import { Playwrite_IN } from 'next/font/google';
+import { Playfair_Display } from 'next/font/google';
 import { Button } from '../ui/button';
 
-const playwrite = Playwrite_IN({
-    weight: '400',
+const playwrite = Playfair_Display({
+  subsets: ['latin'],
+  weight: '400',
 })
 
 const Header = () => {

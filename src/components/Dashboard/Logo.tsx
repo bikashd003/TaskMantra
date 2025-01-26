@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
 
 interface LogoProps {
@@ -11,8 +12,13 @@ const Logo = ({ isExpanded, setIsExpanded }: LogoProps) => {
         <div className={`flex items-center justify-between px-4 py-5 border-b border-gray-700/50 ${isExpanded ? '' : 'flex-col items-center'} `}>
             <div className="flex items-center">
                 {/* Logo Icon */}
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
-                    <span className="text-xl font-bold text-white">TM</span>
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl">
+                    <Image
+                        src="/logo_transparent.png"
+                        alt="Logo"
+                        width={40}
+                        height={40}
+                    />
                 </div>
 
                 {/* Logo Text */}

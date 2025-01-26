@@ -34,7 +34,7 @@ export default function RootLayout({
       >
         <NextUiProviders>
           <Providers>
-            <main className="dark text-foreground bg-background">
+            <main>
               {children}
             </main>
               <Toaster richColors />
