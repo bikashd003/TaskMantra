@@ -39,7 +39,7 @@ const chartConfig = {
 
 export function ActivityChart() {
     return (
-        <Card className="shadow-lg rounded-lg w-full">
+        <Card className="shadow-lg rounded-lg w-full bg-white border-none">
             <CardContent className="p-2">
                 <ChartContainer config={chartConfig}>
                     <ResponsiveContainer width="100%">

@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import chalk from "chalk";
 
 export { default } from "next-auth/middleware";
 
 export async function middleware(request: NextRequest) {
-    const token = await getToken({ req: request }); // Extract token
     const url = request.nextUrl; // Get the current URL
+    const method = request.method;
+    // eslint-disable-next-line no-console
+    console.log(chalk.green(`${Date.now()} ${method} ${url.pathname}`));
+
+    const token = await getToken({ req: request }); // Extract token
 
     const protectedPaths = ["/home", "/projects", "/tasks", "/calendar", "/feedback", "/settings"];
     const isProtectedRoute = protectedPaths.some((path) => url.pathname.startsWith(path));

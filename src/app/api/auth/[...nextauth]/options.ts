@@ -15,10 +15,10 @@ export const authOptions = {
         CredentialsProvider({
             name: "Credentials",
             credentials: {
-                username: {
-                    label: "Username",
+                name: {
+                    label: "Name",
                     type: "text",
-                    placeholder: "Username",
+                    placeholder: "Name",
                 },
                 email: {
                     label: "Email",

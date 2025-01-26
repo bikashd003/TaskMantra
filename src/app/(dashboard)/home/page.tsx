@@ -14,7 +14,7 @@ const page = () => {
                 </div>
             </div>
 
-            <div className="xl:col-span-8 space-y-4">
+            <div className="xl:col-span-8 space-y-4 bg-white">
                 <TaskCalendar />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="w-full h-fit">

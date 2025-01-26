@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 interface ProjectInfoStepProps {
+  // eslint-disable-next-line no-unused-vars
   onSubmit: (data: Project) => void;
   control: Control<Project>;
   errors: FieldErrors<Project>;
@@ -28,7 +29,7 @@ interface ProjectInfoStepProps {
 const ProjectInfoStep = () => {
   const { onSubmit, control, errors, handleSubmit }: ProjectInfoStepProps = useProject()!;
     return (
-      <div className="w-full">
+      <div className="w-full bg-white">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-blue-700 flex items-center gap-2">
             <Folder className="w-6 h-6" /> Project Information

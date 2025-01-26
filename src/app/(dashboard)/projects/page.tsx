@@ -54,7 +54,7 @@ const PageContent = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8">
+        <div className="min-h-full bg-gray-100 p-6">
             <Card className="w-full h-full overflow-y-auto">{renderStepContent()}</Card>
             <div className="flex justify-between mt-6">
                 <Button
