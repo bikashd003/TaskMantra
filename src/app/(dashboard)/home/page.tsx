@@ -6,7 +6,7 @@ import Timeline from "@/components/Dashboard/Timeline"
 
 const page = () => {
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 p-2">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
             <div className="xl:col-span-4 space-y-4 h-fit">
                 <ProjectProgress />
                 <div className="w-full h-fit">

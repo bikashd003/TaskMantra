@@ -30,7 +30,7 @@ const Header = () => {
   };
 
   return (
-    <header className="flex justify-between items-center p-4 mt-2 bg-white text-black shadow-lg mx-2 rounded-lg">
+    <header className="flex justify-between items-center p-4 bg-white text-black shadow-lg rounded-lg">
       <div>
         <h1 className={`${playwrite.className} text-sm font-bold`}>{getGreeting()}, {session?.user?.name}</h1>
         <p className="text-sm">{formatDate(currentTime)}</p>
