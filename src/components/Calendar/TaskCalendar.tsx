@@ -1,15 +1,19 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import { Task } from './Task';
 import { format, startOfWeek, addDays, isToday, isSameDay } from 'date-fns';
 import { motion } from 'framer-motion';
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useCalendarStore } from "@/stores/calendarStore";
 
 const TaskCalendar = () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const currentDate = new Date();
+  const selectedDate = useCalendarStore((state) => state.selectedDate);
+  const setSelectedDate = useCalendarStore((state) => state.setSelectedDate);
+  const tasks = useCalendarStore((state) => state.tasks);
+  const dateRange=useCalendarStore((state)=>state.dateRange)
+
 
   // Get the start of the week
   const startDate = startOfWeek(currentDate);
@@ -25,15 +29,27 @@ const TaskCalendar = () => {
     };
   });
 
-  // Group tasks by date
-  const tasksByDate = Task.reduce((acc, task) => {
-    const date = task.startDate;
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(task);
-    return acc;
-  }, {} as Record<string, typeof Task>);
+// Group tasks by date and filter by dateRange
+const tasksByDate = tasks.reduce((acc, task) => {
+  const taskDate = new Date(task.startDate);
+
+  // Ensure task falls within dateRange
+  if (
+    dateRange?.from &&
+    dateRange?.to &&
+    (taskDate < dateRange.from || taskDate > dateRange.to)
+  ) {
+    return acc; // Skip tasks outside the range
+  }
+
+  const dateKey = format(taskDate, 'yyyy-MM-dd');
+  if (!acc[dateKey]) {
+    acc[dateKey] = [];
+  }
+  acc[dateKey].push(task);
+  return acc;
+}, {} as Record<string, typeof Task>);
+
 
   // Get random pastel color for task
   const getTaskColor = (taskId: number) => {
@@ -47,12 +63,16 @@ const TaskCalendar = () => {
     ];
     return colors[taskId % colors.length];
   };
-
+// Filter weekDays based on dateRange
+const filteredWeekDays = weekDays.filter((day) => {
+  if (!dateRange?.from || !dateRange?.to) return true; // No filter applied
+  return day.date >= dateRange.from && day.date <= dateRange.to;
+});
   return (
     <div className="p-4 bg-white rounded-xl shadow-sm">
       {/* Week days header */}
       <div className="grid grid-cols-7 gap-4 mb-4">
-        {weekDays.map((day) => (
+        {filteredWeekDays.map((day) => (
           <div 
             key={day.fullDate} 
             className="text-center"
@@ -71,7 +91,7 @@ const TaskCalendar = () => {
       
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-4">
-        {weekDays.map((day) => (
+        {filteredWeekDays.map((day) => (
           <motion.div 
             key={day.fullDate}
             initial={{ opacity: 0, y: 20 }}

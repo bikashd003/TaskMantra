@@ -1,7 +1,6 @@
 import React from "react";
-import { addDays, format } from "date-fns";
+import {  format } from "date-fns";
 import { CalendarIcon, Filter } from "lucide-react";
-import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,12 +9,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useCalendarStore } from "@/stores/calendarStore";
 
 const CalendarHeader = () => {
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(),
-    to: addDays(new Date(), 7),
-  });
+  const dateRange = useCalendarStore((state) => state.dateRange);
+  const setDateRange = useCalendarStore((state) => state.setDateRange);
+
 
   return (
     <header className="flex flex-wrap justify-between items-center p-4 border-b bg-white shadow-sm rounded-lg">
@@ -46,18 +45,18 @@ const CalendarHeader = () => {
                 variant="outline"
                 className={cn(
                   "w-full md:w-[300px] justify-start text-left font-normal border-gray-300",
-                  !date && "text-muted-foreground"
+                  !dateRange && "text-muted-foreground"
                 )}
               >
                 <CalendarIcon className="w-5 h-5 mr-2 text-gray-500" />
-                {date?.from ? (
-                  date.to ? (
+                {dateRange?.from ? (
+                  dateRange.to ? (
                     <>
-                      {format(date.from, "LLL dd, y")} -{" "}
-                      {format(date.to, "LLL dd, y")}
+                      {format(dateRange.from, "LLL dd, y")} -{" "}
+                      {format(dateRange.to, "LLL dd, y")}
                     </>
                   ) : (
-                    format(date.from, "LLL dd, y")
+                    format(dateRange.from, "LLL dd, y")
                   )
                 ) : (
                   <span className="text-gray-500">Pick a date</span>
@@ -68,9 +67,9 @@ const CalendarHeader = () => {
               <Calendar
                 initialFocus
                 mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={setDate}
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={(range) => range && setDateRange(range)}
                 numberOfMonths={2}
                 className="p-2 mr-4"
               />

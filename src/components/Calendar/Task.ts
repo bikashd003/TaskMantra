@@ -13,7 +13,7 @@ export const Task:taskType[]=[
         title:"Build landing page",
         description:"Build landing page for e-commerce website",
         completed:false,
-        startDate:"2025-01-26",
+        startDate:"2025-01-28",
         endDate:"2025-01-30",
         status:"In Progress"
     },
@@ -22,8 +22,8 @@ export const Task:taskType[]=[
         title:"Build contact page",
         description:"Build contact page for e-commerce website",
         completed:false,
-        startDate:"2025-03-10",
-        endDate:"2025-03-15",
+        startDate:"2025-02-01",
+        endDate:"2025-02-3",
         status:"In Progress"
     },
     {
@@ -31,8 +31,8 @@ export const Task:taskType[]=[
         title:"Build about page",
         description:"Build about page for e-commerce website",
         completed:false,
-        startDate:"2025-03-10",
-        endDate:"2025-03-15",
+        startDate:"2025-02-5",
+        endDate:"2025-02-15",
         status:"Completed"
     },
     {
@@ -40,8 +40,8 @@ export const Task:taskType[]=[
         title:"Build login page",
         description:"Build login page for e-commerce website",
         completed:false,
-        startDate:"2025-03-10",
-        endDate:"2025-03-15",
+        startDate:"2025-02-10",
+        endDate:"2025-02-15",
         status:"In Progress"
     },
     {
@@ -49,8 +49,8 @@ export const Task:taskType[]=[
         title:"Build signup page",
         description:"Build signup page for e-commerce website",
         completed:false,
-        startDate:"2025-03-10",
-        endDate:"2025-03-15",
+        startDate:"2025-02-10",
+        endDate:"2025-02-15",
         status:"In Progress"
     },
     {
@@ -58,8 +58,8 @@ export const Task:taskType[]=[
         title:"Build profile page",
         description:"Build profile page for e-commerce website",
         completed:false,
-        startDate:"2025-03-10",
-        endDate:"2025-03-15",
+        startDate:"2025-02-10",
+        endDate:"2025-02-15",
         status:"In Progress"
     },
     {
@@ -67,8 +67,8 @@ export const Task:taskType[]=[
         title:"Build cart page",
         description:"Build cart page for e-commerce website",
         completed:false,
-        startDate:"2025-03-10",
-        endDate:"2025-03-15",
+        startDate:"2025-02-10",
+        endDate:"2025-02-15",
         status:"In Progress"
     },
     {
