@@ -15,7 +15,6 @@ const CalendarHeader = () => {
   const dateRange = useCalendarStore((state) => state.dateRange);
   const setDateRange = useCalendarStore((state) => state.setDateRange);
 
-
   return (
     <header className="flex flex-wrap justify-between items-center p-4 border-b bg-white shadow-sm rounded-lg">
       {/* Title and priorities */}

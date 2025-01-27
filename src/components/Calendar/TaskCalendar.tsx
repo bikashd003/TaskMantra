@@ -1,12 +1,17 @@
 'use client';
 import React from 'react';
 import { Task } from './Task';
-import { format, startOfWeek, addDays, isToday, isSameDay } from 'date-fns';
+import { format, addDays, isToday, isSameDay, startOfDay, isAfter, isBefore } from 'date-fns';
 import { motion } from 'framer-motion';
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useCalendarStore } from "@/stores/calendarStore";
-
+interface DayInfo {
+  date: Date;
+  dayName: string;
+  dayNumber: string;
+  fullDate: string;
+}
 const TaskCalendar = () => {
   const currentDate = new Date();
   const selectedDate = useCalendarStore((state) => state.selectedDate);
@@ -15,20 +20,22 @@ const TaskCalendar = () => {
   const dateRange=useCalendarStore((state)=>state.dateRange)
 
 
-  // Get the start of the week
-  const startDate = startOfWeek(currentDate);
-
-  // Generate week days
-  const weekDays = [...Array(7)].map((_, index) => {
-    const date = addDays(startDate, index);
-    return {
-      date,
-      dayName: format(date, 'EEE'),
-      dayNumber: format(date, 'd'),
-      fullDate: format(date, 'yyyy-MM-dd'),
-    };
-  });
-
+  const startDate = dateRange?.from ? startOfDay(new Date(dateRange.from)) : startOfDay(currentDate);
+  const endDate = dateRange?.to ? startOfDay(new Date(dateRange.to)) : addDays(startDate, 6);
+  
+  // Generate days based on the range
+  const weekDays: DayInfo[] = [];
+  let currentDay = startDate;
+  
+  while (currentDay <= endDate) {
+    weekDays.push({
+      date: currentDay,
+      dayName: format(currentDay, "EEE"),
+      dayNumber: format(currentDay, "d"),
+      fullDate: format(currentDay, "yyyy-MM-dd"),
+    });
+    currentDay = addDays(currentDay, 1);
+  }
 // Group tasks by date and filter by dateRange
 const tasksByDate = tasks.reduce((acc, task) => {
   const taskDate = new Date(task.startDate);
@@ -65,9 +72,17 @@ const tasksByDate = tasks.reduce((acc, task) => {
   };
 // Filter weekDays based on dateRange
 const filteredWeekDays = weekDays.filter((day) => {
-  if (!dateRange?.from || !dateRange?.to) return true; // No filter applied
-  return day.date >= dateRange.from && day.date <= dateRange.to;
+  if (!dateRange?.from || !dateRange?.to) return true;
+  
+  const fromDate = startOfDay(new Date(dateRange.from));
+  const toDate = startOfDay(new Date(dateRange.to));
+  
+  return (
+    (isSameDay(day.date, fromDate) || isAfter(day.date, fromDate)) &&
+    (isSameDay(day.date, toDate) || isBefore(day.date, toDate))
+  );
 });
+
   return (
     <div className="p-4 bg-white rounded-xl shadow-sm">
       {/* Week days header */}

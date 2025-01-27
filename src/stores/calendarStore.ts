@@ -26,7 +26,7 @@ interface CalendarState {
 export const useCalendarStore = create<CalendarState>((set) => ({
   dateRange: {
     from: new Date(),
-    to: addDays(new Date(), 7),
+    to: addDays(new Date(), 6),
   },
   setDateRange: (range) => set({ dateRange: range }),
   selectedDate: null,
