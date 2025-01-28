@@ -86,3 +86,55 @@ body {
     @apply bg-background text-foreground;
   }
 }
+/* Custom Scrollbar */
+.scrollbar-custom {
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: #4A90E2 #F1F1F1; /* Thumb and Track colors */
+  scrollbar-track-color: #F1F1F1;
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+  height: 8px; /* Height for horizontal scrollbar */
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background: #4A90E2; /* Scrollbar thumb color */
+  border-radius:  50px !important; /* Roundness */
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background: #357ABD; /* Hover color for the scrollbar thumb */
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: #F1F1F1; /* Scrollbar track color */
+  border-radius: 10px !important; /* Roundness of the track */
+}
+
+/* Optional: Dark Mode Styling */
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #333; /* Dark mode colors */
+}
+
+.scrollbar-dark::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: #333;
+  border-radius: 10px;
+}
+.scrollbar-custom::-webkit-scrollbar-button {
+  display: none; /* Remove scrollbar buttons */
+}
