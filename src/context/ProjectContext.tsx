@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { createContext, useContext, useState } from 'react';
-import { projectInfoSchema } from "@/app/Schemas/ProjectInfo"
+import { projectInfoSchema } from "@/Schemas/ProjectInfo"
 import { useForm, Control, FieldErrors, UseFormHandleSubmit, UseFormTrigger, Resolver } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 
