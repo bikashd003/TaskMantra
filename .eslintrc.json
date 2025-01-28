@@ -5,13 +5,30 @@
     "eslint:recommended"
   ],
   "rules": {
-    "no-console": "error",
+    "no-console": "warn",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/ban-ts-comment": "warn",
-    "no-unused-vars": "warn"
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "react/react-in-jsx-scope": "off"
   },
   "parser": "@typescript-eslint/parser",
   "plugins": [
     "@typescript-eslint"
-  ]
+  ],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2021": true
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
 }
