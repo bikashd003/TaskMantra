@@ -19,7 +19,7 @@ export default function Page() {
     ]
 
     const handleSubmit = () => {
-        console.log({ mood: selectedMood, comment })
+        // console.log({ mood: selectedMood, comment })
     }
 
     return (
