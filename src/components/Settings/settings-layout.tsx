@@ -1,3 +1,4 @@
+import React from "react"
 import { SidebarNav } from "./sidebar-nav"
 
 interface SettingsLayoutProps {

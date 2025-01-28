@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const projectManagementData = {
+export const projectManagementData = {
   projects: [
     {
       id: 1,
