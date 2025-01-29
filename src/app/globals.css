@@ -138,3 +138,26 @@ body {
 .scrollbar-custom::-webkit-scrollbar-button {
   display: none; /* Remove scrollbar buttons */
 }
+
+
+/* Sidebar Styles */
+.sidebar {
+  width: 240px; /* Default width */
+  transition: width 0.3s ease-in-out;
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+@media (max-width: 767px) {
+  .sidebar {
+      width: 240px;
+      position: fixed;
+      transform: translateX(-100%);
+  }
+
+  .sidebar.mobile-open {
+      transform: translateX(0);
+  }
+}

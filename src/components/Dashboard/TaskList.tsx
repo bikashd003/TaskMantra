@@ -1,5 +1,6 @@
 import React from 'react';
 import { MoreHorizontal, CheckCircle } from 'lucide-react';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const TaskList = () => {
     const tasks = [
@@ -10,7 +11,7 @@ const TaskList = () => {
     ];
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg overflow-y-auto max-h-[45vh]">
+        <ScrollArea className="bg-white p-6 rounded-xl shadow-lg  h-[45vh]">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-800">Today&apos;s Tasks</h2>
                 <button className="text-sm text-gray-500 hover:text-gray-700">Today ▼</button>
@@ -34,7 +35,7 @@ const TaskList = () => {
                     </div>
                 ))}
             </div>
-        </div>
+        </ScrollArea>
     );
 };
 
