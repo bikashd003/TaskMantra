@@ -1,18 +1,18 @@
-import React from "react"
-import { SidebarNav } from "./sidebar-nav"
+import React from "react";
+import { SidebarNav } from "./sidebar-nav";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SettingsLayoutProps {
-    children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function SettingsLayout({ children }: SettingsLayoutProps) {
-    return (
-        <div className="container relative mx-auto flex flex-1 items-start gap-8 px-4 py-4 md:py-8 md:px-8">
-            <div className="w-[240px] flex-shrink-0">
-                <SidebarNav />
-            </div>
-            <main className="flex-1">{children}</main>
-        </div>
-    )
+  return (
+    <div className="w-full relative flex gap-8 px-2 py-4 md:py-6 md:px-4 bg-white shadow-sm rounded-lg max-h-[calc(100vh-96px)] overflow-hidden">
+      <div className="max-w-[240px] flex-shrink-0 shadow-sm rounded-lg h-full">
+        <SidebarNav />
+      </div>
+      <ScrollArea className="flex-1">{children}</ScrollArea>
+    </div>
+  );
 }
-

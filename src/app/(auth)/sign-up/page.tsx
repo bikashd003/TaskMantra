@@ -1,6 +1,6 @@
 "use client";
 import { useFormik } from "formik";
-import { signUpSchema } from "@/app/Schemas/auth";
+import { signUpSchema } from "@/Schemas/auth";
 import { FcGoogle } from "react-icons/fc";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";

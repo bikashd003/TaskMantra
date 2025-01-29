@@ -22,7 +22,7 @@ import { Separator } from "@/components/ui/separator"
 export default function SettingsPage() {
     return (
       <SettingsLayout>
-          <div className="space-y-6">
+          <div className="space-y-6 w-full h-full">
               <div>
                   <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
                   <p className="text-muted-foreground">

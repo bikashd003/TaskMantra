@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Card,  } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, User, Settings, Bell, Users, Shield, FileText, CreditCard, Map, LayoutGrid, Sliders } from 'lucide-react'
 import { useState } from "react"
@@ -30,7 +30,7 @@ export function SidebarNav() {
     ]
 
     const NavContent = () => (
-        <ScrollArea className="h-full py-6">
+        <Card className="py-6 h-full">
             <div className="space-y-6">
                 <div>
                     <h2 className="px-4 text-xs font-semibold text-muted-foreground tracking-wider">
@@ -73,7 +73,7 @@ export function SidebarNav() {
                     </div>
                 </div>
             </div>
-        </ScrollArea>
+        </Card>
     )
 
     return (

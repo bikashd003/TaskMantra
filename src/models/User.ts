@@ -18,6 +18,35 @@ const userSchema = new mongoose.Schema({
     },
     emailVerified: {
         type: Date
+    },
+    role: { 
+        type: String,
+        enum: ['User', 'Admin'],
+        default: 'User' 
+    },
+    projects: [{
+        projectId: { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: 'Project',
+        },
+        projectRole: {
+            type: String,
+            enum: ['Project Admin', 'Developer', 'Viewer','Employee','HR','Other'],
+        }
+    }],
+    tasks: [{
+        taskId: { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: 'Task',
+        },
+        taskRole: {
+            type: String,
+            enum: ['Project Admin', 'Developer', 'Viewer','Employee','HR','Other'],
+        }
+    }],
+    settings: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Settings',
     }
 }, {
     timestamps: true
