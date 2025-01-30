@@ -30,14 +30,14 @@ const Header = () => {
   };
 
   return (
-    <header className="flex justify-between items-center p-4 bg-white text-black shadow-lg rounded-lg">
+    <header className="flex justify-between items-center px-4 py-2 bg-white text-black shadow-lg rounded-lg">
       <div>
         <h1 className={`${playwrite.className} text-sm font-bold`}>{getGreeting()}, {session?.user?.name}</h1>
         <p className="text-sm">{formatDate(currentTime)}</p>
       </div>
       <div className="flex space-x-4 items-center">
         <Bell className="w-6 h-6 cursor-pointer hover:text-gray-200" />
-        <Button variant="ghost" className='border shadow-sm bg-gray-100'>
+        <Button variant="ghost"size="default" className='border shadow-sm bg-gray-100'>
           <UserPlus className="w-6 h-6 cursor-pointer hover:text-gray-200" />
           Invite
         </Button>

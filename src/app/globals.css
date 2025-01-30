@@ -161,3 +161,10 @@ body {
       transform: translateX(0);
   }
 }
+.task-bar {
+  transition: opacity 0.2s ease;
+}
+
+.task-bar:hover {
+  opacity: 0.9;
+}
