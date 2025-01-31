@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, {  useState } from 'react';
 import {
     Home,
     MessageSquare,
@@ -21,7 +21,6 @@ interface SidebarProps {
 
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
     const [isExpanded, setIsExpanded] = useState(true);
-    const [isMobile, setIsMobile] = useState(false);
     const pathname = usePathname();
 
     const menuItems = [
@@ -61,24 +60,6 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             ],
           },
     ];
-    useEffect(() => {
-        window.addEventListener('resize', () => {
-            if (window.innerWidth < 768) {
-                setIsMobile(true);
-            } else {
-                setIsMobile(false);
-            }
-        });
-        return () => {
-            window.removeEventListener('resize', () => {
-                if (window.innerWidth < 768) {
-                    setIsMobile(true);
-                } else {
-                    setIsMobile(false);
-                }
-            });
-        }
-    }, []);
 
     return (
         <>
@@ -91,14 +72,12 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             )}
             {/* Sidebar */}
             <aside
-                className={`
+                  className={`
+                    sidebar
                     top-0 left-0 z-50 h-full bg-gray-900 text-white
                     flex flex-col
-                    transition-all duration-300 ease-in-out
-                    ${isExpanded ? 'w-60' : 'w-[70px]'}
-                    ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-                    md:translate-x-0
-                    ${isMobile ? 'md:w-60 fixed' : ''}
+                    ${isExpanded ? '' : 'collapsed'}
+                    ${isMobileOpen ? 'mobile-open' : ''}
                 `}
             >
                 {/* Mobile Close Button */}
@@ -119,7 +98,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 {group.label}
               </div>}
               <div className="space-y-1">
-                {group.items.map((item) => (
+                {group.items.map((item:any) => (
                   <SidebarItem
                     key={item.label}
                     icon={item.icon}
