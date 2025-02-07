@@ -22,6 +22,7 @@ export default function Page() {
     ]
 
     const handleSubmit = () => {
+        // eslint-disable-next-line no-console
         console.log({ feedbackType: selectedFeedbackType, comment, screenshot })
     }
 
