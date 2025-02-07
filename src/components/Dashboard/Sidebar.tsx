@@ -7,7 +7,8 @@ import {
     X,
     SquareChartGantt,
     ClipboardCheck,
-    Calendar
+    Calendar,
+    ServerCog
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { UserProfile } from './UserProfile';
@@ -31,9 +32,8 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               {
                 icon: SquareChartGantt,
                 label: "Projects",
-                path: "/projects",
                 subItems: [
-                  { label: "Project Alpha", path: "/projects/alpha" },
+                  { label: "Create Project", path: "/projects" },
                   { label: "Project Beta", path: "/projects/beta" },
                   { label: "Project Gamma", path: "/projects/gamma" },
                 ],
@@ -54,9 +54,10 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 icon: MessageSquare,
                 label: "Feedback",
                 path: "/feedback",
-                badge: "BETA",
+                
               },
-              { icon: Settings, label: "Settings", path: "/settings" },
+              {icon: ServerCog, label: "Integrations", path: "/integrations",badge:"BETA" },
+              {icon: Settings, label: "Settings", path: "/settings" },
             ],
           },
     ];
@@ -91,7 +92,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 <Logo isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
 
                 {/* Navigation Items */}
-                <nav className="flex-1 px-3 py-4 space-y-4">
+                <div className="flex-1 px-3 py-4 space-y-4">
           {menuItems.map((group) => (
             <div key={group.label}>
               {isExpanded && <div className="text-gray-400 text-xs uppercase font-semibold px-2 mb-2">
@@ -113,7 +114,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
               </div>
             </div>
           ))}
-        </nav>
+        </div>
 
                 <UserProfile isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
             </aside>

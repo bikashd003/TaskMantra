@@ -1,16 +1,19 @@
 'use client'
-
+import React from 'react'
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import FileUploader from '@/components/Global/FileUploader'
 
-type Mood = 'terrible' | 'bad' | 'medium' | 'good' | 'excellent'
+type FeedbackType = 'terrible' | 'bad' | 'medium' | 'good' | 'excellent'
 
 export default function Page() {
-    const [selectedMood, setSelectedMood] = useState<Mood>('medium')
+    const [selectedFeedbackType, setSelectedFeedbackType] = useState<FeedbackType>('medium')
     const [comment, setComment] = useState('')
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [screenshot, setScreenshot] = useState<string | null>(null)
 
-    const moods: { value: Mood; emoji: string }[] = [
+    const feedbackTypes: { value: FeedbackType; emoji: string }[] = [
         { value: 'terrible', emoji: '😫' },
         { value: 'bad', emoji: '😔' },
         { value: 'medium', emoji: '😐' },
@@ -19,20 +22,24 @@ export default function Page() {
     ]
 
     const handleSubmit = () => {
-        // console.log({ mood: selectedMood, comment })
+        // eslint-disable-next-line no-console
+        console.log({ feedbackType: selectedFeedbackType, comment, screenshot })
     }
 
-    return (
-        <div className='mx-auto w-full max-w-md p-6 border mt-[50vh] -translate-y-1/2'>
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-2">
-                    <div className="bg-primary/10 p-2 rounded-full">
-                        <div className="w-4 h-4 bg-primary rounded-full" />
-                    </div>
-                    <span className="font-semibold">Feedback</span>
-                </div>
-            </div>
+    const handleScreenshotChange = (files: File[]) => {
+        if (files.length === 0) return;
+        const file = files[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === 'string') {
+                setScreenshot(reader.result);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
 
+    return (
+        <div className='mx-auto max-w-md w-full p-6 border rounded-lg'>
             <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-2">How are you feeling?</h2>
                 <p className="text-muted-foreground">
@@ -40,19 +47,19 @@ export default function Page() {
                 </p>
             </div>
 
-            <div className="flex justify-center gap-4 mb-8">
-                {moods.map(({ value, emoji }) => (
+            <div className="flex justify-center gap-4 mb-16">
+                {feedbackTypes.map(({ value, emoji }) => (
                     <button
                         key={value}
-                        onClick={() => setSelectedMood(value)}
+                        onClick={() => setSelectedFeedbackType(value)}
                         className={`relative text-2xl p-4 rounded-full transition-all
-                ${selectedMood === value
+                ${selectedFeedbackType === value
                                 ? 'bg-emerald-100 scale-110'
                                 : 'bg-gray-100 hover:bg-gray-200'
                             }`}
                     >
                         {emoji}
-                        {selectedMood === value && (
+                        {selectedFeedbackType === value && (
                             <>
                                 <div className="absolute inset-0 animate-ping bg-emerald-100 rounded-full" />
                                 <div className="absolute -bottom-6 left-1/2 -translate-x-1/2">
@@ -73,8 +80,12 @@ export default function Page() {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Add a Comment..."
-                className="mb-6"
+                className="mb-6 resize-none"
             />
+
+            <label className="block mb-6">
+                <FileUploader onChange={handleScreenshotChange} multiple={false} />
+            </label>
 
             <Button
                 onClick={handleSubmit}
@@ -82,9 +93,6 @@ export default function Page() {
             >
                 Submit Now
             </Button>
-
-
         </div>
     )
 }
-

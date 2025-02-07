@@ -11,7 +11,7 @@ export default function DashboardLayout({
 }>) {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     return (
-        <div className="flex h-screen overflow-hidden bg-gray-50">
+        <div className="flex h-screen overflow-hidden bg-gray-50 overflow-x-hidden">
             <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-30 px-4">
                 <div className="h-full flex items-center">
                     <button
