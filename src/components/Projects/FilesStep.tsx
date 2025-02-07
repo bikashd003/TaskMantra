@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FilePlus, Eye, Trash, X } from "lucide-react";
-import Image from "next/image"; // Use this if you're working with images in Next.js
+import Image from "next/image"; 
 
 const FileStep: React.FC = () => {
   const { projectData, setProjectData } = useProject()!;
