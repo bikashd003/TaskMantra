@@ -33,9 +33,8 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 icon: SquareChartGantt,
                 label: "Projects",
                 subItems: [
-                  { label: "Create Project", path: "/projects" },
+                  { label: "Create Project +", path: "/projects" },
                   { label: "Project Beta", path: "/projects/beta" },
-                  { label: "Project Gamma", path: "/projects/gamma" },
                 ],
               },
             ],
