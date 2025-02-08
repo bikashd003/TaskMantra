@@ -1,4 +1,4 @@
-import mongoose,{Schema} from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const feedbackSchema = new Schema({
   userId: {
@@ -8,7 +8,6 @@ const feedbackSchema = new Schema({
   },
   feedbackType: {
     type: String,
-    enum: ["general", "bug", "featureRequest", "other"],
     required: true,
   },
   description: {
@@ -25,5 +24,5 @@ const feedbackSchema = new Schema({
   },
 });
 
-const Feedback = mongoose.model("Feedback", feedbackSchema);
+const Feedback = mongoose.models.Feedback || mongoose.model("Feedback", feedbackSchema);
 export default Feedback;

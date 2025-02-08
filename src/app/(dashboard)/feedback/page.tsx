@@ -1,17 +1,49 @@
 'use client'
-import React from 'react'
-import { useState } from 'react'
+import React, { useState } from 'react'
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import FileUploader from '@/components/Global/FileUploader'
+import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthProvider';
 
 type FeedbackType = 'terrible' | 'bad' | 'medium' | 'good' | 'excellent'
+
+interface FeedbackData {
+    feedbackType: FeedbackType;
+    comment: string;
+    screenshot: string | null;
+    userId:string
+}
 
 export default function Page() {
     const [selectedFeedbackType, setSelectedFeedbackType] = useState<FeedbackType>('medium')
     const [comment, setComment] = useState('')
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [screenshot, setScreenshot] = useState<string | null>(null)
+    const [resetUploader, setResetUploader] = useState(false)
+    const session = useAuth().session;
+
+    const { mutate, isPending } = useMutation<void, Error, FeedbackData>({
+        mutationFn: async (data: FeedbackData) => {
+          await fetch('/api/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+        },
+        onError: (error) => {
+            toast.error(error.message)
+        },
+        onSuccess: () => {
+            toast.success("Feedback submitted successfully")
+            setComment('')
+            setSelectedFeedbackType('medium')
+            setScreenshot(null)
+            setResetUploader(prev => !prev)
+        }
+    })
 
     const feedbackTypes: { value: FeedbackType; emoji: string }[] = [
         { value: 'terrible', emoji: '😫' },
@@ -20,11 +52,6 @@ export default function Page() {
         { value: 'good', emoji: '🙂' },
         { value: 'excellent', emoji: '🤗' },
     ]
-
-    const handleSubmit = () => {
-        // eslint-disable-next-line no-console
-        console.log({ feedbackType: selectedFeedbackType, comment, screenshot })
-    }
 
     const handleScreenshotChange = (files: File[]) => {
         if (files.length === 0) return;
@@ -37,9 +64,19 @@ export default function Page() {
         };
         reader.readAsDataURL(file);
     };
-
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!isPending) {
+            mutate({ 
+                feedbackType: selectedFeedbackType, 
+                comment, 
+                screenshot,
+                userId: session?.user.id 
+            })
+        }
+    }
     return (
-        <div className='mx-auto max-w-md w-full p-6 border rounded-lg'>
+        <form onSubmit={handleSubmit} className='mx-auto max-w-md w-full p-6 border rounded-lg'>
             <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-2">How are you feeling?</h2>
                 <p className="text-muted-foreground">
@@ -84,15 +121,16 @@ export default function Page() {
             />
 
             <label className="block mb-6">
-                <FileUploader onChange={handleScreenshotChange} multiple={false} />
+                <FileUploader onChange={handleScreenshotChange} multiple={false} reset={resetUploader} />
             </label>
 
             <Button
-                onClick={handleSubmit}
+                type="submit"
                 className="w-full bg-emerald-500 hover:bg-emerald-600"
+                disabled={isPending}
             >
-                Submit Now
+                {isPending ? 'Sending...' : 'Submit Now'}
             </Button>
-        </div>
+        </form>
     )
 }

@@ -8,12 +8,14 @@ interface FileUploaderProps {
   multiple?: boolean;
   onChange(_files: File[]): void;
   maxSize?: number;
+  reset?: boolean;
 }
 
 const FileUploader: React.FC<FileUploaderProps> = ({ 
   multiple = false, 
   onChange,
-  maxSize = 5 * 1024 * 1024 
+  maxSize = 5 * 1024 * 1024 ,
+  reset
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
@@ -50,7 +52,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     setPreviews(newPreviews);
     onChange(newFiles);
   };
-
+  React.useEffect(() => {
+    if (reset) {
+      previews.forEach(preview => URL.revokeObjectURL(preview.url));
+      setPreviews([]);
+      setFiles([]);
+      setSelectedPreview(null);
+    }
+  }, [reset, previews]);
   return (
     <div className="w-full"
     onClick={(e) => {
