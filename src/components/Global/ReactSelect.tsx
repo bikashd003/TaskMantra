@@ -9,7 +9,7 @@ interface Option {
 interface Props {
     options: Option[];
     value: Option | Option[] | null;
-    onChange: (newValue: MultiValue<Option> | SingleValue<Option>, actionMeta: ActionMeta<Option>) => void;
+    onChange: (_newValue: MultiValue<Option> | SingleValue<Option>, _actionMeta: ActionMeta<Option>) => void;
     placeholder?: string;
     isMulti?: boolean;
 }
