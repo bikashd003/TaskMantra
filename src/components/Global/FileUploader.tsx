@@ -59,7 +59,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       setFiles([]);
       setSelectedPreview(null);
     }
-  }, [reset, previews]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reset]);
   return (
     <div className="w-full"
     onClick={(e) => {
