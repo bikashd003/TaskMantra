@@ -30,7 +30,7 @@ export default function RootLayout({
       <ClientProviders>
       <body
         className={`${inter.className} ${outfit.variable} antialiased`}
-
+        suppressHydrationWarning
       >
         <NextUiProviders>
           <Providers>
