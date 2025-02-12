@@ -3,6 +3,9 @@ import React, { createContext, useContext, useState } from 'react';
 import { projectInfoSchema } from "@/Schemas/ProjectInfo"
 import { useForm, Control, FieldErrors, UseFormHandleSubmit, UseFormTrigger, Resolver } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import axios from 'axios';
 
 
 
@@ -74,6 +77,7 @@ interface ProjectContextType {
     errors: FieldErrors<Project>;
     handleSubmit: UseFormHandleSubmit<Project>;
     trigger: UseFormTrigger<Project>;
+    isProjectCreating: boolean;
 }
 
 export const ProjectContext = createContext<ProjectContextType | null>(null);
@@ -81,7 +85,7 @@ export const ProjectContext = createContext<ProjectContextType | null>(null);
 export const ProjectProvider = ({ children }: { children: React.ReactNode }) => {
     const [projectData, setProjectData] = useState<Project | null>(null);
     const [currentStep, setCurrentStep] = useState(1);
-    const { control, handleSubmit, formState: { errors }, trigger } = useForm<Project>({
+    const { control, handleSubmit, formState: { errors }, trigger, reset } = useForm<Project>({
         resolver: yupResolver(projectInfoSchema) as Resolver<Project>,
         defaultValues: {
             name: '',
@@ -106,11 +110,27 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
             history: [],
         },
     });
+    const {mutate, isPending: isProjectCreating} = useMutation<void, Error, Project>({
+        mutationFn: async (data: Project) => {
+            await axios.post('/api/create-project', data)
+        },
+        onError: (error) => {
+            toast.error(error.message)
+        },
+        onSuccess: () => {
+            toast.success("Project created successfully")
+            setCurrentStep(1)
+            setProjectData(null)
+            // reset form
+            reset()
+        }
+    })
 
     const onSubmit = async (data: Project) => {
         try {
             // console.log('Submitting project:', data);
-            setProjectData((prevData) => prevData ? { ...prevData, ...data } : data);
+            mutate(data);
+
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error('Error submitting project:', error);
@@ -131,7 +151,8 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
         errors,
         handleSubmit,
         trigger,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        isProjectCreating
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [projectData, currentStep, errors]);
 
     return (
