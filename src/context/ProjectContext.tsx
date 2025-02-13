@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { projectInfoSchema } from "@/Schemas/ProjectInfo"
 import { useForm, Control, FieldErrors, UseFormHandleSubmit, UseFormTrigger, Resolver } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -125,6 +125,19 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
             reset()
         }
     })
+    const {data: projects, error, isLoading: isLoadingProjects} = useQuery({
+        queryKey: ['projects'],
+        queryFn: async () => {
+            const {data} = await axios.get('/api/get-all-projects');
+            return data as Project[];
+        }
+    })
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error.message);
+        }
+    }, [error]);
 
     const onSubmit = async (data: Project) => {
         try {
@@ -151,7 +164,9 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
         errors,
         handleSubmit,
         trigger,
-        isProjectCreating
+        isProjectCreating,
+        projects,
+        isLoadingProjects
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [projectData, currentStep, errors]);
 

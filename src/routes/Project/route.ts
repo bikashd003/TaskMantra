@@ -1,5 +1,6 @@
 import { connectDB } from "@/Utility/db";
 import { Project } from "@/models/Project";
+import {User} from "@/models/User";
 
 const project = async (data:any) => {
     try {
@@ -20,4 +21,21 @@ const project = async (data:any) => {
         return error;
     }
 }
-export default project;
+const getAllProjects = async (userId:string) => {
+    try {
+        await connectDB();
+        console.log(userId)
+        const user=await User.findById(userId)
+        .populate({
+            path: 'projects',
+            populate: {
+                path: 'projectId',
+            }
+        });
+        return user.projects;
+    } catch (error:any) {
+        return error;
+    }
+}
+
+export {project,getAllProjects}
