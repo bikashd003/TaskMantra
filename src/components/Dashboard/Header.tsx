@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthProvider';
 import { Playfair_Display } from 'next/font/google';
 import { Button } from '../ui/button';
+import { TeamLoggerPopover } from './TeamLogger';
 
 const playwrite = Playfair_Display({
   subsets: ['latin'],
@@ -37,7 +38,8 @@ const Header = () => {
       </div>
       <div className="flex space-x-4 items-center">
         <Bell className="w-6 h-6 cursor-pointer hover:text-gray-200" />
-        <Button variant="ghost"size="default" className='border shadow-sm bg-gray-100'>
+        <TeamLoggerPopover />
+        <Button variant="ghost" size="default" className='border shadow-sm bg-gray-100'>
           <UserPlus className="w-6 h-6 cursor-pointer hover:text-gray-200" />
           Invite
         </Button>
