@@ -3,7 +3,7 @@ import { handle } from 'hono/vercel';
 import { logger } from 'hono/logger';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]/options';
-import { project, getAllProjects } from '@/routes/Project/route';
+import { createProject, getAllProjects } from '@/routes/Project/route';
 
 // Define the type for your context
 type Variables = {
@@ -43,10 +43,14 @@ const createTask = async (c) => {
   return c.json({ message: 'Task created successfully' });
 };
 
-const createProject = async (c) => {
+const createProjectController = async (c) => {
   try {
     const body = await c.req.json();
-    const result = await project(body);
+    const user = c.get('user');
+    if (!user) {
+      return c.json({ error: 'User not authenticated' }, 401);
+    }
+    const result = await createProject(body, user.id);
     if (result instanceof Error) {
       return c.json({ error: result.message }, 500);
     }
@@ -56,7 +60,7 @@ const createProject = async (c) => {
   }
 };
 
-const getAllProjectsByUser = async (c) => {
+const getAllProjectsByUserController = async (c) => {
   try {
     const user = c.get('user');
     if (!user) {
@@ -73,8 +77,8 @@ const getAllProjectsByUser = async (c) => {
 };
 
 app.post('/create-task', createTask);
-app.post('/create-project', createProject);
-app.get('/get-all-projects', getAllProjectsByUser);
+app.post('/create-project', createProjectController);
+app.get('/get-all-projects', getAllProjectsByUserController);
 app.get('/get-project-by-id/:id', );
 app.put('/update-project/:id', );
 app.delete('/delete-project/:id', );

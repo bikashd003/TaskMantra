@@ -14,6 +14,7 @@ import { SidebarItem } from './SidebarItem';
 import { UserProfile } from './UserProfile';
 import { usePathname } from 'next/navigation';
 import Logo from './Logo';
+import { useProject } from '@/context/ProjectContext';
 
 interface SidebarProps {
     isMobileOpen: boolean;
@@ -23,6 +24,8 @@ interface SidebarProps {
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
     const [isExpanded, setIsExpanded] = useState(true);
     const pathname = usePathname();
+    const projectContext = useProject();
+    const projects = projectContext?.allProjects?.projects || [];
 
     const menuItems = [
         {
@@ -34,7 +37,10 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
                 label: "Projects",
                 subItems: [
                   { label: "Create Project +", path: "/projects" },
-                  { label: "Project Beta", path: "/projects/beta" },
+                  ...projects.map((project: any) => ({
+                    label: project?.projectId?.name,
+                    path: `/projects/${project?.projectId?._id}`,
+                  })),
                 ],
               },
             ],

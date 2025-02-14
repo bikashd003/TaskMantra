@@ -2,7 +2,7 @@ import { connectDB } from "@/Utility/db";
 import { Project } from "@/models/Project";
 import {User} from "@/models/User";
 
-const project = async (data:any) => {
+const createProject = async (data:any,id:string) => {
     try {
         await connectDB();
         const { name, description, status, priority } = data;
@@ -16,6 +16,8 @@ const project = async (data:any) => {
             files: []     // Initialize with empty array
         });
         const res = await newProject.save();
+        // push project id to user projects array and also
+        await User.findByIdAndUpdate(id, { $push: { projects: { projectId: res._id,projectRole:"Project Admin"}} });
         return res;
     } catch (error:any) {
         return error;
@@ -24,7 +26,6 @@ const project = async (data:any) => {
 const getAllProjects = async (userId:string) => {
     try {
         await connectDB();
-        console.log(userId)
         const user=await User.findById(userId)
         .populate({
             path: 'projects',
@@ -38,4 +39,4 @@ const getAllProjects = async (userId:string) => {
     }
 }
 
-export {project,getAllProjects}
+export {createProject,getAllProjects}

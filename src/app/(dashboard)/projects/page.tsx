@@ -4,7 +4,7 @@ import ProjectInfoStep from "@/components/Projects/ProjectInfoStep"
 import TasksStep from "@/components/Projects/TasksStep"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ProjectProvider, useProject } from "@/context/ProjectContext"
+import {  useProject } from "@/context/ProjectContext"
 import { FileUp, Layers, FolderPlus, ArrowLeft, CheckCircle, ArrowRight } from 'lucide-react'
 import {Spinner} from "@heroui/spinner";
 
@@ -93,9 +93,7 @@ const PageContent = () => {
 
 const Page = () => {
     return (
-        <ProjectProvider>
             <PageContent />
-        </ProjectProvider>
     );
 };
 

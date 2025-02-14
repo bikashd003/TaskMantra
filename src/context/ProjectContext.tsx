@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { projectInfoSchema } from "@/Schemas/ProjectInfo"
 import { useForm, Control, FieldErrors, UseFormHandleSubmit, UseFormTrigger, Resolver } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -63,8 +63,9 @@ export interface Project {
     files: File[];
 }
 
-
-
+interface ProjectsResponse {
+    projects: Project[];
+}
 
 interface ProjectContextType {
     projectData: Project | null;
@@ -78,6 +79,8 @@ interface ProjectContextType {
     handleSubmit: UseFormHandleSubmit<Project>;
     trigger: UseFormTrigger<Project>;
     isProjectCreating: boolean;
+    allProjects: ProjectsResponse | null;
+    isLoadingProjects: boolean;
 }
 
 export const ProjectContext = createContext<ProjectContextType | null>(null);
@@ -125,11 +128,11 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
             reset()
         }
     })
-    const {data: projects, error, isLoading: isLoadingProjects} = useQuery({
+    const {data: projects, error, isLoading: isLoadingProjects} = useQuery<ProjectsResponse>({
         queryKey: ['projects'],
         queryFn: async () => {
             const {data} = await axios.get('/api/get-all-projects');
-            return data as Project[];
+            return data as ProjectsResponse;
         }
     })
 
@@ -141,19 +144,16 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
 
     const onSubmit = async (data: Project) => {
         try {
-            // console.log('Submitting project:', data);
             mutate(data);
-
-        } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error('Error submitting project:', error);
+        } catch (error:any) {
+            toast.error(error.message)
         }
     };
 
     const createProject = (project: Project) => {
         setProjectData(project);
     }
-    const contextValue = React.useMemo(() => ({
+    const contextValue = useMemo(() => ({
         projectData,
         setProjectData,
         createProject,
@@ -165,10 +165,10 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
         handleSubmit,
         trigger,
         isProjectCreating,
-        projects,
+        allProjects: projects || null,
         isLoadingProjects
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }), [projectData, currentStep, errors]);
+    }), [projectData, currentStep, errors, projects]);
 
     return (
         <ProjectContext.Provider value={contextValue}>
