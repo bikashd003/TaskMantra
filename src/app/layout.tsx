@@ -4,7 +4,8 @@ import "./globals.css";
 import { Inter, Outfit } from "next/font/google";
 import Providers from "@/components/Providers/query-provider";
 import { NextUiProviders } from "@/context/HeroUiProvider";
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 import ClientProviders from "@/context/ClientProviders";
 
 const inter = Inter({ subsets: ['latin'] });
@@ -37,7 +38,8 @@ export default function RootLayout({
             <main>
               {children}
             </main>
-              <Toaster richColors />
+            <Toaster />
+              <Sonner richColors />
           </Providers>
         </NextUiProviders>
       </body>
