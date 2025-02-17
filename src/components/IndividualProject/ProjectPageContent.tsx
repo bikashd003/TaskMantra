@@ -1,9 +1,9 @@
 import React from "react";
 import ProjectKanban from "./ProjectKanban";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
+import ProjectAnalytics from "./ProjectAnalytics";
 
-const ProjectPageContent = () => {
+const ProjectPageContent = ({ project }: { project: any }) => {
   return (
     <div className="mt-2">
       <div className="flex justify-between items-center">
@@ -13,13 +13,16 @@ const ProjectPageContent = () => {
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
           <TabsContent value="kanban">
-            <ProjectKanban />
+            <ProjectKanban project={project} />
           </TabsContent>
-          <TabsContent value="analytics">Analytics</TabsContent>
+          <TabsContent value="analytics">
+            <ProjectAnalytics project={project} />
+          </TabsContent>
         </Tabs>
-        <div>{/* all  workers of the project */}</div>
+        <div>
+          {/* dp of all workers of the project */}
+        </div>
       </div>
-      <Separator />
     </div>
   );
 };

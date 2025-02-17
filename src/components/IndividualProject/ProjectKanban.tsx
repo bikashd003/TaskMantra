@@ -1,9 +1,9 @@
 import React from 'react'
 
 
-const ProjectKanban = () => {
+const ProjectKanban = ({ project }: { project: any }) => {
   return (
-    <div>
+    <div className='bg-blue-500'>
       
   </div>
   )

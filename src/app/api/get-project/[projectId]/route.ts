@@ -8,7 +8,7 @@ export async function GET(
 ) {
     try {
         await connectDB();
-        const projectId = params.projectId;
+        const projectId =await params.projectId;
 
         const project = await Project.findById(projectId);
         

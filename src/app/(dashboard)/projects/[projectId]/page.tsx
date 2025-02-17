@@ -83,7 +83,7 @@ export default function ProjectPage() {
           </BreadcrumbList>
         </Breadcrumb>
       </header>
-      <ProjectPageContent />
+      <ProjectPageContent project={project}/>
     </ScrollArea>
   );
 }

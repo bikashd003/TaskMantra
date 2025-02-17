@@ -53,6 +53,11 @@ interface ActivityLogEntry {
 }
 
 
+interface FileData {
+    name: string;
+    data: string;
+    type: string;
+  }
 export interface Project {
     name: string;
     description?: string;
@@ -60,7 +65,7 @@ export interface Project {
     priority: 'High' | 'Medium' | 'Low';
     tasks: Task[];
     history: ActivityLogEntry[]
-    files: File[];
+    files: FileData[];
 }
 
 interface ProjectsResponse {
@@ -81,12 +86,17 @@ interface ProjectContextType {
     isProjectCreating: boolean;
     allProjects: ProjectsResponse | null;
     isLoadingProjects: boolean;
+    resetUploader: boolean;
+    setResetUploader: React.Dispatch<React.SetStateAction<boolean>>;
+    setProjectFiles: React.Dispatch<React.SetStateAction<FileData[]>>;
 }
 
 export const ProjectContext = createContext<ProjectContextType | null>(null);
 
 export const ProjectProvider = ({ children }: { children: React.ReactNode }) => {
     const [projectData, setProjectData] = useState<Project | null>(null);
+    const [projectFiles, setProjectFiles] = useState<FileData[]>([]);
+  const [resetUploader, setResetUploader] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const { control, handleSubmit, formState: { errors }, trigger, reset } = useForm<Project>({
         resolver: yupResolver(projectInfoSchema) as Resolver<Project>,
@@ -126,6 +136,7 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
             setProjectData(null)
             // reset form
             reset()
+            setResetUploader(true)
         }
     })
     const {data: projects, error, isLoading: isLoadingProjects} = useQuery<ProjectsResponse>({
@@ -144,7 +155,11 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
 
     const onSubmit = async (data: Project) => {
         try {
-            mutate(data);
+            const formatedData={
+                ...data,
+                files:projectFiles || []
+            }
+            mutate(formatedData);
         } catch (error:any) {
             toast.error(error.message)
         }
@@ -166,7 +181,10 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
         trigger,
         isProjectCreating,
         allProjects: projects || null,
-        isLoadingProjects
+        isLoadingProjects,
+        resetUploader,
+        setResetUploader,
+        setProjectFiles
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [projectData, currentStep, errors, projects]);
 
