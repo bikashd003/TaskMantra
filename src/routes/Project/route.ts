@@ -77,4 +77,31 @@ const getAllProjects = async (userId:string) => {
     }
 }
 
-export {createProject,getAllProjects}
+const getProjectById=async (projectId:string,userId:string) => {
+    try {
+        await connectDB();
+        console.log("projectId",projectId)
+        const user=await User.findById(userId)
+        .populate({
+            path: 'projects',
+            populate: {
+                path: 'projectId',
+                populate: {
+                    path: 'tasks',
+                    populate: {
+                        path: 'assignedTo',
+                    }
+                }
+            }
+        });
+        const project=user.projects.find((project:any)=>project.projectId._id.toString()===projectId)   
+        if (!project) {
+            return 
+        }
+        return project;
+    } catch (error:any) {
+        return error;
+    }
+}
+
+export {createProject,getAllProjects,getProjectById}

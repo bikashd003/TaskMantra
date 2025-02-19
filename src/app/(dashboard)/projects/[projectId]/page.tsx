@@ -25,7 +25,7 @@ import ProjectPageContent from "@/components/IndividualProject/ProjectPageConten
 
 export default function ProjectPage() {
   const { projectId } = useParams();
-  const { data: project, isLoading } = useQuery({
+  const { data: projectData, isLoading } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
       const { data } = await axios.get(`/api/get-project/${projectId}`);
@@ -34,6 +34,9 @@ export default function ProjectPage() {
   });
   const projectContext = useProject();
   const projects = projectContext?.allProjects?.projects || [];
+
+  const project = projectData?.project?.projectId;
+  const projectRole = projectData?.project?.projectRole;
 
   if (isLoading) {
     return (
