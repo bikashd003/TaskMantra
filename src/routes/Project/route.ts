@@ -80,7 +80,6 @@ const getAllProjects = async (userId:string) => {
 const getProjectById=async (projectId:string,userId:string) => {
     try {
         await connectDB();
-        console.log("projectId",projectId)
         const user=await User.findById(userId)
         .populate({
             path: 'projects',
