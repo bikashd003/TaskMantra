@@ -3,6 +3,7 @@ import { X, Heart, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { ScrollArea } from "../ui/scroll-area";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -128,14 +129,11 @@ export const RightSidebar = ({
                 </Button>
               </div>
             </motion.div>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
+            <ScrollArea
               className="p-6 overflow-auto h-[calc(100%-73px)]"
             >
               {children}
-            </motion.div>
+            </ScrollArea>
           </motion.div>
         </motion.div>
       )}

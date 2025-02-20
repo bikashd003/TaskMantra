@@ -36,7 +36,7 @@ export default function ProjectPage() {
   const projects = projectContext?.allProjects?.projects || [];
 
   const project = projectData?.project?.projectId;
-  const projectRole = projectData?.project?.projectRole;
+  // const _projectRole = projectData?.project?.projectRole;
 
   if (isLoading) {
     return (

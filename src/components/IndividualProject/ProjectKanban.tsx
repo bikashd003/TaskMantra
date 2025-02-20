@@ -13,12 +13,14 @@ import KanbanColumn from "./KanbanColumn";
 import KanbanTask from "./KanbanTask";
 import { createPortal } from "react-dom";
 import { useToast } from "@/hooks/use-toast"
+import {TaskSidebar} from "./TaskSidebar";
 
 
 const defaultColumns = [
   { id: "todo", title: "To Do" },
   { id: "inprogress", title: "In Progress" },
-  { id: "done", title: "Done" },
+  { id: "completed", title: "Done" },
+  { id: "review", title: "Review" },
 ];
 
 const dropAnimation = {
@@ -46,7 +48,8 @@ const ProjectKanban = ({ project }: { project: any }) => {
 
   const [tasks, setTasks] = useState(formattedTasks);
   const [activeTask, setActiveTask] = useState<any>(null);
-  const [_selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Save columns to localStorage whenever they change
   useEffect(() => {
@@ -55,33 +58,49 @@ const ProjectKanban = ({ project }: { project: any }) => {
 
   const handleOpenSidebar = (taskId: string) => {
     setSelectedTaskId(taskId);
+    setIsSidebarOpen(true);
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor)
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    })
   );
 
-  const updateTaskStatus = async (taskId: string, newStatus: string) => {
+  const updateTaskStatus = async (taskId: string, newStatus: string): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PATCH',
+      const response = await fetch(`/api/update-task-status/${taskId}`, {
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           status: newStatus,
         }),
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to update task status');
+        throw new Error("Failed to update task status");
       }
-    } catch (error:any) {
+      if(response.ok){
         toast({
-            variant: "destructive",
-            title: "Error",
-            description: error.message
+          variant: "success",
+          title: "Success",
+          description: "Task status updated",
         })
+      }
+
+      return true;
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+      return false;
     }
   };
 
@@ -93,15 +112,19 @@ const ProjectKanban = ({ project }: { project: any }) => {
     }
   };
 
-  const onDragEnd = (event: any) => {
+  const onDragEnd = async (event: any) => {
     const { active, over } = event;
     setActiveTask(null);
-    
+
     if (!over) return;
 
     if (active.id.startsWith("col-") && over.id.startsWith("col-")) {
-      const oldIndex = columns.findIndex((c) => `col-${c.id}` === active.id);
-      const newIndex = columns.findIndex((c) => `col-${c.id}` === over.id);
+      const oldIndex = columns.findIndex(
+        (c) => `col-${c.id}` === active.id
+      );
+      const newIndex = columns.findIndex(
+        (c) => `col-${c.id}` === over.id
+      );
       
       if (oldIndex !== newIndex) {
         setColumns(arrayMove(columns, oldIndex, newIndex));
@@ -112,22 +135,34 @@ const ProjectKanban = ({ project }: { project: any }) => {
     const activeTask = tasks.find((t) => t._id === active.id);
     if (activeTask) {
       const newColumnId = over.id;
-      const newStatus = columns.find(col => col.id === newColumnId)?.title || '';
-      
-      // Update local state
+      const newStatus = columns.find((col) => col.id === newColumnId)?.title || "";
+
+      // Update local state optimistically
       setTasks((prev) =>
         prev.map((task) =>
           task._id === active.id ? { ...task, columnId: newColumnId } : task
         )
       );
-      
+
       // Call API to update status
-      updateTaskStatus(active.id, newStatus);
+      const success = await updateTaskStatus(active.id, newStatus);
+      
+      // Revert changes if API call failed
+      if (!success) {
+        setTasks((prev) =>
+          prev.map((task) =>
+            task._id === active.id ? { ...task, columnId: activeTask.columnId } : task
+          )
+        );
+      }
     }
   };
 
   return (
-    <div className="p-6 w-full overflow-x-auto">
+    <div className="p-2 w-full overflow-x-auto">
+      {selectedTaskId && (
+      <TaskSidebar taskId={selectedTaskId!} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      )}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}

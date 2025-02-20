@@ -33,7 +33,7 @@ const KanbanColumn = ({
       }}
       {...attributes}
       className={cn(
-        "w-80 bg-white rounded-lg shadow-md p-5",
+        "w-80 bg-white cursor-default rounded-lg shadow-md p-5",
         isDragging && "opacity-50"
       )}
     >

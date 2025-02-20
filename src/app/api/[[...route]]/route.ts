@@ -3,7 +3,7 @@ import { handle } from 'hono/vercel';
 import { logger } from 'hono/logger';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]/options';
-import { createProject, getAllProjects, getProjectById } from '@/routes/Project/route';
+import { createProject, getAllProjects, getProjectById, getTaskById, updateTask } from '@/routes/Project/route';
 
 // Define the type for your context
 type Variables = {
@@ -92,14 +92,50 @@ const getProjectByIdController = async (c:any) => {
     }
 }
 
+const getTaskByIdController = async (c:any) => {
+    try {
+        const user = c.get('user');
+        if (!user) {
+            return c.json({ error: 'User not authenticated' }, 401);
+        }
+        const result = await getTaskById(c.req.param('taskId'), user.id);
+        if (result instanceof Error) {
+            return c.json({ error: result.message }, 500);
+        }
+        return c.json({ task: result });
+    } catch (error:any) {
+        return c.json({ error: error.message }, 500);
+    }
+}
+
+const updateTaskController = async (c:any) => {
+    try {
+        const user = c.get('user');
+        if (!user) {
+            return c.json({ error: 'User not authenticated' }, 401);
+        }
+        const data=await c.req.json();
+        const result = await updateTask(c.req.param('taskId'), data);
+        if (result instanceof Error) {
+            return c.json({ error: result.message }, 500);
+        }
+        return c.json({ task: result });
+    } catch (error:any) {
+        return c.json({ error: error.message }, 500);
+    }
+}
+
 app.post('/create-task', createTask);
 app.post('/create-project', createProjectController);
 app.get('/get-all-projects', getAllProjectsByUserController);
 app.get('/get-project/:projectId',getProjectByIdController);
-app.put('/update-project/:id', );
-app.delete('/delete-project/:id', );
+app.get('/get-task/:taskId',getTaskByIdController);
+app.patch('/update-task-status/:taskId', updateTaskController);
+// app.put('/update-project/:id', updateProjectController);
+// app.delete('/delete-project/:id', deleteProjectController);
 
 export const GET = handle(app);
 export const POST = handle(app);
 export const DELETE = handle(app);
 export const PUT = handle(app);
+export const PATCH = handle(app);
