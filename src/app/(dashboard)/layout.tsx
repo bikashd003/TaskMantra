@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Sidebar } from '@/components/Dashboard/Sidebar';
 import Header from '@/components/Dashboard/Header';
 import { Menu } from 'lucide-react';
+import { ProjectProvider } from '@/context/ProjectContext';
 
 export default function DashboardLayout({
     children,
@@ -11,6 +12,7 @@ export default function DashboardLayout({
 }>) {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     return (
+        <ProjectProvider>
         <div className="flex h-screen overflow-hidden bg-gray-50 overflow-x-hidden">
             <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-30 px-4">
                 <div className="h-full flex items-center">
@@ -35,5 +37,6 @@ export default function DashboardLayout({
                 </main>
             </div>
         </div>
+        </ProjectProvider>
     );
 }

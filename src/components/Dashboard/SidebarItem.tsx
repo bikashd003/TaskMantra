@@ -152,6 +152,7 @@ export function SidebarItem({
                   href={subItem.path}
                   className={`
                     pl-8 block py-2 text-sm
+                    truncate
                     transition-colors duration-200 rounded-lg
                     ${pathname === subItem.path
                       ? 'bg-gray-700 text-white'

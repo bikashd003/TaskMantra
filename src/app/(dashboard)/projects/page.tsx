@@ -4,8 +4,9 @@ import ProjectInfoStep from "@/components/Projects/ProjectInfoStep"
 import TasksStep from "@/components/Projects/TasksStep"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ProjectProvider, useProject } from "@/context/ProjectContext"
+import {  useProject } from "@/context/ProjectContext"
 import { FileUp, Layers, FolderPlus, ArrowLeft, CheckCircle, ArrowRight } from 'lucide-react'
+import {Spinner} from "@heroui/spinner";
 
 
 const steps = [
@@ -15,7 +16,7 @@ const steps = [
 ]
 
 const PageContent = () => {
-    const { currentStep, setCurrentStep, trigger, handleSubmit, onSubmit } = useProject()!;
+    const { currentStep, setCurrentStep, trigger, handleSubmit, onSubmit, isProjectCreating } = useProject()!;
 
     const renderStepContent = () => {
         switch (currentStep) {
@@ -68,10 +69,12 @@ const PageContent = () => {
                 </Button>
                 <Button
                     onClick={handleNext}
+                    disabled={isProjectCreating}
                     className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all hover:translate-x-[4px]"
                 >
                     {currentStep === steps.length ? (
                         <>
+                        {isProjectCreating &&(<Spinner color="white"/>)}
                             Finish
                             <CheckCircle className="w-4 h-4" />
                         </>
@@ -90,9 +93,7 @@ const PageContent = () => {
 
 const Page = () => {
     return (
-        <ProjectProvider>
             <PageContent />
-        </ProjectProvider>
     );
 };
 

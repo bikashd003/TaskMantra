@@ -1,8 +1,11 @@
 /* eslint-disable no-unused-vars */
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { projectInfoSchema } from "@/Schemas/ProjectInfo"
 import { useForm, Control, FieldErrors, UseFormHandleSubmit, UseFormTrigger, Resolver } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import axios from 'axios';
 
 
 
@@ -50,6 +53,11 @@ interface ActivityLogEntry {
 }
 
 
+interface FileData {
+    name: string;
+    data: string;
+    type: string;
+  }
 export interface Project {
     name: string;
     description?: string;
@@ -57,11 +65,12 @@ export interface Project {
     priority: 'High' | 'Medium' | 'Low';
     tasks: Task[];
     history: ActivityLogEntry[]
-    files: File[];
+    files: FileData[];
 }
 
-
-
+interface ProjectsResponse {
+    projects: Project[];
+}
 
 interface ProjectContextType {
     projectData: Project | null;
@@ -74,14 +83,22 @@ interface ProjectContextType {
     errors: FieldErrors<Project>;
     handleSubmit: UseFormHandleSubmit<Project>;
     trigger: UseFormTrigger<Project>;
+    isProjectCreating: boolean;
+    allProjects: ProjectsResponse | null;
+    isLoadingProjects: boolean;
+    resetUploader: boolean;
+    setResetUploader: React.Dispatch<React.SetStateAction<boolean>>;
+    setProjectFiles: React.Dispatch<React.SetStateAction<FileData[]>>;
 }
 
 export const ProjectContext = createContext<ProjectContextType | null>(null);
 
 export const ProjectProvider = ({ children }: { children: React.ReactNode }) => {
     const [projectData, setProjectData] = useState<Project | null>(null);
+    const [projectFiles, setProjectFiles] = useState<FileData[]>([]);
+  const [resetUploader, setResetUploader] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
-    const { control, handleSubmit, formState: { errors }, trigger } = useForm<Project>({
+    const { control, handleSubmit, formState: { errors }, trigger, reset } = useForm<Project>({
         resolver: yupResolver(projectInfoSchema) as Resolver<Project>,
         defaultValues: {
             name: '',
@@ -106,21 +123,52 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
             history: [],
         },
     });
+    const {mutate, isPending: isProjectCreating} = useMutation<void, Error, Project>({
+        mutationFn: async (data: Project) => {
+            await axios.post('/api/create-project', data)
+        },
+        onError: (error) => {
+            toast.error(error.message)
+        },
+        onSuccess: () => {
+            toast.success("Project created successfully")
+            setCurrentStep(1)
+            setProjectData(null)
+            // reset form
+            reset()
+            setResetUploader(true)
+        }
+    })
+    const {data: projects, error, isLoading: isLoadingProjects} = useQuery<ProjectsResponse>({
+        queryKey: ['projects'],
+        queryFn: async () => {
+            const {data} = await axios.get('/api/get-all-projects');
+            return data as ProjectsResponse;
+        }
+    })
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error.message);
+        }
+    }, [error]);
 
     const onSubmit = async (data: Project) => {
         try {
-            // console.log('Submitting project:', data);
-            setProjectData((prevData) => prevData ? { ...prevData, ...data } : data);
-        } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error('Error submitting project:', error);
+            const formatedData={
+                ...data,
+                files:projectFiles || []
+            }
+            mutate(formatedData);
+        } catch (error:any) {
+            toast.error(error.message)
         }
     };
 
     const createProject = (project: Project) => {
         setProjectData(project);
     }
-    const contextValue = React.useMemo(() => ({
+    const contextValue = useMemo(() => ({
         projectData,
         setProjectData,
         createProject,
@@ -131,8 +179,14 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
         errors,
         handleSubmit,
         trigger,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }), [projectData, currentStep, errors]);
+        isProjectCreating,
+        allProjects: projects || null,
+        isLoadingProjects,
+        resetUploader,
+        setResetUploader,
+        setProjectFiles
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }), [projectData, currentStep, errors, projects]);
 
     return (
         <ProjectContext.Provider value={contextValue}>
