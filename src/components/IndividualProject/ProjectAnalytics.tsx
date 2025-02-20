@@ -1,8 +1,8 @@
 import React from 'react'
 
-const ProjectAnalytics = ({ _project }: { project: any }) => {
+const ProjectAnalytics = ({ project }: { project: any }) => {
   return (
-    <div className='bg-green-300'>ProjectAnalytics</div>
+    <div className='bg-green-300'>{project?.name}</div>
   )
 }
 
