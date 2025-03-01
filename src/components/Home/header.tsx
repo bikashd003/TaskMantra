@@ -28,7 +28,7 @@ export default function Header() {
                     <NavItem href="#testimonials">Testimonials</NavItem>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <Link href="/sign-up" className="text-white">Sign Up</Link>
+                    <Link href="/auth" className="text-white">Sign Up</Link>
                     <button onClick={toggleMenu} className="md:hidden text-white">
                         <Menu />
                     </button>
