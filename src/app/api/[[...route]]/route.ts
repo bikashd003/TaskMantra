@@ -5,7 +5,6 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]/options';
 import { createProject, getAllProjects, getProjectById, getTaskById, updateTask } from '@/routes/Project/route';
 
-// Define the type for your context
 type Variables = {
   user?: {
     id: string;

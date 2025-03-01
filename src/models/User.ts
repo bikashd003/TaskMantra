@@ -10,6 +10,9 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    bio: {
+        type: String
+    },
     password: {
         type: String
     },
@@ -19,35 +22,27 @@ const userSchema = new mongoose.Schema({
     emailVerified: {
         type: Date
     },
-    role: { 
+    urls: {
+        type: Object
+    },
+    role: {
         type: String,
         enum: ['User', 'Admin'],
-        default: 'User' 
+        default: 'User'
     },
-    projects: [{
-        projectId: { 
-            type: mongoose.Schema.Types.ObjectId, 
-            ref: 'Project',
-        },
-        projectRole: {
-            type: String,
-            enum: ['Project Admin', 'Developer', 'Viewer','Employee','HR','Other'],
-        }
-    }],
-    tasks: [{
-        taskId: { 
-            type: mongoose.Schema.Types.ObjectId, 
-            ref: 'Task',
-        },
-        taskRole: {
-            type: String,
-            enum: ['Project Admin', 'Developer', 'Viewer','Employee','HR','Other'],
-        }
-    }],
+    systemRole: {
+        type: String,
+        enum: ['User', 'Admin'],
+        default: 'User'
+    },
+    organizationId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Organization'
+    },
     settings: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Settings',
-    }
+        ref: 'Settings'
+    },
 }, {
     timestamps: true
 });

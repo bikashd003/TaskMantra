@@ -1,56 +1,65 @@
 'use client'
 
 import React from 'react'
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Switch } from "@/components/ui/switch"
+import { Formik, Form, Field, ErrorMessage } from 'formik'
+import * as Yup from 'yup'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Camera, Github, Linkedin, Twitter } from 'lucide-react'
+import axios from 'axios'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { Spinner } from '@heroui/react'
+import { Skeleton } from '@heroui/skeleton'
 
-const profileFormSchema = z.object({
-  username: z.string().min(2, { message: "Username must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  bio: z.string().max(160, { message: "Bio must not exceed 160 characters." }),
-  urls: z.object({
-    github: z.string().url({ message: "Please enter a valid URL." }).optional(),
-    twitter: z.string().url({ message: "Please enter a valid URL." }).optional(),
-    linkedin: z.string().url({ message: "Please enter a valid URL." }).optional(),
+const profileFormSchema = Yup.object().shape({
+  username: Yup.string().min(2, "Username must be at least 2 characters.").required("Username is required."),
+  email: Yup.string().email("Please enter a valid email address.").required("Email is required."),
+  bio: Yup.string().max(160, "Bio must not exceed 160 characters."),
+  urls: Yup.object().shape({
+    github: Yup.string().url("Please enter a valid URL.").nullable().notRequired(),
+    twitter: Yup.string().url("Please enter a valid URL.").nullable().notRequired(),
+    linkedin: Yup.string().url("Please enter a valid URL.").nullable().notRequired(),
   }),
-  notifications: z.object({
-    emailNotifications: z.boolean(),
-    pushNotifications: z.boolean(),
-  }),
-})
+});
 
 export default function ProfileSettings() {
-  const form = useForm<z.infer<typeof profileFormSchema>>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      username: "johndoe",
-      email: "john@example.com",
-      bio: "Task management enthusiast and productivity geek.",
-      urls: {
-        github: "https://github.com",
-        twitter: "https://twitter.com",
-        linkedin: "https://linkedin.com",
-      },
-      notifications: {
-        emailNotifications: true,
-        pushNotifications: true,
-      },
+  const { data: profileSettings, isLoading } = useQuery({
+    queryKey: ['profileSettings'],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/settings/profile')
+      return data
     },
   })
 
-  function onSubmit(values: z.infer<typeof profileFormSchema>) {
-    console.log(values)
-    // TODO: Implement profile update logic
+  const profile = profileSettings?.profile
+
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: async (values: any) => {
+      await axios.patch('/api/settings/profile', values)
+      return values
+    },
+    onError: (error: any) => {
+      toast.error(error.message)
+    },
+    onSuccess: () => {
+      toast.success('Profile Updated')
+    },
+  })
+
+  const initialValues = {
+    username: profile?.username || '',
+    email: profile?.email || '',
+    bio: profile?.bio || '',
+    urls: {
+      github: profile?.urls?.github || '',
+      twitter: profile?.urls?.twitter || '',
+      linkedin: profile?.urls?.linkedin || '',
+    },
   }
 
   return (
@@ -67,222 +76,199 @@ export default function ProfileSettings() {
         {/* Profile Picture Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Profile Picture</CardTitle>
-            <CardDescription>
-              Upload a profile picture to personalize your account
-            </CardDescription>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-8 w-32 mb-2" />
+                <Skeleton className="h-4 w-64" />
+              </>
+            ) : (
+              <>
+                  <CardTitle>Profile Picture</CardTitle>
+                  <CardDescription>
+                    Upload a profile picture to personalize your account
+                  </CardDescription>
+              </>
+            )}
           </CardHeader>
           <CardContent className="flex items-center gap-6">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src="https://github.com/shadcn.png" alt="Profile" />
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
+            {isLoading ? (
+              <Skeleton className="h-24 w-24 rounded-full" />
+            ) : (
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src="https://github.com/shadcn.png" alt="Profile" />
+                  <AvatarFallback>JD</AvatarFallback>
+                </Avatar>
+            )}
             <div className="space-y-2">
-              <Button variant="outline" className="gap-2">
-                <Camera className="h-4 w-4" />
-                Change Picture
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Recommended: Square image, at least 400x400px
-              </p>
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-10 w-32" />
+                  <Skeleton className="h-4 w-56" />
+                </>
+              ) : (
+                <>
+                    <Button variant="outline" className="gap-2">
+                      <Camera className="h-4 w-4" />
+                      Change Picture
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Recommended: Square image, at least 400x400px
+                    </p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
 
         {/* Profile Form */}
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-                <CardDescription>
-                  Update your personal details and public profile information
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="johndoe" {...field} />
-                      </FormControl>
-                      <FormDescription>
+        <Card>
+          <CardHeader>
+            <CardTitle>Personal Information</CardTitle>
+            <CardDescription>
+              Update your personal details and public profile information
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Formik
+              enableReinitialize
+              initialValues={initialValues}
+              validationSchema={profileFormSchema}
+              onSubmit={async (values) => {
+                await mutateAsync(values)
+              }}
+            >
+              {({ isSubmitting }) => (
+                <Form className="space-y-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="username" className="block text-sm font-medium">
+                        Username
+                      </label>
+                      <Field
+                        id="username"
+                        name="username"
+                        as={Input}
+                        placeholder="bikashd003"
+                      />
+                      <ErrorMessage
+                        name="username"
+                        component="div"
+                        className="text-sm text-red-500"
+                      />
+                      <p className="text-xs text-muted-foreground">
                         This is your public display name.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      </p>
+                    </div>
 
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="john@example.com" {...field} />
-                      </FormControl>
-                      <FormDescription>
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium">
+                        Email
+                      </label>
+                      <Field
+                        id="email"
+                        name="email"
+                        as={Input}
+                        placeholder="bikashd003@gmail.com"
+                        disabled
+                      />
+                      <ErrorMessage
+                        name="email"
+                        component="div"
+                        className="text-sm text-red-500"
+                      />
+                      <p className="text-xs text-muted-foreground">
                         Your email address will not be publicly displayed.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      </p>
+                    </div>
 
-                <FormField
-                  control={form.control}
-                  name="bio"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bio</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Tell us a little bit about yourself"
-                          className="resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
+                    <div>
+                      <label htmlFor="bio" className="block text-sm font-medium">
+                        Bio
+                      </label>
+                      <Field
+                        id="bio"
+                        name="bio"
+                        as={Textarea}
+                        placeholder="Tell us a little bit about yourself"
+                        className="resize-none"
+                      />
+                      <ErrorMessage
+                        name="bio"
+                        component="div"
+                        className="text-sm text-red-500"
+                      />
+                      <p className="text-xs text-muted-foreground">
                         Brief description for your profile. Maximum 160 characters.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+                      </p>
+                    </div>
+                  </div>
 
-            {/* Social Links */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Social Links</CardTitle>
-                <CardDescription>
-                  Connect your social media accounts
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="urls.github"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                  {/* Social Links */}
+                  <div className="mt-6 space-y-4">
+                    <h4 className="text-md font-medium">Social Links</h4>
+                    <div>
+                      <label htmlFor="urls.github" className="flex items-center gap-2 text-sm font-medium">
                         <Github className="h-4 w-4" />
                         GitHub
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://github.com/username" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="urls.twitter"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                      </label>
+                      <Field
+                        id="urls.github"
+                        name="urls.github"
+                        as={Input}
+                        placeholder="https://github.com/username"
+                      />
+                      <ErrorMessage
+                        name="urls.github"
+                        component="div"
+                        className="text-sm text-red-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="urls.twitter" className="flex items-center gap-2 text-sm font-medium">
                         <Twitter className="h-4 w-4" />
                         Twitter
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://twitter.com/username" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="urls.linkedin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                      </label>
+                      <Field
+                        id="urls.twitter"
+                        name="urls.twitter"
+                        as={Input}
+                        placeholder="https://twitter.com/username"
+                      />
+                      <ErrorMessage
+                        name="urls.twitter"
+                        component="div"
+                        className="text-sm text-red-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="urls.linkedin" className="flex items-center gap-2 text-sm font-medium">
                         <Linkedin className="h-4 w-4" />
                         LinkedIn
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://linkedin.com/in/username" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Notification Preferences */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
-                <CardDescription>
-                  Choose how you want to receive notifications
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="notifications.emailNotifications"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Email Notifications
-                        </FormLabel>
-                        <FormDescription>
-                          Receive notifications about your tasks via email
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notifications.pushNotifications"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Push Notifications
-                        </FormLabel>
-                        <FormDescription>
-                          Receive notifications about your tasks in the browser
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end">
-              <Button type="submit" size="lg">
-                Save Changes
-              </Button>
-            </div>
-          </form>
-        </Form>
+                      </label>
+                      <Field
+                        id="urls.linkedin"
+                        name="urls.linkedin"
+                        as={Input}
+                        placeholder="https://linkedin.com/in/username"
+                      />
+                      <ErrorMessage
+                        name="urls.linkedin"
+                        component="div"
+                        className="text-sm text-red-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button type="submit" size="lg">
+                      {isPending || isSubmitting ? <Spinner /> : null}
+                      Save Changes
+                    </Button>
+                  </div>
+                </Form>
+              )}
+            </Formik>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
