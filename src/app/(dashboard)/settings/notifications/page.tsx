@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
-import { Bell, Calendar, MessageSquare, Star, Users } from 'lucide-react'
+import { Bell, MessageSquare, Star } from 'lucide-react'
 
 const notificationSchema = z.object({
   email: z.object({
