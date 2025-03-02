@@ -74,7 +74,7 @@ const OrganizationSetupPage = () => {
         reader.readAsDataURL(finalFile);
     };
 
-    const { errors, touched, values, handleChange, handleSubmit, isValid } = formik;
+    const { errors, touched, values, handleChange, handleSubmit } = formik;
 
     const nextStep = () => {
         if (currentStep < totalSteps - 1) {
@@ -133,7 +133,7 @@ const OrganizationSetupPage = () => {
                     animate={{ y: 0 }}
                     transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
                 >
-                    <div className="p-8 md:p-12">
+                    <div className="p-4 md:p-6">
                         <motion.h1
                             className="text-3xl md:text-2xl font-bold text-gray-800 mb-6"
                             initial={{ y: -20, opacity: 0 }}
@@ -145,7 +145,8 @@ const OrganizationSetupPage = () => {
                             {currentStep === 2 && "Add your organization's branding"}
                         </motion.h1>
 
-                        <form onSubmit={(e) => { e.preventDefault(); nextStep(); }} className="space-y-8">
+                        <form onSubmit={(e) => { e.preventDefault(); nextStep(); }} className="flex flex-col flex-1">
+                            <div className="flex-1">
                             <AnimatePresence mode="wait">
                                 {currentStep === 0 && (
                                     <motion.div
@@ -246,31 +247,35 @@ const OrganizationSetupPage = () => {
                                     </motion.div>
                                 )}
 
-                                {currentStep === 2 && (
-                                    <motion.div
-                                        key="step3"
-                                        initial={{ x: 50, opacity: 0 }}
-                                        animate={{ x: 0, opacity: 1 }}
-                                        exit={{ x: -50, opacity: 0 }}
-                                        transition={{ duration: 0.3 }}
-                                        className="space-y-6"
-                                    >
-                                        <div>
-                                            <Label className="text-gray-700 text-lg font-medium block mb-4">
-                                                Organization logo (Optional)
-                                            </Label>
-                                            <ImageUploader
-                                                onImageUpload={handleImageUpload}
-                                                maxSizeMB={2}
-                                                aspectRatio={1}
-                                                allowedTypes={["image/jpeg", "image/png", "image/webp"]}
-                                                className="w-full"
-                                                initialImage={image}
-                                            />
-                                        </div>
-                                    </motion.div>
-                                )}
+                                    {currentStep === 2 && (
+                                        <motion.div
+                                            key="step3"
+                                            initial={{ x: 50, opacity: 0 }}
+                                            animate={{ x: 0, opacity: 1 }}
+                                            exit={{ x: -50, opacity: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="h-full"
+                                        >
+                                            <div className="flex-grow">
+                                                <Label className="text-gray-700 text-lg font-medium block mb-2">
+                                                    Organization logo (Optional)
+                                                </Label>
+                                                <div className="h-[500px] max-h-[500px]">
+
+                                                    <ImageUploader
+                                                        onImageUpload={handleImageUpload}
+                                                        maxSizeMB={2}
+                                                        aspectRatio={1}
+                                                        allowedTypes={["image/jpeg", "image/png", "image/webp"]}
+                                                        className="w-full"
+                                                        initialImage={image}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
                             </AnimatePresence>
+                            </div>
 
                             <div className="flex justify-between pt-4 mt-8 border-t border-gray-100">
                                 {currentStep > 0 ? (

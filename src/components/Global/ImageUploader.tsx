@@ -243,6 +243,7 @@ const ImageUploader = ({
                                         size="sm"
                                         onClick={handleRemoveImage}
                                         className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                            type='button'
                                     >
                                         <X className="h-4 w-4 mr-1" />
                                         <span>Cancel</span>
@@ -252,6 +253,7 @@ const ImageUploader = ({
                                         size="sm"
                                         onClick={handleCropComplete}
                                         className="h-8 bg-blue-600 hover:bg-blue-700"
+                                            type='button'
                                     >
                                         <Check className="h-4 w-4 mr-1" />
                                         <span>Apply</span>
@@ -260,7 +262,7 @@ const ImageUploader = ({
                             </div>
 
                             <div className="p-4 overflow-hidden">
-                                <div className="max-h-[500px] overflow-auto mx-auto">
+                                    <div className="max-h-[500px] overflow-auto flex justify-center">
                                     <ReactCrop
                                         crop={crop}
                                         onChange={(c) => setCrop(c)}
@@ -274,8 +276,8 @@ const ImageUploader = ({
                                             alt="Upload"
                                             style={{ transform: `scale(${zoom})` }}
                                             className="max-w-full transition-transform duration-150 mx-auto"
-                                            width={500}
-                                            height={500}
+                                                width={300}
+                                                height={300}
                                         />
                                     </ReactCrop>
                                 </div>
@@ -288,9 +290,9 @@ const ImageUploader = ({
                             <Image
                                 src={image}
                                 alt="Uploaded preview"
-                                className="object-cover w-full h-full"
-                                width={500}
-                                height={500}
+                                        className="object-cover w-full h-fit"
+                                        width={200}
+                                        height={200}
                             />
                             <div className="absolute top-2 right-2 flex space-x-2">
                                 <Button
