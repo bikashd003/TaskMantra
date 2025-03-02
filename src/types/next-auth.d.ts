@@ -7,6 +7,7 @@ declare module "next-auth" {
       name: string;
       email: string;
       image?: string;
+      systemRole?: string;
     };
   }
 
@@ -16,6 +17,7 @@ declare module "next-auth" {
     name: string;
     email: string;
     image?: string;
+    systemRole?: string;
   }
 }
 

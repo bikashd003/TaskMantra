@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ArrowRight, Building2, Loader2, MapPin, FileText } from "lucide-react";
 import ImageUploader from "@/components/Global/ImageUploader";
 import { useMutation } from "@tanstack/react-query";
