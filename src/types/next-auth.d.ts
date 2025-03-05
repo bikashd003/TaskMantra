@@ -6,24 +6,31 @@ declare module "next-auth" {
       id: string;
       name: string;
       email: string;
+      systemRole: string;
       image?: string;
-      systemRole?: string;
     };
   }
-
-  interface User {
-    _id: string;
-    id?: string;
+  interface JWT {
+    id: string;
     name: string;
     email: string;
+    systemRole: string;
     image?: string;
-    systemRole?: string;
+  }
+  interface User {
+    id: string;
+    name: string;
+    email: string;
+    systemRole: string;
+    image?: string;
+  }
+  interface Profile {
+    picture?: string;
   }
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    userId: string;
-    email: string;
+declare module "next-auth/providers/GoogleProvider" {
+  interface Profile {
+    picture?: string;
   }
 }

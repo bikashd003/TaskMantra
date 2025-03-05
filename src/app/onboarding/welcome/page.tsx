@@ -29,7 +29,7 @@ const WelcomePage = () => {
     }, []);
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-white p-4">
+        <div className="flex items-center justify-center min-h-screen bg-gray-800 p-4">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

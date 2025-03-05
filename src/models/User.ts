@@ -25,11 +25,6 @@ const userSchema = new mongoose.Schema({
     urls: {
         type: Object
     },
-    role: {
-        type: String,
-        enum: ['User', 'Admin'],
-        default: 'User'
-    },
     systemRole: {
         type: String,
         enum: ['User', 'Admin'],

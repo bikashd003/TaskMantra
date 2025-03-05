@@ -7,6 +7,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { FcGoogle } from 'react-icons/fc';
+import axios from 'axios';
 
 interface SignUpProps {
     onSwitchForm: () => void;
@@ -19,22 +20,18 @@ const SignUp: React.FC<SignUpProps> = ({ onSwitchForm }) => {
 
     const handleSubmit = async (values: { name: string; email: string; password: string; confirmPassword: string }) => {
         try {
-            const response = await fetch("/api/auth/sign-up", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    name: values.name,
-                    email: values.email,
-                    password: values.password,
-                }),
-            });
+            const data = {
+                name: values.name,
+                email: values.email,
+                password: values.password,
+            }
+            const response = await axios.post("/api/auth/sign-up", data)
 
-            if (response.ok) {
+            if (response.status === 201) {
                 const result = await signIn("credentials", {
                     email: values.email,
                     password: values.password,
+                    systemRole: response?.data?.user?.systemRole,
                     redirect: false,
                 });
 

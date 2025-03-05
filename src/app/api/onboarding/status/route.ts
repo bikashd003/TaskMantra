@@ -2,17 +2,18 @@ import { NextResponse } from "next/server";
 import { OrganizationMembers } from "@/models/OrganizationMembers";
 import { getServerSession } from "next-auth";
 import { connectDB } from "@/Utility/db";
+import { authOptions } from "../../auth/[...nextauth]/options";
 
 export async function GET() {
     try {
-        const session = await getServerSession();
-        if (!session) {
+        const user = await getServerSession(authOptions);
+        if (!user) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
         await connectDB()
 
         const hasCompletedOnboarding = await OrganizationMembers.exists({
-            userId: session.user.id,
+            userId: user.id,
         });
 
         return NextResponse.json({ hasCompletedOnboarding }, { status: 200 });

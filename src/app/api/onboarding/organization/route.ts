@@ -1,36 +1,38 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { connectDB } from "@/Utility/db";
-import { Organization } from "@/models/organization";
-import { OrganizationMembers } from "@/models/OrganizationMembers";
+import { Hono } from "hono"
+import { handle } from "hono/vercel"
+import { logger } from "hono/logger"
+import createOrganization from "@/routes/onboarding/organization/route"
+import { authOptions } from "../../auth/[...nextauth]/options"
+import { getServerSession } from "next-auth"
 
-export async function POST(req) {
+const app = new Hono().basePath("/api")
+
+app.use("*", logger())
+
+app.use('*', async (c, next) => {
     try {
-        const session = await getServerSession();
-        if (!session?.user?.id) {
-            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        const session = await getServerSession(authOptions);
+
+        if (session?.user) {
+            const userData = {
+                id: session.user.id || '',
+                name: session.user.name || '',
+                email: session.user.email || '',
+                image: session.user.image || '',
+                systemRole: session.user.systemRole || '',
+            };
+            (c as any).set('user', userData);
         }
-
-        const { name, location, description } = await req.json();
-        await connectDB()
-
-        // Create the organization
-        const organization = await Organization.create({
-            name,
-            location,
-            description,
-            ownerId: session.user.id,
-        });
-
-        // Link the user as the owner
-        await OrganizationMembers.create({
-            organizationId: organization._id,
-            userId: session.user.id,
-            role: "Owner",
-        });
-
-        return NextResponse.json({ message: "Organization created" }, { status: 200 });
     } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        throw new Error(error.message);
     }
-}
+    await next();
+});
+
+const routes = app
+    .route("/onboarding", createOrganization)
+
+export const GET = handle(routes)
+export const POST = handle(routes)
+export const DELETE = handle(routes)
+export const PUT = handle(routes)
