@@ -3,8 +3,8 @@ import { handle } from "hono/vercel";
 import { logger } from "hono/logger";
 import { getServerSession } from "next-auth";
 import { connectDB } from "@/Utility/db";
-import { OrganizationMembers } from "@/models/OrganizationMembers";
 import { authOptions } from "../../auth/[...nextauth]/options";
+import { Organization } from "@/models/organization";
 
 const app = new Hono().basePath("/api/onboarding");
 
@@ -38,7 +38,7 @@ app.get("/status", async (c: any) => {
         }
 
         await connectDB();
-        const hasCompletedOnboarding = await OrganizationMembers.exists({ userId: user.id });
+        const hasCompletedOnboarding = await Organization.findOne({ ownerId: user.id });
 
         return c.json({ hasCompletedOnboarding }, { status: 200 });
     } catch (error: any) {
