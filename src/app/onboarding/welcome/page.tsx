@@ -2,31 +2,32 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { toast } from "sonner";
 
 const WelcomePage = () => {
     const router = useRouter();
-    const [hasInvite, setHasInvite] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
 
+    const { data, error, isLoading } = useQuery({
+        queryKey: ['check-invites'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/onboarding/check-invites');
+            return data;
+        }
+    });
+    // Show error toast if query fails
     useEffect(() => {
-        const checkInvites = async () => {
-            try {
-                const res = await fetch("/api/onboarding/check-invites");
-                const data = await res.json();
-                setHasInvite(data.hasInvite);
-            } catch (error: any) {
-                toast.error("Failed to check invites", {
-                    description: error.message,
-                });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        checkInvites();
-    }, []);
+        if (error) {
+            toast.error("Failed to check invites", {
+                description: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
+    }, [error]);
+    const hasInvite = data?.hasInvite;
+
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-800 p-4">
