@@ -3,7 +3,6 @@ import { handle } from "hono/vercel";
 import { logger } from "hono/logger";
 import { getServerSession } from "next-auth";
 import { connectDB } from "@/Utility/db";
-import { OrganizationMembers } from "@/models/OrganizationMembers";
 import { authOptions } from "../../auth/[...nextauth]/options";
 import { uploadToCloudinary } from "@/Utility/cloudinary";
 import { Organization } from "@/models/organization";
@@ -58,16 +57,16 @@ app.post("/organization", async (c: any) => {
             description,
             ownerId: user.id,
             logo: logoUrl,
+            members: [
+                {
+                    userId: user.id,
+                    role: 'Owner',
+                    joinedAt: new Date(),
+                },
+            ],
         });
 
-        // Link the user as the owner
-        await OrganizationMembers.create({
-            organizationId: organization._id,
-            userId: user.id,
-            role: "Owner",
-        });
-
-        return c.json({ message: "Organization created" }, { status: 200 });
+        return c.json({ message: "Organization created" }, { organization }, { status: 200 });
     } catch (error: any) {
         return c.json({ message: error.message }, { status: 500 });
     }

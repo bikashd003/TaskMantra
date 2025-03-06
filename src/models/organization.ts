@@ -6,5 +6,12 @@ const organizationSchema = new Schema({
     logo: String,
     description: String,
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    members: [
+        {
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+            role: { type: String, enum: ['Owner', 'Member', 'Guest'], required: true },
+            joinedAt: { type: Date, default: Date.now },
+        }
+    ],
 }, { timestamps: true });
 export const Organization = mongoose.models.Organization || mongoose.model('Organization', organizationSchema);

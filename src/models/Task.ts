@@ -19,6 +19,7 @@ const taskSchema = new Schema({
     timestamp: { type: Date, default: Date.now },
     attachments: [{ filename: { type: String, required: true }, url: { type: String, required: true } }],
   }],
+  assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true });
 
 export const Task = mongoose.models.Task || mongoose.model('Task', taskSchema);

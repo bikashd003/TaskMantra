@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema({
     },
     systemRole: {
         type: String,
-        enum: ['User', 'Admin'],
+        enum: ['User', 'Admin'], // User means all normal user and admin means Bikash (this admin role will used as making dashboard for controlling everything)
         default: 'User'
     },
     organizationId: {
