@@ -1,8 +1,8 @@
 import { uploadToCloudinary } from "@/Utility/cloudinary";
 import { connectDB } from "@/Utility/db";
 import { Project } from "@/models/Project";
+import { ProjectMembers } from "@/models/ProjectMembers";
 import { Task } from "@/models/Task";
-import {User} from "@/models/User";
 
 const createProject = async (data:any,id:string) => {
     try {
@@ -54,8 +54,24 @@ const createProject = async (data:any,id:string) => {
         const res = await newProject.save();
         // update those tasks with project id
         await Task.updateMany({ _id: { $in: createdTasks.map((task:any)=>task._id) } }, { $set: { projectId: res._id } });
-        // push project id to user projects array and also
-        await User.findByIdAndUpdate(id, { $push: { projects: { projectId: res._id,projectRole:"Project Admin"}} });
+        // create project members
+        await new ProjectMembers({
+            projectId: res._id,
+            members: [{
+                userId: id,
+                role: 'Project Admin',
+                joinedAt: new Date(),
+                invitedAt: new Date(),
+            },
+            ...tasks.length > 0 && formatedTasks.map((task: any) => {
+                return {
+                    userId: task.assignedTo,
+                    role: 'Developer',
+                    joinedAt: new Date(),
+                    invitedAt: new Date(),
+                }
+            })]
+        })
         return res;
     } catch (error:any) {
         return error;
@@ -64,39 +80,20 @@ const createProject = async (data:any,id:string) => {
 const getAllProjects = async (userId:string) => {
     try {
         await connectDB();
-        const user=await User.findById(userId)
-        .populate({
-            path: 'projects',
-            populate: {
-                path: 'projectId',
-            }
-        });
-        return user.projects;
+        // find userId on project members
+        const projectMembers = await ProjectMembers.find({ members: { $elemMatch: { userId } } });
+        // find projectId on project
+        const projects = await Project.find({ _id: { $in: projectMembers.map((project: any) => project.projectId) } });
+        return projects;
     } catch (error:any) {
         return error;
     }
 }
 
-const getProjectById=async (projectId:string,userId:string) => {
+const getProjectById = async (projectId: string, _userId: string) => {
     try {
         await connectDB();
-        const user=await User.findById(userId)
-        .populate({
-            path: 'projects',
-            populate: {
-                path: 'projectId',
-                populate: {
-                    path: 'tasks',
-                    populate: {
-                        path: 'assignedTo',
-                    }
-                }
-            }
-        });
-        const project=user.projects.find((project:any)=>project.projectId._id.toString()===projectId)   
-        if (!project) {
-            return 
-        }
+        const project = await Project.findById(projectId)
         return project;
     } catch (error:any) {
         return error;

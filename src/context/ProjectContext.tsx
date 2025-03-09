@@ -57,7 +57,7 @@ interface FileData {
     name: string;
     data: string;
     type: string;
-  }
+}
 export interface Project {
     name: string;
     description?: string;
@@ -96,7 +96,7 @@ export const ProjectContext = createContext<ProjectContextType | null>(null);
 export const ProjectProvider = ({ children }: { children: React.ReactNode }) => {
     const [projectData, setProjectData] = useState<Project | null>(null);
     const [projectFiles, setProjectFiles] = useState<FileData[]>([]);
-  const [resetUploader, setResetUploader] = useState(false);
+    const [resetUploader, setResetUploader] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const { control, handleSubmit, formState: { errors }, trigger, reset } = useForm<Project>({
         resolver: yupResolver(projectInfoSchema) as Resolver<Project>,
@@ -123,7 +123,7 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
             history: [],
         },
     });
-    const {mutate, isPending: isProjectCreating} = useMutation<void, Error, Project>({
+    const { mutate, isPending: isProjectCreating } = useMutation<void, Error, Project>({
         mutationFn: async (data: Project) => {
             await axios.post('/api/create-project', data)
         },
@@ -139,10 +139,10 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
             setResetUploader(true)
         }
     })
-    const {data: projects, error, isLoading: isLoadingProjects} = useQuery<ProjectsResponse>({
+    const { data: projects, error, isLoading: isLoadingProjects } = useQuery<ProjectsResponse>({
         queryKey: ['projects'],
         queryFn: async () => {
-            const {data} = await axios.get('/api/get-all-projects');
+            const { data } = await axios.get('/api/get-all-projects');
             return data as ProjectsResponse;
         }
     })
@@ -155,12 +155,12 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
 
     const onSubmit = async (data: Project) => {
         try {
-            const formatedData={
+            const formatedData = {
                 ...data,
-                files:projectFiles || []
+                files: projectFiles || []
             }
             mutate(formatedData);
-        } catch (error:any) {
+        } catch (error: any) {
             toast.error(error.message)
         }
     };
@@ -185,7 +185,7 @@ export const ProjectProvider = ({ children }: { children: React.ReactNode }) => 
         resetUploader,
         setResetUploader,
         setProjectFiles
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [projectData, currentStep, errors, projects]);
 
     return (
