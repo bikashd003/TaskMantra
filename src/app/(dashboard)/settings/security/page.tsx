@@ -52,6 +52,7 @@ export default function SecuritySettings() {
   })
 
   function onSubmit(values: z.infer<typeof securitySchema>) {
+    // eslint-disable-next-line no-console
     console.log(values)
     // TODO: Implement security settings update
   }
