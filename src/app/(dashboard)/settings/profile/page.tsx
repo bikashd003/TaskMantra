@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useRef } from 'react'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Camera, Github, Linkedin, Twitter } from 'lucide-react'
 import axios from 'axios'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Spinner } from '@heroui/react'
 import { Skeleton } from '@heroui/skeleton'
@@ -28,6 +28,7 @@ const profileFormSchema = Yup.object().shape({
 });
 
 export default function ProfileSettings() {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { data: profileSettings, isLoading } = useQuery({
     queryKey: ['profileSettings'],
     queryFn: async () => {
@@ -35,6 +36,7 @@ export default function ProfileSettings() {
       return data
     },
   })
+  const queryClient = useQueryClient()
 
   const profile = profileSettings?.profile
 
@@ -50,6 +52,19 @@ export default function ProfileSettings() {
       toast.success('Profile Updated')
     },
   })
+  const { mutateAsync: uploadImageMutation, isPending: isUploading } = useMutation({
+    mutationFn: async (image: string) => {
+      const { data } = await axios.post('/api/settings/profile', { file: image })
+      return data
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to upload image')
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profileSettings'] })
+      toast.success('Profile picture updated')
+    },
+  })
 
   const initialValues = {
     username: profile?.username || '',
@@ -61,7 +76,38 @@ export default function ProfileSettings() {
       linkedin: profile?.urls?.linkedin || '',
     },
   }
+  const handleImageClick = () => {
+    fileInputRef.current?.click()
+  }
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file')
+      return
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size should be less than 2MB')
+      return
+    }
+
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        const base64String = reader.result as string
+        await uploadImageMutation(base64String)
+      }
+      reader.readAsDataURL(file)
+    } catch (error: any) {
+      toast.error("Error uploading image", {
+        description: error.message
+      })
+    }
+  }
   return (
     <div className="space-y-6 px-4">
       <div>
@@ -95,8 +141,8 @@ export default function ProfileSettings() {
               <Skeleton className="h-24 w-24 rounded-full" />
             ) : (
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src="https://github.com/shadcn.png" alt="Profile" />
-                  <AvatarFallback>JD</AvatarFallback>
+                  <AvatarImage src={profile?.image} alt="Profile" />
+                  <AvatarFallback>{profile?.username?.charAt(0)}</AvatarFallback>
                 </Avatar>
             )}
             <div className="space-y-2">
@@ -106,10 +152,22 @@ export default function ProfileSettings() {
                   <Skeleton className="h-4 w-56" />
                 </>
               ) : (
-                <>
-                    <Button variant="outline" className="gap-2">
-                      <Camera className="h-4 w-4" />
-                      Change Picture
+                  <>    
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={handleImageClick}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? <Spinner color="primary" /> : <Camera className="h-4 w-4" />}
+                      {isUploading ? 'Uploading...' : 'Change Picture'}
                     </Button>
                     <p className="text-xs text-muted-foreground">
                       Recommended: Square image, at least 400x400px

@@ -20,7 +20,7 @@ export interface UploadResult {
  * @returns Promise<UploadResult>
  */
 export const uploadToCloudinary = async (
-  file: string,
+  file: string, // file should contain proper base64 data
   folder: string = 'taskmantra'
 ): Promise<UploadResult> => {
   try {

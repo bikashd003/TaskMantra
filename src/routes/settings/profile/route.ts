@@ -1,4 +1,5 @@
 import { User } from "@/models/User";
+import { uploadToCloudinary } from "@/Utility/cloudinary";
 import { connectDB } from "@/Utility/db";
 // import { Settings } from "@/models/Settings"
 
@@ -35,4 +36,31 @@ const getProfileSetting=async (userId:string) => {
     }
 }
 
-export {updateProfileSetting,getProfileSetting}
+const updateProfileImage = async (userId: string, data) => {
+    try {
+        await connectDB();
+        const { secure_url } = await uploadToCloudinary(data.file);
+        const user = await User.findByIdAndUpdate(
+            userId,
+            {
+                $set: { image: secure_url },
+            },
+            { new: true }
+        );
+        if (!user) {
+            throw new Error("User not found");
+        }
+        const profileData = {
+            username: user.name,
+            email: user.email,
+            image: user.image,
+            bio: user.bio,
+            urls: user.urls
+        }
+        return profileData
+    } catch (error: any) {
+        return error;
+    }
+}
+
+export { updateProfileSetting, getProfileSetting, updateProfileImage }

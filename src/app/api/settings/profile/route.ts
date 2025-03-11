@@ -3,7 +3,7 @@ import { handle } from "hono/vercel";
 import { logger } from "hono/logger";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/options";
-import { getProfileSetting, updateProfileSetting } from "@/routes/settings/profile/route";
+import { getProfileSetting, updateProfileImage, updateProfileSetting } from "@/routes/settings/profile/route";
 
 type Variables = {
   user?: {
@@ -70,10 +70,28 @@ const getProfileSettingController = async (c) => {
     return c.json({ error: error.message }, 500);
   }
 };
+const updateProfileImageController = async (c: any) => {
+  try {
+    const user = c.get('user');
+    if (!user) {
+      return c.json({ error: 'User not authenticated' }, 401);
+    }
+    const data = await c.req.json();
+    const result = await updateProfileImage(user.id, data);
+    if (result instanceof Error) {
+      return c.json({ error: result.message }, 500);
+    }
+    return c.json({ profile: result });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+
+  }
+}
 
 
 app.patch('/', updateProfileSettingController);
 app.get('/', getProfileSettingController);
+app.post('/', updateProfileImageController)
 
 
 export const GET = handle(app);
