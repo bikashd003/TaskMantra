@@ -111,10 +111,20 @@ export default function ProfileSettings() {
   return (
     <div className="space-y-6 px-4">
       <div>
-        <h3 className="text-lg font-medium">Profile Settings</h3>
-        <p className="text-sm text-muted-foreground">
-          Manage your personal information and preferences
-        </p>
+        {isLoading ? (
+          <>
+            <Skeleton className="h-8 w-32 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </>
+        ) : (
+          <>
+              <h3 className="text-lg font-medium">Profile Settings</h3>
+              <p className="text-sm text-muted-foreground">
+                Manage your personal information and preferences
+              </p>
+          </>
+        )}
+
       </div>
       <Separator />
 
@@ -152,7 +162,7 @@ export default function ProfileSettings() {
                   <Skeleton className="h-4 w-56" />
                 </>
               ) : (
-                  <>    
+                  <>
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -181,10 +191,19 @@ export default function ProfileSettings() {
         {/* Profile Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-            <CardDescription>
-              Update your personal details and public profile information
-            </CardDescription>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-8 w-32 mb-2" />
+                <Skeleton className="h-4 w-64" />
+              </>
+            ) : (
+              <>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>
+                  Update your personal details and public profile information
+                </CardDescription>
+              </>
+            )}
           </CardHeader>
           <CardContent>
             <Formik
@@ -199,121 +218,188 @@ export default function ProfileSettings() {
                 <Form className="space-y-6">
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="username" className="block text-sm font-medium">
-                        Username
-                      </label>
-                      <Field
-                        id="username"
-                        name="username"
-                        as={Input}
-                        placeholder="bikashd003"
-                      />
-                      <ErrorMessage
-                        name="username"
-                        component="div"
-                        className="text-sm text-red-500"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        This is your public display name.
-                      </p>
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-6 w-32 mb-1" />
+                          <Skeleton className="h-10 w-full mb-1" />
+                          <Skeleton className="h-4 w-48 mb-1" />
+
+                        </>
+                      ) : (
+                        <>
+                            <label htmlFor="username" className="block text-sm font-medium">
+                              Username
+                            </label>
+                            <Field
+                              id="username"
+                              name="username"
+                              as={Input}
+                              placeholder="bikashd003"
+                            />
+                            <ErrorMessage
+                              name="username"
+                              component="div"
+                              className="text-sm text-red-500"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              This is your public display name.
+                            </p>
+                        </>
+                      )}
+
                     </div>
 
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium">
-                        Email
-                      </label>
-                      <Field
-                        id="email"
-                        name="email"
-                        as={Input}
-                        placeholder="bikashd003@gmail.com"
-                        disabled
-                      />
-                      <ErrorMessage
-                        name="email"
-                        component="div"
-                        className="text-sm text-red-500"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Your email address will not be publicly displayed.
-                      </p>
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-6 w-32 mb-1" />
+                          <Skeleton className="h-10 w-full mb-1" />
+                          <Skeleton className="h-4 w-48 mb-1" />
+                        </>
+                      ) : (
+                        <>
+                            <label htmlFor="email" className="block text-sm font-medium">
+                              Email
+                            </label>
+                            <Field
+                              id="email"
+                              name="email"
+                              as={Input}
+                              placeholder="bikashd003@gmail.com"
+                              disabled
+                            />
+                            <ErrorMessage
+                              name="email"
+                              component="div"
+                              className="text-sm text-red-500"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Your email address will not be publicly displayed.
+                            </p>
+                        </>
+                      )}
                     </div>
 
                     <div>
-                      <label htmlFor="bio" className="block text-sm font-medium">
-                        Bio
-                      </label>
-                      <Field
-                        id="bio"
-                        name="bio"
-                        as={Textarea}
-                        placeholder="Tell us a little bit about yourself"
-                        className="resize-none"
-                      />
-                      <ErrorMessage
-                        name="bio"
-                        component="div"
-                        className="text-sm text-red-500"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Brief description for your profile. Maximum 160 characters.
-                      </p>
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-6 w-32 mb-1" />
+                          <Skeleton className="h-16 w-full mb-1" />
+                          <Skeleton className="h-4 w-48 mb-1" />
+                        </>
+                      ) : (
+                        <>
+                            <label htmlFor="bio" className="block text-sm font-medium">
+                              Bio
+                            </label>
+                            <Field
+                              id="bio"
+                              name="bio"
+                              as={Textarea}
+                              placeholder="Tell us a little bit about yourself"
+                              className="resize-none"
+                            />
+                            <ErrorMessage
+                              name="bio"
+                              component="div"
+                              className="text-sm text-red-500"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Brief description for your profile. Maximum 160 characters.
+                            </p>
+                        </>
+                      )}
                     </div>
                   </div>
 
                   {/* Social Links */}
                   <div className="mt-6 space-y-4">
-                    <h4 className="text-md font-medium">Social Links</h4>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-6 w-32 mb-1" />
+                      </>
+                    ) : (
+                      <>
+                          <h4 className="text-md font-medium">Social Links</h4>
+                      </>
+                    )}
                     <div>
-                      <label htmlFor="urls.github" className="flex items-center gap-2 text-sm font-medium">
-                        <Github className="h-4 w-4" />
-                        GitHub
-                      </label>
-                      <Field
-                        id="urls.github"
-                        name="urls.github"
-                        as={Input}
-                        placeholder="https://github.com/username"
-                      />
-                      <ErrorMessage
-                        name="urls.github"
-                        component="div"
-                        className="text-sm text-red-500"
-                      />
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-6 w-32 mb-1" />
+                          <Skeleton className="h-10 w-full mb-1" />
+                        </>
+                      ) : (
+                        <>
+                            <label htmlFor="urls.github" className="flex items-center gap-2 text-sm font-medium">
+                              <Github className="h-4 w-4" />
+                              GitHub
+                            </label>
+                            <Field
+                              id="urls.github"
+                              name="urls.github"
+                              as={Input}
+                              placeholder="https://github.com/username"
+                            />
+                            <ErrorMessage
+                              name="urls.github"
+                              component="div"
+                              className="text-sm text-red-500"
+                            />
+                        </>
+                      )}
                     </div>
                     <div>
-                      <label htmlFor="urls.twitter" className="flex items-center gap-2 text-sm font-medium">
-                        <Twitter className="h-4 w-4" />
-                        Twitter
-                      </label>
-                      <Field
-                        id="urls.twitter"
-                        name="urls.twitter"
-                        as={Input}
-                        placeholder="https://twitter.com/username"
-                      />
-                      <ErrorMessage
-                        name="urls.twitter"
-                        component="div"
-                        className="text-sm text-red-500"
-                      />
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-6 w-32 mb-1" />
+                          <Skeleton className="h-10 w-full mb-1" />
+                        </>
+                      ) : (
+                        <>
+                            <label htmlFor="urls.twitter" className="flex items-center gap-2 text-sm font-medium">
+                              <Twitter className="h-4 w-4" />
+                              Twitter
+                            </label>
+                            <Field
+                              id="urls.twitter"
+                              name="urls.twitter"
+                              as={Input}
+                              placeholder="https://twitter.com/username"
+                            />
+                            <ErrorMessage
+                              name="urls.twitter"
+                              component="div"
+                              className="text-sm text-red-500"
+                            />
+                        </>
+                      )}
                     </div>
                     <div>
-                      <label htmlFor="urls.linkedin" className="flex items-center gap-2 text-sm font-medium">
-                        <Linkedin className="h-4 w-4" />
-                        LinkedIn
-                      </label>
-                      <Field
-                        id="urls.linkedin"
-                        name="urls.linkedin"
-                        as={Input}
-                        placeholder="https://linkedin.com/in/username"
-                      />
-                      <ErrorMessage
-                        name="urls.linkedin"
-                        component="div"
-                        className="text-sm text-red-500"
-                      />
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-6 w-32 mb-1" />
+                          <Skeleton className="h-10 w-full mb-1" />
+                        </>
+                      ) : (
+                        <>
+                            <label htmlFor="urls.linkedin" className="flex items-center gap-2 text-sm font-medium">
+                              <Linkedin className="h-4 w-4" />
+                              LinkedIn
+                            </label>
+                            <Field
+                              id="urls.linkedin"
+                              name="urls.linkedin"
+                              as={Input}
+                              placeholder="https://linkedin.com/in/username"
+                            />
+                            <ErrorMessage
+                              name="urls.linkedin"
+                              component="div"
+                              className="text-sm text-red-500"
+                            />
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex justify-end">
