@@ -11,6 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { Clock, Globe, Monitor, Moon, Sun } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
+import { Skeleton } from '@heroui/skeleton'
+import { toast } from 'sonner'
+import { Spinner } from '@heroui/spinner'
 
 const generalSettingsSchema = z.object({
   appearance: z.object({
@@ -46,27 +51,50 @@ const dateFormats = [
 ]
 
 const timezones = [
+  { value: "IST", label: "(UTC+05:30) India Standard Time" },
   { value: "UTC", label: "(UTC+00:00) Universal Coordinated Time" },
   { value: "EST", label: "(UTC-05:00) Eastern Time" },
   { value: "CST", label: "(UTC-06:00) Central Time" },
   { value: "PST", label: "(UTC-08:00) Pacific Time" },
-  { value: "IST", label: "(UTC+05:30) India Standard Time" },
 ]
 
 export default function GeneralSettings() {
-  
+  const { data: generalSettings, isLoading } = useQuery({
+    queryKey: ['general-settings'],
+    queryFn: async () => {
+      const { data } = await axios.get("/api/settings/general")
+      return data
+    }
+  })
+  const gSettings = generalSettings?.general;
+  const queryClient = useQueryClient();
+
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: async (values: z.infer<typeof generalSettingsSchema>) => {
+      const response = await axios.put("/api/settings/general", values)
+      return response.data
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Something went wrong')
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['general-settings'] })
+      toast.success('Settings updated successfully')
+    },
+  })
+
   const form = useForm<z.infer<typeof generalSettingsSchema>>({
     resolver: zodResolver(generalSettingsSchema),
-    defaultValues: {
+    values: generalSettings?.general || {
       appearance: {
         theme: "system",
-        animations: true,
+        animations: false,
         reducedMotion: false,
       },
       localization: {
         language: "en-US",
-        timezone: "UTC",
-        dateFormat: "MM/DD/YYYY",
+        timezone: "IST",
+        dateFormat: "DD/MM/YYYY",
       },
       accessibility: {
         screenReader: false,
@@ -76,18 +104,27 @@ export default function GeneralSettings() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof generalSettingsSchema>) {
-    console.log(values)
-    // TODO: Implement settings update logic
+  const onSubmit = async (values: z.infer<typeof generalSettingsSchema>) => {
+    await mutateAsync(values)
   }
 
   return (
     <div className="space-y-6 px-4">
       <div>
-        <h3 className="text-lg font-medium">General Settings</h3>
-        <p className="text-sm text-muted-foreground">
-          Customize your application experience
-        </p>
+        {isLoading ? (
+          <>
+            <Skeleton className="h-8 w-32 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </>
+        ) : (
+          <>
+              <h3 className="text-lg font-medium">General Settings</h3>
+              <p className="text-sm text-muted-foreground">
+                Customize your application experience
+              </p>
+          </>
+        )}
+
       </div>
       <Separator />
 
@@ -96,10 +133,19 @@ export default function GeneralSettings() {
           {/* Appearance Settings */}
           <Card>
             <CardHeader>
-              <CardTitle>Appearance</CardTitle>
-              <CardDescription>
-                Customize how the application looks and feels
-              </CardDescription>
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-8 w-32 mb-1" />
+                  <Skeleton className="h-4 w-64" />
+                </>
+              ) : (
+                <>
+                    <CardTitle>Appearance</CardTitle>
+                    <CardDescription>
+                      Customize how the application looks and feels
+                    </CardDescription>
+                </>
+              )}
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField
@@ -107,37 +153,53 @@ export default function GeneralSettings() {
                 name="appearance.theme"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Theme</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-[240px]">
-                          <SelectValue placeholder="Select a theme" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="light">
-                          <div className="flex items-center gap-2">
-                            <Sun className="h-4 w-4" />
-                            <span>Light</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="dark">
-                          <div className="flex items-center gap-2">
-                            <Moon className="h-4 w-4" />
-                            <span>Dark</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="system">
-                          <div className="flex items-center gap-2">
-                            <Monitor className="h-4 w-4" />
-                            <span>System</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Select your preferred theme appearance
-                    </FormDescription>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-4 w-32 mb-1" />
+                      </>
+                    ) : (
+                        <FormLabel>Theme</FormLabel>
+                    )}
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-8 w-40 mb-1" />
+                        <Skeleton className="h-4 w-64" />
+
+                      </>
+                    ) : (
+                      <>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="w-[240px]">
+                                <SelectValue placeholder="Select a theme" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="light">
+                                <div className="flex items-center gap-2">
+                                  <Sun className="h-4 w-4" />
+                                  <span>Light</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="dark">
+                                <div className="flex items-center gap-2">
+                                  <Moon className="h-4 w-4" />
+                                  <span>Dark</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="system">
+                                <div className="flex items-center gap-2">
+                                  <Monitor className="h-4 w-4" />
+                                  <span>System</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Select your preferred theme appearance
+                          </FormDescription>
+                      </>
+                    )}
                   </FormItem>
                 )}
               />
@@ -148,18 +210,35 @@ export default function GeneralSettings() {
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        Enable Animations
-                      </FormLabel>
-                      <FormDescription>
-                        Show animations and transitions
-                      </FormDescription>
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-4 w-32 mb-1" />
+                          <Skeleton className="h-4 w-64" />
+                        </>
+                      ) : (
+                        <>
+                            <FormLabel className="text-base">
+                              Enable Animations
+                            </FormLabel>
+                            <FormDescription>
+                              Show animations and transitions
+                            </FormDescription>
+                        </>
+                      )}
+
                     </div>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-4 w-12" />
+                        </>
+                      ) : (
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+
+                      )}
                     </FormControl>
                   </FormItem>
                 )}
@@ -347,6 +426,7 @@ export default function GeneralSettings() {
 
           <div className="flex justify-end">
             <Button type="submit" size="lg">
+              {isPending ? <Spinner /> : null}
               Save Changes
             </Button>
           </div>

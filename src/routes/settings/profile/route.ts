@@ -10,7 +10,14 @@ const updateProfileSetting=async (userId:string,data:any) => {
         if (!user) {
             throw new Error("User not found") 
         }
-        return user;
+        const userData = {
+            username: user.name,
+            email: user.email,
+            image: user.image,
+            bio: user.bio,
+            urls: user.urls
+        }
+        return userData;
     } catch (error:any) {
         return error;
     }
