@@ -113,8 +113,8 @@ export default function ProfileSettings() {
       <div>
         {isLoading ? (
           <>
-            <Skeleton className="h-8 w-32 mb-2" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-8 w-32 mb-2 rounded-sm" />
+            <Skeleton className="h-4 w-64 rounded-sm" />
           </>
         ) : (
           <>
@@ -134,8 +134,8 @@ export default function ProfileSettings() {
           <CardHeader>
             {isLoading ? (
               <>
-                <Skeleton className="h-8 w-32 mb-2" />
-                <Skeleton className="h-4 w-64" />
+                <Skeleton className="h-8 w-32 mb-2 rounded-sm" />
+                <Skeleton className="h-4 w-64 rounded-sm" />
               </>
             ) : (
               <>
@@ -158,8 +158,8 @@ export default function ProfileSettings() {
             <div className="space-y-2">
               {isLoading ? (
                 <>
-                  <Skeleton className="h-10 w-32" />
-                  <Skeleton className="h-4 w-56" />
+                  <Skeleton className="h-10 w-32 rounded-sm" />
+                  <Skeleton className="h-4 w-56 rounded-sm" />
                 </>
               ) : (
                   <>
@@ -193,8 +193,8 @@ export default function ProfileSettings() {
           <CardHeader>
             {isLoading ? (
               <>
-                <Skeleton className="h-8 w-32 mb-2" />
-                <Skeleton className="h-4 w-64" />
+                <Skeleton className="h-8 w-32 mb-2 rounded-sm" />
+                <Skeleton className="h-4 w-64 rounded-sm" />
               </>
             ) : (
               <>
@@ -220,9 +220,9 @@ export default function ProfileSettings() {
                     <div>
                       {isLoading ? (
                         <>
-                          <Skeleton className="h-6 w-32 mb-1" />
-                          <Skeleton className="h-10 w-full mb-1" />
-                          <Skeleton className="h-4 w-48 mb-1" />
+                          <Skeleton className="h-6 w-32 mb-1 rounded-sm" />
+                          <Skeleton className="h-10 w-full mb-1 rounded-sm" />
+                          <Skeleton className="h-4 w-48 mb-1 rounded-sm" />
 
                         </>
                       ) : (
@@ -252,9 +252,9 @@ export default function ProfileSettings() {
                     <div>
                       {isLoading ? (
                         <>
-                          <Skeleton className="h-6 w-32 mb-1" />
-                          <Skeleton className="h-10 w-full mb-1" />
-                          <Skeleton className="h-4 w-48 mb-1" />
+                          <Skeleton className="h-6 w-32 mb-1 rounded-sm" />
+                          <Skeleton className="h-10 w-full mb-1 rounded-sm" />
+                          <Skeleton className="h-4 w-48 mb-1 rounded-sm" />
                         </>
                       ) : (
                         <>
@@ -283,9 +283,9 @@ export default function ProfileSettings() {
                     <div>
                       {isLoading ? (
                         <>
-                          <Skeleton className="h-6 w-32 mb-1" />
-                          <Skeleton className="h-16 w-full mb-1" />
-                          <Skeleton className="h-4 w-48 mb-1" />
+                          <Skeleton className="h-6 w-32 mb-1 rounded-sm" />
+                          <Skeleton className="h-16 w-full mb-1 rounded-sm" />
+                          <Skeleton className="h-4 w-48 mb-1 rounded-sm" />
                         </>
                       ) : (
                         <>
@@ -316,7 +316,7 @@ export default function ProfileSettings() {
                   <div className="mt-6 space-y-4">
                     {isLoading ? (
                       <>
-                        <Skeleton className="h-6 w-32 mb-1" />
+                        <Skeleton className="h-6 w-32 mb-1 rounded-sm" />
                       </>
                     ) : (
                       <>
@@ -326,8 +326,8 @@ export default function ProfileSettings() {
                     <div>
                       {isLoading ? (
                         <>
-                          <Skeleton className="h-6 w-32 mb-1" />
-                          <Skeleton className="h-10 w-full mb-1" />
+                          <Skeleton className="h-6 w-32 mb-1 rounded-sm" />
+                          <Skeleton className="h-10 w-full mb-1 rounded-sm" />
                         </>
                       ) : (
                         <>
@@ -352,8 +352,8 @@ export default function ProfileSettings() {
                     <div>
                       {isLoading ? (
                         <>
-                          <Skeleton className="h-6 w-32 mb-1" />
-                          <Skeleton className="h-10 w-full mb-1" />
+                          <Skeleton className="h-6 w-32 mb-1 rounded-sm" />
+                          <Skeleton className="h-10 w-full mb-1 rounded-sm" />
                         </>
                       ) : (
                         <>
@@ -378,8 +378,8 @@ export default function ProfileSettings() {
                     <div>
                       {isLoading ? (
                         <>
-                          <Skeleton className="h-6 w-32 mb-1" />
-                          <Skeleton className="h-10 w-full mb-1" />
+                          <Skeleton className="h-6 w-32 mb-1 rounded-sm" />
+                          <Skeleton className="h-10 w-full mb-1 rounded-sm" />
                         </>
                       ) : (
                         <>

@@ -66,7 +66,6 @@ export default function GeneralSettings() {
       return data
     }
   })
-  const gSettings = generalSettings?.general;
   const queryClient = useQueryClient();
 
   const { mutateAsync, isPending } = useMutation({
@@ -113,8 +112,8 @@ export default function GeneralSettings() {
       <div>
         {isLoading ? (
           <>
-            <Skeleton className="h-8 w-32 mb-2" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-8 w-32 mb-2 rounded-sm" />
+            <Skeleton className="h-4 w-64 rounded-sm" />
           </>
         ) : (
           <>
@@ -135,8 +134,8 @@ export default function GeneralSettings() {
             <CardHeader>
               {isLoading ? (
                 <>
-                  <Skeleton className="h-8 w-32 mb-1" />
-                  <Skeleton className="h-4 w-64" />
+                  <Skeleton className="h-8 w-32 mb-1 rounded-sm" />
+                  <Skeleton className="h-4 w-64 rounded-sm" />
                 </>
               ) : (
                 <>
@@ -155,15 +154,15 @@ export default function GeneralSettings() {
                   <FormItem>
                     {isLoading ? (
                       <>
-                        <Skeleton className="h-4 w-32 mb-1" />
+                        <Skeleton className="h-4 w-32 mb-1 rounded-sm" />
                       </>
                     ) : (
                         <FormLabel>Theme</FormLabel>
                     )}
                     {isLoading ? (
                       <>
-                        <Skeleton className="h-8 w-40 mb-1" />
-                        <Skeleton className="h-4 w-64" />
+                        <Skeleton className="h-8 w-40 mb-1 rounded-sm" />
+                        <Skeleton className="h-4 w-64 rounded-sm" />
 
                       </>
                     ) : (
@@ -212,8 +211,8 @@ export default function GeneralSettings() {
                     <div className="space-y-0.5">
                       {isLoading ? (
                         <>
-                          <Skeleton className="h-4 w-32 mb-1" />
-                          <Skeleton className="h-4 w-64" />
+                          <Skeleton className="h-4 w-32 mb-1 rounded-sm" />
+                          <Skeleton className="h-4 w-64 rounded-sm" />
                         </>
                       ) : (
                         <>
@@ -230,7 +229,7 @@ export default function GeneralSettings() {
                     <FormControl>
                       {isLoading ? (
                         <>
-                          <Skeleton className="h-4 w-12" />
+                          <Skeleton className="h-4 w-12 rounded-sm" />
                         </>
                       ) : (
                           <Switch
@@ -249,13 +248,23 @@ export default function GeneralSettings() {
           {/* Localization Settings */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5" />
-                Localization
-              </CardTitle>
-              <CardDescription>
-                Configure language and regional preferences
-              </CardDescription>
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-8 w-32 mb-1 rounded-sm" />
+                  <Skeleton className="h-4 w-64 rounded-sm" />
+                </>
+              ) : (
+                <>
+                    <CardTitle className="flex items-center gap-2">
+                      <Globe className="h-5 w-5" />
+                      Localization
+                    </CardTitle>
+                    <CardDescription>
+                      Configure language and regional preferences
+                    </CardDescription>
+                </>
+              )}
+
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField
@@ -263,24 +272,39 @@ export default function GeneralSettings() {
                 name="localization.language"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Language</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-[240px]">
-                          <SelectValue placeholder="Select a language" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {languages.map((language) => (
-                          <SelectItem key={language.value} value={language.value}>
-                            {language.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Choose your preferred language
-                    </FormDescription>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-4 w-32 mb-1 rounded-sm" />
+                      </>
+                    ) : (
+                        <FormLabel>Language</FormLabel>
+                    )}
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-8 w-40 mb-1 rounded-sm" />
+                        <Skeleton className="h-4 w-64 rounded-sm" />
+                      </>
+                    ) : (
+                      <>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="w-[240px]">
+                                <SelectValue placeholder="Select a language" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {languages.map((language) => (
+                                <SelectItem key={language.value} value={language.value}>
+                                  {language.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Choose your preferred language
+                          </FormDescription>
+                      </>
+                    )}
                   </FormItem>
                 )}
               />
@@ -290,54 +314,87 @@ export default function GeneralSettings() {
                 name="localization.timezone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Time Zone
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-[240px]">
-                          <SelectValue placeholder="Select a timezone" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {timezones.map((timezone) => (
-                          <SelectItem key={timezone.value} value={timezone.value}>
-                            {timezone.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Select your timezone for accurate time display
-                    </FormDescription>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-4 w-32 mb-1 rounded-sm" />
+                      </>
+                    ) : (
+                        <FormLabel className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Time Zone
+                        </FormLabel>
+                    )}
+                    {
+                      isLoading ? (
+                        <>
+                          <Skeleton className="h-8 w-40 mb-1 rounded-sm" />
+                          <Skeleton className="h-4 w-64 rounded-sm" />
+                        </>
+                      ) : (
+                        <>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="w-[240px]">
+                                  <SelectValue placeholder="Select a timezone" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {timezones.map((timezone) => (
+                                  <SelectItem key={timezone.value} value={timezone.value}>
+                                    {timezone.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Select your timezone for accurate time display
+                            </FormDescription>
+                        </>
+                      )
+                    }
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="localization.dateFormat"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date Format</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-[240px]">
-                          <SelectValue placeholder="Select date format" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {dateFormats.map((format) => (
-                          <SelectItem key={format.value} value={format.value}>
-                            {format.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Choose how dates should be displayed
-                    </FormDescription>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-4 w-32 mb-1 rounded-sm" />
+                      </>
+                    ) : (
+                        <FormLabel>Date Format</FormLabel>
+                    )}
+                    {
+                      isLoading ? (
+                        <>
+                          <Skeleton className="h-8 w-40 mb-1 rounded-sm" />
+                          <Skeleton className="h-4 w-64 rounded-sm" />
+                        </>
+                      ) : (
+                        <>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="w-[240px]">
+                                  <SelectValue placeholder="Select date format" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {dateFormats.map((format) => (
+                                  <SelectItem key={format.value} value={format.value}>
+                                    {format.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Choose how dates should be displayed
+                            </FormDescription>
+                        </>
+                      )
+                    }
                   </FormItem>
                 )}
               />
@@ -347,10 +404,20 @@ export default function GeneralSettings() {
           {/* Accessibility Settings */}
           <Card>
             <CardHeader>
-              <CardTitle>Accessibility</CardTitle>
-              <CardDescription>
-                Configure accessibility preferences
-              </CardDescription>
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-8 w-32 mb-1 rounded-sm" />
+                  <Skeleton className="h-4 w-64 rounded-sm" />
+                </>
+              ) : (
+                <>
+                    <CardTitle>Accessibility</CardTitle>
+                    <CardDescription>
+                      Configure accessibility preferences
+                    </CardDescription>
+                </>
+              )}
+
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField
@@ -359,41 +426,66 @@ export default function GeneralSettings() {
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        Screen Reader Optimization
-                      </FormLabel>
-                      <FormDescription>
-                        Optimize interface for screen readers
-                      </FormDescription>
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-4 w-32 mb-1 rounded-sm" />
+                          <Skeleton className="h-4 w-64 rounded-sm" />
+                        </>
+                      ) : (
+                        <>
+                            <FormLabel className="text-base">
+                              Screen Reader Optimization
+                            </FormLabel>
+                            <FormDescription>
+                              Optimize interface for screen readers
+                            </FormDescription>
+                        </>
+                      )}
                     </div>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      {isLoading ? (
+                        <Skeleton className="h-4 w-8 rounded-sm" />
+                      ) : (
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                      )}
                     </FormControl>
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="accessibility.highContrast"
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        High Contrast Mode
-                      </FormLabel>
-                      <FormDescription>
-                        Increase contrast for better visibility
-                      </FormDescription>
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-4 w-32 mb-1 rounded-sm" />
+                          <Skeleton className="h-4 w-64 rounded-sm" />
+                        </>
+                      ) : (
+                        <>
+                            <FormLabel className="text-base">
+                              High Contrast Mode
+                            </FormLabel>
+                            <FormDescription>
+                              Increase contrast for better visibility
+                            </FormDescription>
+                        </>
+                      )}
                     </div>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      {isLoading ? (
+                        <Skeleton className="h-4 w-8 rounded-sm" />
+                      ) : (
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                      )}
                     </FormControl>
                   </FormItem>
                 )}
@@ -405,18 +497,31 @@ export default function GeneralSettings() {
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        Large Text
-                      </FormLabel>
-                      <FormDescription>
-                        Increase text size throughout the application
-                      </FormDescription>
+                      {isLoading ? (
+                        <>
+                          <Skeleton className="h-4 w-32 mb-1 rounded-sm" />
+                          <Skeleton className="h-4 w-64 rounded-sm" />
+                        </>
+                      ) : (
+                        <>
+                            <FormLabel className="text-base">
+                              Large Text
+                            </FormLabel>
+                            <FormDescription>
+                              Increase text size throughout the application
+                            </FormDescription>
+                        </>
+                      )}
                     </div>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      {isLoading ? (
+                        <Skeleton className="h-4 w-8 rounded-sm" />
+                      ) : (
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                      )}
                     </FormControl>
                   </FormItem>
                 )}
