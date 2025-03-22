@@ -111,19 +111,10 @@ export default function ProfileSettings() {
   return (
     <div className="space-y-6 px-4">
       <div>
-        {isLoading ? (
-          <>
-            <Skeleton className="h-8 w-32 mb-2 rounded-sm" />
-            <Skeleton className="h-4 w-64 rounded-sm" />
-          </>
-        ) : (
-          <>
               <h3 className="text-lg font-medium">Profile Settings</h3>
               <p className="text-sm text-muted-foreground">
                 Manage your personal information and preferences
-              </p>
-          </>
-        )}
+        </p>
 
       </div>
       <Separator />

@@ -1,16 +1,57 @@
 import mongoose from 'mongoose';
 
-const settingsSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    unique: true,
+const notificationsSchema = new mongoose.Schema({
+  email: {
+    taskAssigned: {
+      type: Boolean,
+      default: true,
+    },
+    taskUpdates: {
+      type: Boolean,
+      default: true,
+    },
+    taskComments: {
+      type: Boolean,
+      default: false,
+    },
+    dueDateReminders: {
+      type: Boolean,
+      default: true,
+    },
+    teamUpdates: {
+      type: Boolean,
+      default: true,
+    },
   },
-  organizationId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Organization',
+  push: {
+    instantNotifications: {
+      type: Boolean,
+      default: true,
+    },
+    mentions: {
+      type: Boolean,
+      default: true,
+    },
+    teamActivity: {
+      type: Boolean,
+      default: false,
+    },
   },
+  desktop: {
+    showNotifications: {
+      type: Boolean,
+      default: true,
+    },
+    soundEnabled: {
+      type: Boolean,
+      default: true,
+    },
+  },
+}, {
+  timestamps: true,
+});
+
+const generalSchema = new mongoose.Schema({
   appearance: {
     theme: {
       type: String,
@@ -60,10 +101,35 @@ const settingsSchema = new mongoose.Schema({
       default: false,
     },
   },
-
 }, {
   timestamps: true,
 });
 
-export const Settings = mongoose.models.Settings || mongoose.model('Settings', settingsSchema);
+const settingsSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+  },
+  organizationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+  },
+  generalSettings: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'General',
+    required: true,
+  },
+  notificationSettings: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Notifications',
+    required: true,
+  }
+}, {
+  timestamps: true,
+});
 
+export const Notifications = mongoose.models.Notifications || mongoose.model('Notifications', notificationsSchema);
+export const General = mongoose.models.General || mongoose.model('General', generalSchema);
+export const Settings = mongoose.models.Settings || mongoose.model('Settings', settingsSchema);

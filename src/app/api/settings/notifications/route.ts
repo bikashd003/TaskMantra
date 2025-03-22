@@ -3,7 +3,7 @@ import { handle } from "hono/vercel";
 import { logger } from "hono/logger";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/options";
-import { getGeneralSettings, updateGeneralSettings } from "@/routes/settings/general/route";
+import { notificationsSettings, updateNotificationsSettings } from "@/routes/settings/notifications/route";
 type Variables = {
     user?: {
         id?: string;
@@ -12,7 +12,7 @@ type Variables = {
         image?: string;
     };
 }
-const app = new Hono<{ Variables: Variables }>().basePath("/api/settings/general");
+const app = new Hono<{ Variables: Variables }>().basePath("/api/settings/notifications");
 app.use("*", logger());
 
 app.use("*", async (c, next) => {
@@ -33,44 +33,47 @@ app.use("*", async (c, next) => {
     }
     await next();
 });
-
-const getGenerallSettingController = async (c: any) => {
+const getNotificationsSettingController = async (c) => {
     try {
         const user = c.get("user");
         if (!user) {
             return c.json({ error: 'User not authenticated' }, 401);
         }
-        const result =await getGeneralSettings(user.id);
-        return c.json({ general: result});
-    } catch (error: unknown) {
+        const result = await notificationsSettings(user.id);
+        return c.json({ notifications: result }); 
+    } 
+    catch (error: unknown) {
         if (error instanceof Error) {
-            return c.json({ error: error.message }, 500);
-        } else {
-            return c.json({ error: 'An unexpected error occurred' }, 500);
+            return c.json({ error: error.message }, 500); 
+        } 
+        else {
+            return c.json({ error: 'An unexpected error occurred' }, 500); 
         }
     }
 }
-
-const updateGeneralSettingController = async (c) => {
+const updateNotificationsSettingController = async (c) => {
     try {
         const user = c.get("user");
         if (!user) {
             return c.json({ error: 'User not authenticated' }, 401);
-        }
-        const data=await c.req.json();
-        const result = await updateGeneralSettings(user.id, data);
-        return c.json({ message: 'Profile updated successfully', general: result });
-    } catch (error: unknown) {
+        } 
+        const body = await c.req.json();
+        const result = await updateNotificationsSettings(user.id, body);
+        return c.json({ notifications: result });
+    } 
+    catch (error: unknown) {
         if (error instanceof Error) {
             return c.json({ error: error.message }, 500);
-        } else {
-            return c.json({ error: 'An unexpected error occurred' }, 500);
+        } 
+        else {
+            return c.json({ error: 'An unexpected error occurred' }, 500); 
         }
     }
 }
 
-app.get("/", getGenerallSettingController)
-app.put("/", updateGeneralSettingController)
+
+app.get("/", getNotificationsSettingController)
+app.put("/", updateNotificationsSettingController)
 
 export const GET = handle(app);
 export const PUT = handle(app);

@@ -12,7 +12,7 @@ import {
     Bell, 
     Users, 
     Settings, 
-    Shield, 
+    // Shield, 
     Database,
     Lock,
     Clock,
@@ -29,7 +29,7 @@ export function SidebarNav() {
         { href: "/settings/profile", icon: User, label: "Profile" },
         { href: "/settings/general", icon: Settings, label: "General" },
         { href: "/settings/notifications", icon: Bell, label: "Notifications" },
-        { href: "/settings/security", icon: Shield, label: "Security" },
+        // { href: "/settings/security", icon: Shield, label: "Security" },
     ]
 
     const workspaceItems = [
