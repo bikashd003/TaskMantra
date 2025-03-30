@@ -1,41 +1,60 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckCircle, Clock, Circle } from 'lucide-react'; // Icons for status
+import { CheckCircle, Clock, Circle } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-// Reusable TimelineItem Component
 const TimelineItem = ({ date, title, users, status, statusColor, statusIcon }) => {
     return (
         <div className="relative group">
             {/* Connector Circle */}
-            <div className="absolute -left-6 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-3 bg-gray-300 z-10 transition-all duration-300 group-hover:scale-110"
-                 style={{ borderColor: statusColor }}
-            ></div>
+            <div className={cn(
+                "absolute -left-6 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full",
+                "border-2 bg-background z-10 transition-all duration-300",
+                "group-hover:scale-125 group-hover:ring-2 group-hover:ring-offset-2",
+                "ring-offset-background",
+                statusColor.ring
+            )}></div>
 
             {/* Timeline Card */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 group-hover:border-gray-200">
-                <div className="flex items-center gap-3">
+            <div className={cn(
+                "flex flex-col sm:flex-row sm:items-center justify-between",
+                "p-4 rounded-lg transition-all duration-300",
+                "bg-card hover:bg-accent/50",
+                "border border-border/50 hover:border-border"
+            )}>
+                <div className="flex items-center gap-4">
                     {/* User Avatars */}
                     <div className="flex -space-x-2">
                         {users.map((user, index) => (
                             <img
                                 key={index}
                                 src={user}
-                                className="w-7 h-7 rounded-full border-2 border-white"
+                                className={cn(
+                                    "w-8 h-8 rounded-full",
+                                    "border-2 border-background",
+                                    "ring-1 ring-border/50"
+                                )}
                                 alt={`User ${index + 1}`}
                             />
                         ))}
                     </div>
                     {/* Title and Date */}
                     <div>
-                        <h3 className="font-medium text-gray-800">{title}</h3>
-                        <p className="text-xs text-gray-500">{date}</p>
+                        <h3 className="font-medium text-foreground">{title}</h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">{date}</p>
                     </div>
                 </div>
                 {/* Status */}
-                <div className={`flex items-center gap-2 mt-2 sm:mt-0 px-3 py-1 rounded-full text-xs ${statusColor} w-fit`}>
+                <div className={cn(
+                    "flex items-center gap-2 mt-3 sm:mt-0",
+                    "px-3 py-1.5 rounded-full text-sm",
+                    "transition-colors duration-300",
+                    statusColor.badge
+                )}>
                     {statusIcon}
-                    <span>{status}</span>
+                    <span className="font-medium">{status}</span>
                 </div>
             </div>
         </div>
@@ -52,7 +71,10 @@ const Timeline = () => {
                 "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&h=40",
             ],
             status: "On Progress",
-            statusColor: "bg-blue-50 text-blue-600",
+            statusColor: {
+                badge: "bg-primary/15 text-primary",
+                ring: "border-primary/50 ring-primary/50"
+            },
             statusIcon: <Clock className="w-4 h-4" />,
         },
         {
@@ -62,7 +84,10 @@ const Timeline = () => {
                 "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=40&h=40",
             ],
             status: "Done",
-            statusColor: "bg-emerald-50 text-emerald-600",
+            statusColor: {
+                badge: "bg-success/15 text-success",
+                ring: "border-success/50 ring-success/50"
+            },
             statusIcon: <CheckCircle className="w-4 h-4" />,
         },
         {
@@ -72,52 +97,57 @@ const Timeline = () => {
                 "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40",
             ],
             status: "Pending",
-            statusColor: "bg-gray-100 text-gray-600",
-            statusIcon: <Circle className="w-4 h-4" />,
-        },
-        {
-            date: "15 January - 10 February",
-            title: "Project Planning",
-            users: [
-                "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40",
-            ],
-            status: "Pending",
-            statusColor: "bg-gray-100 text-gray-600",
+            statusColor: {
+                badge: "bg-muted text-muted-foreground",
+                ring: "border-muted-foreground/50 ring-muted-foreground/50"
+            },
             statusIcon: <Circle className="w-4 h-4" />,
         },
     ];
 
     return (
-        <ScrollArea className="bg-white w-full p-4 lg:p-6 rounded-2xl shadow-lg h-[40vh]">
-            {/* Tabs */}
-            <div className="flex items-center gap-3 mb-4 pb-2 overflow-x-auto scrollbar-hide">
-                <button className="px-4 py-1.5 bg-blue-600 text-white rounded-full text-sm hover:bg-blue-700 transition-all whitespace-nowrap">
-                    Project Timeline
-                </button>
-                <button className="px-4 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-all whitespace-nowrap">
-                    Project Notes
-                </button>
-            </div>
+        <Card className="bg-gradient-to-br from-white to-gray-50 border-none shadow-md overflow-hidden h-[calc(40vh-5.5rem)]">
+            <CardHeader className="pt-6 px-6">
+                <div className="flex items-center gap-3">
+                    <button className={cn(
+                        "px-4 py-1.5 rounded-md text-sm font-medium",
+                        "bg-primary text-primary-foreground",
+                        "hover:bg-primary/90 transition-colors"
+                    )}>
+                        Project Timeline
+                    </button>
+                    <button className={cn(
+                        "px-4 py-1.5 rounded-md text-sm font-medium",
+                        "bg-muted text-muted-foreground",
+                        "hover:bg-accent transition-colors"
+                    )}>
+                        Project Notes
+                    </button>
+                </div>
+            </CardHeader>
 
-            {/* Timeline */}
-            <div className="relative pl-6 space-y-4">
-                {/* Vertical Line */}
-                <div className="absolute left-1 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+            <CardContent className="px-6 pb-4">
+                <ScrollArea className="h-[calc(40vh-11rem)]">
+                    <div className="relative pl-6 space-y-4">
+                        {/* Vertical Line */}
+                        <div className="absolute left-1 top-0 bottom-0 w-0.5 bg-border"></div>
 
-                {/* Render Timeline Items */}
-                {timelineData.map((item, index) => (
-                    <TimelineItem
-                        key={index}
-                        date={item.date}
-                        title={item.title}
-                        users={item.users}
-                        status={item.status}
-                        statusColor={item.statusColor}
-                        statusIcon={item.statusIcon}
-                    />
-                ))}
-            </div>
-        </ScrollArea>
+                        {/* Timeline Items */}
+                        {timelineData.map((item, index) => (
+                            <TimelineItem
+                                key={index}
+                                date={item.date}
+                                title={item.title}
+                                users={item.users}
+                                status={item.status}
+                                statusColor={item.statusColor}
+                                statusIcon={item.statusIcon}
+                            />
+                        ))}
+                    </div>
+                </ScrollArea>
+            </CardContent>
+        </Card>
     );
 };
 

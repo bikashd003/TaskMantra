@@ -6,7 +6,6 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis } from 'rechar
 import {
     Card,
     CardContent,
-    CardFooter,
 } from '@/components/ui/card'
 import {
     ChartConfig,
