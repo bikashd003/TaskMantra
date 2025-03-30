@@ -7,6 +7,7 @@ import { ProjectProvider } from "@/context/ProjectContext";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function DashboardLayout({
     children,
@@ -91,7 +92,9 @@ export default function DashboardLayout({
                 />
                 <div className="flex-1 min-w-0 overflow-hidden flex flex-col gap-2 pt-16 md:pt-2 pb-2 px-2">
                     <Header />
-                    <main className="overflow-y-auto h-[calc(100vh-64px)]">{children}</main>
+                    <main className="overflow-y-auto h-[calc(100vh-64px)]">
+                        <ScrollArea className="h-full">{children}</ScrollArea>
+                    </main>
                 </div>
             </div>
         </ProjectProvider>

@@ -37,7 +37,7 @@ const Logo = ({ isExpanded, setIsExpanded }: LogoProps) => {
 
             {/* Toggle Button */}
             <button
-                className="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-300 shadow-md"
+                className="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-300 shadow-md -ml-2"
                 onClick={() => setIsExpanded(!isExpanded)}
                 aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
             >

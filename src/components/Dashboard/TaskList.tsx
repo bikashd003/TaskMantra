@@ -1,6 +1,8 @@
 import React from 'react';
-import { MoreHorizontal, CheckCircle } from 'lucide-react';
+import { MoreHorizontal, CheckCircle, ChevronDown } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const TaskList = () => {
     const tasks = [
@@ -11,31 +13,58 @@ const TaskList = () => {
     ];
 
     return (
-        <ScrollArea className="bg-white p-6 rounded-xl shadow-lg  h-[45vh]">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-800">Today&apos;s Tasks</h2>
-                <button className="text-sm text-gray-500 hover:text-gray-700">Today ▼</button>
-            </div>
-
-            <div className="space-y-4">
-                {tasks.map(task => (
-                    <div key={task.id} className="flex items-center justify-between p-4 bg-gray-100 rounded-lg shadow-sm hover:bg-gray-200 transition-colors">
-                        <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${task.completed ? 'bg-emerald-100 text-emerald-500' : 'bg-blue-100 text-blue-500'}`}>
-                                <CheckCircle size={24} />
+        <Card className="bg-gradient-to-br from-white to-gray-50 border-none shadow-md h-[calc(40vh-3rem)]">
+            <CardHeader>
+                <CardTitle className="flex justify-between items-center">
+                    <h2 className="font-semibold text-foreground">Today&apos;s Tasks</h2>
+                    <button className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-sm text-muted-foreground hover:bg-accent transition-colors">
+                        Today
+                        <ChevronDown size={16} />
+                    </button>
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ScrollArea className="h-[calc(40vh-8rem)] px-2">
+                    <div className="space-y-3">
+                        {tasks.map(task => (
+                            <div
+                                key={task.id}
+                                className={cn(
+                                    "group flex items-center justify-between p-3 rounded-lg",
+                                    "bg-background/50 hover:bg-accent/50 transition-all duration-200",
+                                    "border border-border/50"
+                                )}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div
+                                        className={cn(
+                                            "w-9 h-9 rounded-full flex items-center justify-center transition-colors",
+                                            task.completed
+                                                ? "bg-success/15 text-success"
+                                                : "bg-primary/15 text-primary"
+                                        )}
+                                    >
+                                        <CheckCircle size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className={cn(
+                                            "font-medium",
+                                            task.completed ? "text-muted-foreground" : "text-foreground"
+                                        )}>
+                                            {task.title}
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground">{task.description}</p>
+                                    </div>
+                                </div>
+                                <button className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-all duration-200">
+                                    <MoreHorizontal size={20} />
+                                </button>
                             </div>
-                            <div>
-                                <h3 className="font-semibold text-gray-700">{task.title}</h3>
-                                <p className="text-sm text-gray-500">{task.description}</p>
-                            </div>
-                        </div>
-                        <button className="text-gray-400 hover:text-gray-600">
-                            <MoreHorizontal size={24} />
-                        </button>
+                        ))}
                     </div>
-                ))}
-            </div>
-        </ScrollArea>
+                </ScrollArea>
+            </CardContent>
+        </Card>
     );
 };
 

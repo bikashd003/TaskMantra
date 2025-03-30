@@ -39,47 +39,66 @@ const chartConfig = {
 
 export function ActivityChart() {
     return (
-        <Card className="shadow-lg rounded-lg w-full bg-white border-none">
-            <CardContent className="p-2">
-                <ChartContainer config={chartConfig}>
-                    <ResponsiveContainer width="100%">
-                        <BarChart data={chartData}>
-                            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="month"
-                                tickLine={false}
-                                tickMargin={8}
-                                axisLine={false}
-                                tickFormatter={(value) => value.slice(0, 3)}
-                                fontSize={12}
-                                fontWeight={500}
-                            />
-                            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                            <ChartLegend content={<ChartLegendContent />} />
-                            <Bar
-                                dataKey="desktop"
-                                stackId="a"
-                                fill="var(--color-desktop)"
-                                radius={[0, 0, 4, 4]}
-                            />
-                            <Bar
-                                dataKey="mobile"
-                                stackId="a"
-                                fill="var(--color-mobile)"
-                                radius={[4, 4, 0, 0]}
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
+        <Card className="bg-gradient-to-br from-white to-gray-50 border-none shadow-md overflow-hidden h-[calc(40vh-5.5rem)]">
+            <CardContent className="pt-6 px-6 pb-4">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 className="font-semibold text-foreground">Activity Overview</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Monthly visitor statistics</p>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
+                        <TrendingUp className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">+5.2%</span>
+                    </div>
+                </div>
+
+                <div className="h-[300px]">
+                    <ChartContainer config={chartConfig}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                                <CartesianGrid
+                                    vertical={false}
+                                    strokeDasharray="3 3"
+                                    stroke="hsl(var(--muted))"
+                                    opacity={0.4}
+                                />
+                                <XAxis
+                                    dataKey="month"
+                                    tickLine={false}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                    tickFormatter={(value) => value.slice(0, 3)}
+                                    fontSize={12}
+                                    fontWeight={500}
+                                    stroke="hsl(var(--muted-foreground))"
+                                />
+                                <ChartTooltip
+                                    cursor={{ fill: 'hsl(var(--muted)/0.1)' }}
+                                    content={<ChartTooltipContent hideLabel />}
+                                />
+                                <ChartLegend
+                                    content={<ChartLegendContent />}
+                                    wrapperStyle={{ paddingTop: '20px' }}
+                                />
+                                <Bar
+                                    dataKey="desktop"
+                                    stackId="a"
+                                    fill="var(--color-desktop)"
+                                    radius={[4, 4, 0, 0]}
+                                    barSize={24}
+                                />
+                                <Bar
+                                    dataKey="mobile"
+                                    stackId="a"
+                                    fill="var(--color-mobile)"
+                                    radius={[0, 0, 4, 4]}
+                                    barSize={24}
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                </div>
             </CardContent>
-            <CardFooter className="flex flex-col items-start gap-2 text-sm">
-                <div className="flex items-center gap-2 font-medium leading-none text-primary">
-                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                </div>
-                <div className="leading-none text-muted-foreground text-xs">
-                    Showing total visitors for the last 6 months
-                </div>
-            </CardFooter>
         </Card>
     )
 }
