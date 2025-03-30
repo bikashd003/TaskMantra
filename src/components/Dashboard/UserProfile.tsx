@@ -1,9 +1,7 @@
 import React from 'react';
 import { signOut } from 'next-auth/react';
 import { Avatar } from "@heroui/react";
-import {
-    ChevronRight,
-} from 'lucide-react';
+import { ChevronRight, LogOut } from 'lucide-react';
 import {
     Popover,
     PopoverContent,
@@ -19,37 +17,35 @@ interface UserProfileProps {
 export function UserProfile({ isExpanded }: UserProfileProps) {
     const session = useAuth().session;
     return (
-        <div>
+        <div className="border-t border-gray-700/50 shadow-lg">
             <div className={`
-      p-4 border-b border-gray-700
-      flex items-center gap-3
+      px-4 py-2 border-b border-gray-700
+      flex items-center gap-4
       ${isExpanded ? '' : 'justify-center'}
     `}>
-                <Avatar name={session?.user?.name?.charAt(0)} color="success" isBordered radius='full' size='md' />
-
+                {session?.user?.image && <Avatar src={session?.user?.image} radius='full' size='md' />}
+                {!session?.user?.image && <Avatar name={session?.user?.name?.charAt(0)} color="primary" radius='full' size='md' />}
 
                 {isExpanded && (
                     <>
                         <div className="flex-1 min-w-0">
-                            <h2 className="text-sm font-semibold truncate">{session?.user?.name}</h2>
-                            <p className="text-xs text-gray-400 truncate">{session?.user?.email}</p>
+                            <h2 className="text-base font-semibold text-white truncate">{session?.user?.name}</h2>
+                            <p className="text-xs text-gray-300 truncate">{session?.user?.email}</p>
                         </div>
                         <Popover>
-                            <PopoverTrigger>                        <ChevronRight className="h-5 w-5 text-gray-400" />
+                            <PopoverTrigger>
+                                <ChevronRight className="h-6 w-6 text-gray-400 hover:text-white transition-colors duration-200" />
                             </PopoverTrigger>
                             <PopoverContent className='w-fit h-fit p-0'>
                                 <button
-                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 rounded-md border border-gray-200 shadow-sm transition-colors duration-200"
+                                    className="flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-200 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-md transition-colors duration-200"
                                     onClick={() => signOut({ callbackUrl: '/' })}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                    </svg>
+                                    <LogOut className="h-5 w-5" />
                                     Sign out
                                 </button>
                             </PopoverContent>
                         </Popover>
-
                     </>
                 )}
             </div>
