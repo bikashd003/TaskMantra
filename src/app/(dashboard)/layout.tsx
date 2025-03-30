@@ -51,8 +51,19 @@ export default function DashboardLayout({
 
     if (status === "loading" || isChecking) {
         return (
-            <div className="flex items-center justify-center h-screen bg-gray-50">
-                <div className="text-gray-600">Loading...</div>
+            <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+                <div className="relative w-16 h-16 mb-4">
+                    <div className="absolute w-full h-full border-4 border-primary/20 rounded-full"></div>
+                    <div className="absolute w-full h-full border-4 border-t-primary rounded-full animate-spin"></div>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                    <h3 className="text-xl font-semibold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                        TaskMantra
+                    </h3>
+                    <p className="text-sm text-gray-500 animate-pulse">
+                        Setting up your workspace...
+                    </p>
+                </div>
             </div>
         );
     }

@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -23,46 +23,49 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Check, MoreVertical, Plus, Search, Shield, UserPlus, X } from 'lucide-react'
+import { Check, MoreVertical, Plus, Search, Shield, UserPlus } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import axios from 'axios'
+import { Skeleton } from '@heroui/skeleton'
 
 const inviteFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   role: z.enum(["admin", "member", "viewer"]),
 })
 
-// Mock data for team members
-const teamMembers = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    role: "Admin",
-    status: "active",
-    avatar: "https://github.com/shadcn.png",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    role: "Member",
-    status: "active",
-    avatar: "https://github.com/shadcn.png",
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    email: "mike@example.com",
-    role: "Viewer",
-    status: "pending",
-    avatar: "https://github.com/shadcn.png",
-  },
-]
-
 export default function MembersSettings() {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [roleFilter, setRoleFilter] = useState('all')
+
+  const { data: teamMembers, isLoading } = useQuery({
+    queryKey: ['teamMembers', searchQuery, roleFilter],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/settings/member', {
+        params: {
+          search: searchQuery,
+          role: roleFilter !== 'all' ? roleFilter : undefined
+        }
+      })
+      return data.teamMembers
+    },
+  })
+
+  // Debounce search to avoid too many API calls
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    const timeoutId = setTimeout(() => {
+      setSearchQuery(value)
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }
+
+  const handleRoleFilter = (value: string) => {
+    setRoleFilter(value)
+  }
+
   const form = useForm<z.infer<typeof inviteFormSchema>>({
     resolver: zodResolver(inviteFormSchema),
     defaultValues: {
@@ -124,7 +127,7 @@ export default function MembersSettings() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
+                        {/* <SelectItem value="admin">Admin</SelectItem> */}
                         <SelectItem value="member">Member</SelectItem>
                         <SelectItem value="viewer">Viewer</SelectItem>
                       </SelectContent>
@@ -146,17 +149,26 @@ export default function MembersSettings() {
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search members..." className="pl-8" />
+          <Input
+            placeholder="Search members..."
+            className="pl-8"
+            onChange={handleSearch}
+            defaultValue={searchQuery}
+          />
         </div>
-        <Select defaultValue="all">
+        <Select
+          defaultValue={roleFilter}
+          onValueChange={handleRoleFilter}
+        >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Filter by role" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
+            {/* <SelectItem value="admin">Admin</SelectItem> */}
             <SelectItem value="member">Member</SelectItem>
             <SelectItem value="viewer">Viewer</SelectItem>
+            <SelectItem value="Owner">Owner</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -180,54 +192,79 @@ export default function MembersSettings() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {teamMembers.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.avatar} alt={member.name} />
-                      <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{member.name}</p>
-                      <p className="text-sm text-muted-foreground">{member.email}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={member.role === "Admin" ? "default" : "secondary"} className="flex w-fit items-center gap-1">
-                      {member.role === "Admin" && <Shield className="h-3 w-3" />}
-                      {member.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={member.status === "active" ? "success" : "warning"} className="flex w-fit items-center gap-1">
-                      {member.status === "active" ? (
-                        <Check className="h-3 w-3" />
-                      ) : (
-                        <X className="h-3 w-3" />
-                      )}
-                      {member.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>Change Role</DropdownMenuItem>
-                        <DropdownMenuItem>Resend Invitation</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          Remove Member
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {isLoading ? (
+                [...Array(3)].map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div>
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-40 mt-1" />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-16" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-16" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Skeleton className="h-8 w-8 ml-auto" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : teamMembers && teamMembers.length > 0 ? (
+                teamMembers.map((team) => (
+                  team.members.map((member) => (
+                    <TableRow key={member.userId._id}>
+                      <TableCell className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={member.userId.image} alt={member.userId.name} />
+                          <AvatarFallback>{member.userId.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{member.userId.name}</p>
+                          <p className="text-sm text-muted-foreground">{member.userId.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={member.role === "Owner" ? "default" : "secondary"} className="flex w-fit items-center gap-1">
+                          {member.role === "Owner" && <Shield className="h-3 w-3" />}
+                          {member.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="success" className="flex w-fit items-center gap-1">
+                          <Check className="h-3 w-3" />
+                          active
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>Change Role</DropdownMenuItem>
+                            <DropdownMenuItem>Resend Invitation</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              Remove Member
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-6">
+                    No members found matching your search criteria
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

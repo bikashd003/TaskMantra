@@ -12,7 +12,7 @@ const PageContent = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4">
+        <div className="min-h-screen  flex items-center justify-center p-4 bg-gradient-to-b from-slate-950  to-neutral-950">
             <div className="w-full max-w-md relative">
                 <div className="absolute inset-0 bg-white rounded-2xl shadow-2xl overflow-hidden">
                     <AnimatePresence mode="wait">
