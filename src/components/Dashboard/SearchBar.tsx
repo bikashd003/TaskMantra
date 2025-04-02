@@ -3,7 +3,7 @@ import { Search, X } from 'lucide-react'
 
 interface SearchBarProps {
     placeholder?: string
-    onSearch: (query: string) => void
+    onSearch: (_query: string) => void
     className?: string
 }
 

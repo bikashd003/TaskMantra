@@ -1,5 +1,110 @@
 import mongoose from 'mongoose';
 
+const notificationsSchema = new mongoose.Schema({
+  email: {
+    taskAssigned: {
+      type: Boolean,
+      default: true,
+    },
+    taskUpdates: {
+      type: Boolean,
+      default: true,
+    },
+    taskComments: {
+      type: Boolean,
+      default: false,
+    },
+    dueDateReminders: {
+      type: Boolean,
+      default: true,
+    },
+    teamUpdates: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  push: {
+    instantNotifications: {
+      type: Boolean,
+      default: true,
+    },
+    mentions: {
+      type: Boolean,
+      default: true,
+    },
+    teamActivity: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  desktop: {
+    showNotifications: {
+      type: Boolean,
+      default: true,
+    },
+    soundEnabled: {
+      type: Boolean,
+      default: true,
+    },
+  },
+}, {
+  timestamps: true,
+});
+
+const generalSchema = new mongoose.Schema({
+  appearance: {
+    theme: {
+      type: String,
+      enum: ["light", "dark", "system"],
+      default: 'system',
+    },
+    animations: {
+      type: Boolean,
+      default: true,
+    },
+    reducedMotion: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  localization: {
+    language: {
+      type: String,
+      enum: ['en-US', 'en-GB', 'es', 'fr', 'de', 'hi'],
+      default: 'en-US',
+    },
+    timezone: {
+      type: String,
+      default: 'IST',
+    },
+    dateFormat: {
+      type: String,
+      enum: ['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY/MM/DD'],
+      default: 'DD/MM/YYYY',
+    },
+  },
+  accessibility: {
+    keyboardShortcuts: {
+      type: Boolean,
+      default: true,
+    },
+    screenReader: {
+      type: Boolean,
+      default: false,
+    },
+    highContrast: {
+      type: Boolean,
+      default: false,
+    },
+    largeText: {
+      type: Boolean,
+      default: false,
+    },
+  },
+}, {
+  timestamps: true,
+});
+
 const settingsSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -7,88 +112,24 @@ const settingsSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-
-  notifications: {
-    email: {
-      enabled: { type: Boolean, default: true },
-      taskAssigned: { type: Boolean, default: true },
-      taskDueSoon: { type: Boolean, default: true },
-      projectUpdates: { type: Boolean, default: true },
-      mentions: { type: Boolean, default: true },
-    },
-    inApp: {
-      enabled: { type: Boolean, default: true },
-      taskAssigned: { type: Boolean, default: true },
-      taskDueSoon: { type: Boolean, default: true },
-      projectUpdates: { type: Boolean, default: true },
-      mentions: { type: Boolean, default: true },
-    },
-    dailySummary: {
-      enabled: { type: Boolean, default: false },
-      time: { type: String, default: '08:00' },
-    },
+  organizationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
   },
-
-  projectView: {
-    defaultView: { 
-      type: String, 
-      enum: ['Board', 'List', 'Timeline', 'Calendar'], 
-      default: 'Board' 
-    },
-    sortTasksBy: {
-      type: String,
-      enum: ['priority', 'dueDate', 'status', 'assignee'],
-      default: 'priority'
-    },
+  generalSettings: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'General',
+    required: true,
   },
-
-  // Timezone
-  timezone: {
-    type: String,
-    default: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  },
-
-  // Language
-  language: {
-    type: String,
-    enum: ['en', 'es', 'fr', 'de',], 
-    default: 'en', 
-  },
-
-  // Theme
-  theme: {
-    type: String,
-    enum: ['light', 'dark', 'system'],
-    default: 'light',
-  },
-
-  // Integrations (for future use, add specific fields as needed)
-  integrations: {
-    slack: {
-      connected: { type: Boolean, default: false },
-      // ... other Slack-related settings
-    },
-    // ... other integrations like Google Calendar, Microsoft Teams, etc. 
-  },
-
-  // Advanced Settings (consider using a separate subdocument if needed)
-  advanced: {
-    dataExportFormat: { 
-      type: String, 
-      enum: ['CSV', 'JSON', 'XML'], 
-      default: 'CSV' 
-    },
-    // ...other advanced options
-  },
-
-  // Custom Fields (flexible storage for user-specific preferences)
-  customFields: {
-    type: Map,
-    of: mongoose.Schema.Types.Mixed, // Allows storing different data types
-  },
+  notificationSettings: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Notifications',
+    required: true,
+  }
 }, {
   timestamps: true,
 });
 
+export const Notifications = mongoose.models.Notifications || mongoose.model('Notifications', notificationsSchema);
+export const General = mongoose.models.General || mongoose.model('General', generalSchema);
 export const Settings = mongoose.models.Settings || mongoose.model('Settings', settingsSchema);
-

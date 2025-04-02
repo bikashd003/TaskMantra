@@ -1,5 +1,5 @@
 "use client";
-import React, {  useState } from 'react';
+import React, { useState } from 'react';
 import {
     Home,
     MessageSquare,
@@ -50,6 +50,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             items: [
               { icon: ClipboardCheck, label: "Tasks", path: "/tasks" },
               { icon: Calendar, label: "Calendar", path: "/calendar" },
+              { icon: SquareChartGantt, label: "Timeline", path: "/timeline" },
             ],
           },
           {

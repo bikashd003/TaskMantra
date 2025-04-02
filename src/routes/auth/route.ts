@@ -17,7 +17,7 @@ const auth = new Hono()
             email,
             password: hashedPassword,
         });
-        await newUser.save();
-        return c.json({ message: "User created successfully" });
+        const createdUser = await newUser.save();
+        return c.json({ message: "User created successfully", user: createdUser }, 201);
     });
 export default auth;

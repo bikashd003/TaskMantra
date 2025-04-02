@@ -1,12 +1,11 @@
 'use client'
 
 import { TrendingUp } from 'lucide-react'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 
 import {
     Card,
     CardContent,
-    CardFooter,
 } from '@/components/ui/card'
 import {
     ChartConfig,
@@ -39,47 +38,68 @@ const chartConfig = {
 
 export function ActivityChart() {
     return (
-        <Card className="shadow-lg rounded-lg w-full bg-white border-none">
-            <CardContent className="p-2">
-                <ChartContainer config={chartConfig}>
-                    <ResponsiveContainer width="100%">
-                        <BarChart data={chartData}>
-                            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+        <Card className="bg-gradient-to-br from-white to-gray-50 border-none shadow-md h-full flex flex-col">
+            <CardContent className="pt-6 px-6 pb-4 flex flex-col flex-1 min-h-0">
+                <div className="flex justify-between items-center mb-6 shrink-0">
+                    <div>
+                        <h3 className="font-semibold text-foreground">Activity Overview</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Monthly visitor statistics</p>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
+                        <TrendingUp className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">+5.2%</span>
+                    </div>
+                </div>
+
+                <div className="flex-1 max-h-[250px] overflow-hidden">
+                    <ChartContainer config={chartConfig} className="h-full w-full">
+                        <BarChart
+                            data={chartData}
+                            margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                            height={300} // Explicit height as fallback
+                        >
+                            <CartesianGrid
+                                vertical={false}
+                                strokeDasharray="3 3"
+                                stroke="hsl(var(--muted))"
+                                opacity={0.4}
+                            />
                             <XAxis
                                 dataKey="month"
                                 tickLine={false}
-                                tickMargin={8}
+                                tickMargin={10}
                                 axisLine={false}
                                 tickFormatter={(value) => value.slice(0, 3)}
                                 fontSize={12}
                                 fontWeight={500}
+                                stroke="hsl(var(--muted-foreground))"
                             />
-                            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                            <ChartLegend content={<ChartLegendContent />} />
+                            <ChartTooltip
+                                cursor={{ fill: 'hsl(var(--muted)/0.1)' }}
+                                content={<ChartTooltipContent hideLabel />}
+                            />
+                            <ChartLegend
+                                content={<ChartLegendContent />}
+                                wrapperStyle={{ paddingTop: '20px' }}
+                            />
                             <Bar
                                 dataKey="desktop"
                                 stackId="a"
                                 fill="var(--color-desktop)"
-                                radius={[0, 0, 4, 4]}
+                                radius={[0, 0, 0, 0]}
+                                barSize={24}
                             />
                             <Bar
                                 dataKey="mobile"
                                 stackId="a"
                                 fill="var(--color-mobile)"
                                 radius={[4, 4, 0, 0]}
+                                barSize={24}
                             />
                         </BarChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
+                    </ChartContainer>
+                </div>
             </CardContent>
-            <CardFooter className="flex flex-col items-start gap-2 text-sm">
-                <div className="flex items-center gap-2 font-medium leading-none text-primary">
-                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                </div>
-                <div className="leading-none text-muted-foreground text-xs">
-                    Showing total visitors for the last 6 months
-                </div>
-            </CardFooter>
         </Card>
     )
 }

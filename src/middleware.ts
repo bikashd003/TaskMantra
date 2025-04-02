@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import chalk from "chalk";
 
 export { default } from "next-auth/middleware";
 
 export async function middleware(request: NextRequest) {
     const url = request.nextUrl; // Get the current URL
-    const method = request.method;
-    // eslint-disable-next-line no-console
-    console.log(chalk.green(`${Date.now()} ${method} ${url.pathname}`));
 
-    const token = await getToken({ req: request }); // Extract token
+    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET }); // Extract token
 
-    const protectedPaths = ["/home", "/projects", "/tasks", "/calendar", "/feedback", "/settings"];
+    const protectedPaths = ["/home", "/projects", "/tasks", "/calendar", "/feedback", "/settings", "/onboarding"];
     const isProtectedRoute = protectedPaths.some((path) => url.pathname.startsWith(path));
-    const isAuthPage = ["/", "/sign-in", "/sign-up"].includes(url.pathname);
+    const isAuthPage = ["/", "/auth"].includes(url.pathname);
 
     if (token) {
         // Authenticated user
@@ -29,7 +25,7 @@ export async function middleware(request: NextRequest) {
         // Unauthenticated user
         if (isProtectedRoute) {
             // Redirect unauthenticated users trying to access protected routes
-            return NextResponse.redirect(new URL("/sign-in", request.url));
+            return NextResponse.redirect(new URL("/auth", request.url));
         }
         // Allow access to public pages (e.g., sign-in, sign-up, or landing page)
         return NextResponse.next();
@@ -39,13 +35,15 @@ export async function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         "/",
-        "/sign-in",
-        "/sign-up",
+        "/auth",
         "/home",
         "/projects",
         "/tasks",
         "/calendar",
         "/feedback",
-        "/settings"
+        "/settings",
+        "/onboarding",
+        "/onboarding/welcome",
+        "/onboarding/organization",
     ],
 };

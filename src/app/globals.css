@@ -180,3 +180,7 @@ body {
 .task-bar:hover {
   opacity: 0.9;
 }
+.gradient-text {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(to right, #a855f7, #ec4899);
+}
