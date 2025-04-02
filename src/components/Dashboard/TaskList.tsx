@@ -13,7 +13,7 @@ const TaskList = () => {
     ];
 
     return (
-        <Card className="bg-gradient-to-br from-white to-gray-50 border-none shadow-md h-[calc(40vh-3rem)]">
+        <Card className="bg-gradient-to-br from-white to-gray-50 border-none shadow-md h-full">
             <CardHeader>
                 <CardTitle className="flex justify-between items-center">
                     <h2 className="font-semibold text-foreground">Today&apos;s Tasks</h2>
@@ -23,8 +23,8 @@ const TaskList = () => {
                     </button>
                 </CardTitle>
             </CardHeader>
-            <CardContent>
-                <ScrollArea className="h-[calc(40vh-8rem)] px-2">
+            <CardContent className="h-full">
+                <ScrollArea className="h-full px-2">
                     <div className="space-y-3">
                         {tasks.map(task => (
                             <div

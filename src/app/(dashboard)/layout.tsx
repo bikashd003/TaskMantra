@@ -7,7 +7,6 @@ import { ProjectProvider } from "@/context/ProjectContext";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function DashboardLayout({
     children,
@@ -74,7 +73,7 @@ export default function DashboardLayout({
 
     return (
         <ProjectProvider>
-            <div className="flex h-screen overflow-hidden bg-gray-50 overflow-x-hidden">
+            <div className="flex h-screen overflow-hidden bg-gray-50">
                 <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-30 px-4">
                     <div className="h-full flex items-center">
                         <button
@@ -90,10 +89,12 @@ export default function DashboardLayout({
                     isMobileOpen={isMobileOpen}
                     onMobileClose={() => setIsMobileOpen(false)}
                 />
-                <div className="flex-1 min-w-0 overflow-hidden flex flex-col gap-2 pt-16 md:pt-2 pb-2 px-2">
+                <div className="flex-1 min-w-0 flex flex-col pt-16 md:pt-2 px-2">
                     <Header />
-                    <main className="overflow-y-auto h-[calc(100vh-64px)]">
-                        <ScrollArea className="h-full">{children}</ScrollArea>
+                    <main className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden py-2">
+                        <div className="h-full">
+                            {children}
+                        </div>
                     </main>
                 </div>
             </div>

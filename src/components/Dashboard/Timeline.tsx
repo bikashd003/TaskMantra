@@ -106,7 +106,7 @@ const Timeline = () => {
     ];
 
     return (
-        <Card className="bg-gradient-to-br from-white to-gray-50 border-none shadow-md overflow-hidden h-[calc(40vh-5.5rem)]">
+        <Card className="bg-gradient-to-br from-white to-gray-50 border-none shadow-md h-full">
             <CardHeader className="pt-6 px-6">
                 <div className="flex items-center gap-3">
                     <button className={cn(
@@ -126,8 +126,8 @@ const Timeline = () => {
                 </div>
             </CardHeader>
 
-            <CardContent className="px-6 pb-4">
-                <ScrollArea className="h-[calc(40vh-11rem)]">
+            <CardContent className="px-6 pb-4 h-full">
+                <ScrollArea className="h-full">
                     <div className="relative pl-6 space-y-4">
                         {/* Vertical Line */}
                         <div className="absolute left-1 top-0 bottom-0 w-0.5 bg-border"></div>

@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
     Card,
     CardContent,
-    CardDescription,
     CardFooter,
     CardHeader,
     CardTitle
@@ -25,7 +24,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     Calendar,
-    Clock,
     Filter,
     MoreHorizontal,
     Plus,
@@ -35,7 +33,6 @@ import {
     Trash,
     Edit,
     CheckCircle2,
-    AlertCircle
 } from "lucide-react";
 import {
     Dialog,
@@ -44,7 +41,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
