@@ -36,29 +36,16 @@ const SignIn: React.FC<SignInProps> = ({ onSwitchForm }) => {
         signIn("google", { callbackUrl: "/home" });
     };
 
-    const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
-        visible: (i: number) => ({
-            y: 0,
-            opacity: 1,
-            transition: {
-                delay: i * 0.1,
-                duration: 0.5,
-                ease: "easeOut"
-            }
-        })
-    };
-
     return (
-        <div className="h-full flex flex-col justify-center p-8 bg-white">
+        <div className="h-full flex flex-col justify-center p-8 text-white">
             <motion.div
                 className="text-center mb-8"
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
             >
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">Welcome Back</h1>
-                <p className="text-gray-600">Sign in to continue to your account</p>
+                <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white via-white to-white/70 bg-clip-text text-transparent">Welcome Back</h1>
+                <p className="text-white/60">Sign in to continue to your account</p>
             </motion.div>
 
             <Formik
@@ -71,59 +58,51 @@ const SignIn: React.FC<SignInProps> = ({ onSwitchForm }) => {
                         <div className="space-y-4">
                             <motion.div
                                 className="relative"
-                                custom={0}
-                                initial="hidden"
-                                animate="visible"
-                                variants={itemVariants}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
                             >
-                                <Mail className="absolute left-3 top-6 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" size={18} />
                                 <Field
                                     type="email"
                                     name="email"
                                     placeholder="Email"
-                                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.email && touched.email
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : 'border-gray-200 focus:ring-indigo-500'
-                                        } rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all`}
+                                    className={`w-full pl-10 pr-4 py-3 bg-white/5 border ${errors.email && touched.email ? 'border-red-500/50' : 'border-white/10'} rounded-xl focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/30 transition-all text-white placeholder-white/40`}
                                 />
                                 <ErrorMessage name="email">
-                                    {msg => <div className="text-red-500 text-sm mt-1">{msg}</div>}
+                                    {msg => <div className="text-red-400 text-sm mt-1">{msg}</div>}
                                 </ErrorMessage>
                             </motion.div>
 
                             <motion.div
                                 className="relative"
-                                custom={1}
-                                initial="hidden"
-                                animate="visible"
-                                variants={itemVariants}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
                             >
-                                <Lock className="absolute left-3 top-6 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" size={18} />
                                 <Field
                                     type={showPassword ? "text" : "password"}
                                     name="password"
                                     placeholder="Password"
-                                    className={`w-full pl-10 pr-10 py-3 bg-gray-50 border ${errors.password && touched.password
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : 'border-gray-200 focus:ring-indigo-500'
-                                        } rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all`}
+                                    className={`w-full pl-10 pr-10 py-3 bg-white/5 border ${errors.password && touched.password ? 'border-red-500/50' : 'border-white/10'} rounded-xl focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/30 transition-all text-white placeholder-white/40`}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-[1.65rem] transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                                 <ErrorMessage name="password">
-                                    {msg => <div className="text-red-500 text-sm mt-1">{msg}</div>}
+                                    {msg => <div className="text-red-400 text-sm mt-1">{msg}</div>}
                                 </ErrorMessage>
                             </motion.div>
                         </div>
                         <motion.button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                         >
@@ -131,44 +110,43 @@ const SignIn: React.FC<SignInProps> = ({ onSwitchForm }) => {
                             {!isSubmitting && <ArrowRight className="ml-2" size={18} />}
                         </motion.button>
 
-                        <div className="relative flex items-center justify-center my-4">
-                            <div className="border-t border-gray-300 absolute w-full"></div>
-                            <span className="bg-white px-2 text-sm text-gray-500 relative">Or continue with</span>
+                        <div className="relative flex items-center justify-center my-6">
+                            <div className="border-t border-white/10 absolute w-full"></div>
+                            <span className="bg-transparent px-2 text-sm text-white/40 relative">Or continue with</span>
                         </div>
 
                         <motion.button
                             type="button"
                             onClick={handleGoogleSignIn}
-                            className="w-full py-3 px-4 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg shadow-sm hover:shadow-md transition-all flex items-center justify-center"
+                            className="w-full py-3 px-4 bg-white/5 border border-white/10 text-white font-medium rounded-xl hover:bg-white/10 transition-all flex items-center justify-center"
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                         >
                             <FcGoogle size={20} />
                             <span className="ml-2">Sign in with Google</span>
                         </motion.button>
+
+                        <motion.div
+                            className="mt-6 text-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                        >
+                            <p className="text-white/60">
+                                Don&apos;t have an account?{' '}
+                                <motion.button
+                                    onClick={onSwitchForm}
+                                    className="text-white hover:text-indigo-400 font-medium transition-colors"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    Sign Up
+                                </motion.button>
+                            </p>
+                        </motion.div>
                     </Form>
                 )}
             </Formik>
-
-            <motion.div
-                className="mt-8 text-center"
-                custom={5}
-                initial="hidden"
-                animate="visible"
-                variants={itemVariants}
-            >
-                <p className="text-gray-600">
-                    Don&apos;t have an account?{' '}
-                    <motion.button
-                        onClick={onSwitchForm}
-                        className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        Sign Up
-                    </motion.button>
-                </p>
-            </motion.div>
         </div>
     );
 };

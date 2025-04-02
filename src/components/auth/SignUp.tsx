@@ -15,8 +15,8 @@ interface SignUpProps {
 
 const SignUp: React.FC<SignUpProps> = ({ onSwitchForm }) => {
     const [showPassword, setShowPassword] = useState(false);
-    const router = useRouter();
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const router = useRouter();
 
     const handleSubmit = async (values: { name: string; email: string; password: string; confirmPassword: string }) => {
         try {
@@ -49,29 +49,16 @@ const SignUp: React.FC<SignUpProps> = ({ onSwitchForm }) => {
         signIn("google", { callbackUrl: "/onboarding/welcome" });
     };
 
-    const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
-        visible: (i: number) => ({
-            y: 0,
-            opacity: 1,
-            transition: {
-                delay: i * 0.1,
-                duration: 0.5,
-                ease: "easeOut"
-            }
-        })
-    };
-
     return (
-        <div className="h-full flex flex-col justify-center p-8 bg-white">
+        <div className="h-full flex flex-col justify-center p-8 text-white">
             <motion.div
                 className="text-center mb-6"
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
             >
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">Create Account</h1>
-                <p className="text-gray-600">Sign up to get started</p>
+                <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white via-white to-white/70 bg-clip-text text-transparent">Create Account</h1>
+                <p className="text-white/60">Sign up to get started</p>
             </motion.div>
 
             <Formik
@@ -84,122 +71,105 @@ const SignUp: React.FC<SignUpProps> = ({ onSwitchForm }) => {
                         <div className="space-y-4">
                             <motion.div
                                 className="relative"
-                                custom={0}
-                                initial="hidden"
-                                animate="visible"
-                                variants={itemVariants}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
                             >
-                                <User className="absolute left-3 top-6 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" size={18} />
                                 <Field
                                     type="text"
                                     name="name"
                                     placeholder="Full Name"
-                                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.name && touched.name
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : 'border-gray-200 focus:ring-indigo-500'
-                                        } rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all`}
+                                    className={`w-full pl-10 pr-4 py-3 bg-white/5 border ${errors.name && touched.name ? 'border-red-500/50' : 'border-white/10'} rounded-xl focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/30 transition-all text-white placeholder-white/40`}
                                 />
                                 <ErrorMessage name="name">
-                                    {msg => <div className="text-red-500 text-sm mt-1">{msg}</div>}
+                                    {msg => <div className="text-red-400 text-sm mt-1">{msg}</div>}
                                 </ErrorMessage>
                             </motion.div>
 
                             <motion.div
                                 className="relative"
-                                custom={1}
-                                initial="hidden"
-                                animate="visible"
-                                variants={itemVariants}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
                             >
-                                <Mail className="absolute left-3 top-6 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" size={18} />
                                 <Field
                                     type="email"
                                     name="email"
                                     placeholder="Email"
-                                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.email && touched.email
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : 'border-gray-200 focus:ring-indigo-500'
-                                        } rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all`}
+                                    className={`w-full pl-10 pr-4 py-3 bg-white/5 border ${errors.email && touched.email ? 'border-red-500/50' : 'border-white/10'} rounded-xl focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/30 transition-all text-white placeholder-white/40`}
                                 />
                                 <ErrorMessage name="email">
-                                    {msg => <div className="text-red-500 text-sm mt-1">{msg}</div>}
+                                    {msg => <div className="text-red-400 text-sm mt-1">{msg}</div>}
                                 </ErrorMessage>
                             </motion.div>
 
                             <motion.div
                                 className="relative"
-                                custom={2}
-                                initial="hidden"
-                                animate="visible"
-                                variants={itemVariants}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
                             >
-                                <Lock className="absolute left-3 top-6 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" size={18} />
                                 <Field
                                     type={showPassword ? "text" : "password"}
                                     name="password"
                                     placeholder="Password"
-                                    className={`w-full pl-10 pr-10 py-3 bg-gray-50 border ${errors.password && touched.password
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : 'border-gray-200 focus:ring-indigo-500'
-                                        } rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all`}
+                                    className={`w-full pl-10 pr-10 py-3 bg-white/5 border ${errors.password && touched.password ? 'border-red-500/50' : 'border-white/10'} rounded-xl focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/30 transition-all text-white placeholder-white/40`}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-6 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                                 <ErrorMessage name="password">
-                                    {msg => <div className="text-red-500 text-sm mt-1">{msg}</div>}
+                                    {msg => <div className="text-red-400 text-sm mt-1">{msg}</div>}
                                 </ErrorMessage>
                             </motion.div>
 
                             <motion.div
                                 className="relative"
-                                custom={3}
-                                initial="hidden"
-                                animate="visible"
-                                variants={itemVariants}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
                             >
-                                <Lock className="absolute left-3 top-6 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" size={18} />
                                 <Field
                                     type={showConfirmPassword ? "text" : "password"}
                                     name="confirmPassword"
                                     placeholder="Confirm Password"
-                                    className={`w-full pl-10 pr-10 py-3 bg-gray-50 border ${errors.confirmPassword && touched.confirmPassword
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : 'border-gray-200 focus:ring-indigo-500'
-                                        } rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all`}
+                                    className={`w-full pl-10 pr-10 py-3 bg-white/5 border ${errors.confirmPassword && touched.confirmPassword ? 'border-red-500/50' : 'border-white/10'} rounded-xl focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/30 transition-all text-white placeholder-white/40`}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-3 top-6 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
                                 >
                                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                                 <ErrorMessage name="confirmPassword">
-                                    {msg => <div className="text-red-500 text-sm mt-1">{msg}</div>}
+                                    {msg => <div className="text-red-400 text-sm mt-1">{msg}</div>}
                                 </ErrorMessage>
                             </motion.div>
                         </div>
 
                         <motion.div
                             className="flex items-center"
-                            custom={4}
-                            initial="hidden"
-                            animate="visible"
-                            variants={itemVariants}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.5 }}
                         >
                             <input
                                 id="terms"
                                 type="checkbox"
                                 required
-                                className="rounded text-indigo-600 focus:ring-indigo-500"
+                                className="rounded border-white/10 bg-white/5 text-indigo-500 focus:ring-indigo-500"
                             />
-                            <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
-                                I agree to the <a href="#" className="text-indigo-600 hover:text-indigo-800">Terms of Service</a> and <a href="#" className="text-indigo-600 hover:text-indigo-800">Privacy Policy</a>
+                            <label htmlFor="terms" className="ml-2 text-sm text-white/60">
+                                I agree to the <a href="#" className="text-white hover:text-indigo-400">Terms of Service</a> and <a href="#" className="text-white hover:text-indigo-400">Privacy Policy</a>
                             </label>
                         </motion.div>
 
@@ -235,16 +205,15 @@ const SignUp: React.FC<SignUpProps> = ({ onSwitchForm }) => {
 
             <motion.div
                 className="mt-6 text-center"
-                custom={7}
-                initial="hidden"
-                animate="visible"
-                variants={itemVariants}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
             >
-                <p className="text-gray-600">
+                <p className="text-white/60">
                     Already have an account?{' '}
                     <motion.button
                         onClick={onSwitchForm}
-                        className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                        className="text-indigo-500 hover:text-indigo-600 font-medium transition-colors"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                     >

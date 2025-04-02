@@ -12,9 +12,9 @@ const PageContent = () => {
     };
 
     return (
-        <div className="min-h-screen  flex items-center justify-center p-4 bg-gradient-to-b from-slate-950  to-neutral-950">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[#0F172A] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
             <div className="w-full max-w-md relative">
-                <div className="absolute inset-0 bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div className="absolute inset-0 bg-white/10 rounded-2xl backdrop-blur-xl border border-white/10 shadow-[0_0_1000px_rgba(120,119,198,0.3)] overflow-hidden">
                     <AnimatePresence mode="wait">
                         {isSignIn ? (
                             <motion.div
@@ -51,8 +51,6 @@ const PageContent = () => {
                         )}
                     </AnimatePresence>
                 </div>
-
-                {/* This div creates space for the absolute positioned content */}
                 <div className="h-[700px]"></div>
             </div>
         </div>
@@ -61,9 +59,7 @@ const PageContent = () => {
 
 
 const Page = () => {
-    return (
-        <PageContent />
-    );
+    return <PageContent />;
 };
 
 export default Page;
