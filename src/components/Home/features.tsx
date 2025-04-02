@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronDown, CheckCircle, Clock, Calendar, AlertCircle } from 'lucide-react';
+import { ChevronRight, CheckCircle, Clock, Calendar, AlertCircle } from 'lucide-react';
 
 const Features = () => {
     const [activeProject, setActiveProject] = useState('Website Redesign');
