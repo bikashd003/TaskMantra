@@ -7,7 +7,8 @@ import { NextUiProviders } from "@/context/HeroUiProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import ClientProviders from "@/context/ClientProviders";
-import {PostHogProvider} from "@/components/Providers/PostHogProvider";
+import { PostHogProvider } from "@/components/Providers/PostHogProvider";
+import { NotificationProvider } from "@/components/Providers/NotificationProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -36,14 +37,15 @@ export default function RootLayout({
           suppressHydrationWarning
         >
           <PostHogProvider>
-
-          <NextUiProviders>
-            <Providers>
-              <main>{children}</main>
-              <Toaster />
-              <Sonner richColors />
-            </Providers>
-          </NextUiProviders>
+            <NextUiProviders>
+              <Providers>
+                <NotificationProvider>
+                  <main>{children}</main>
+                  <Toaster />
+                  <Sonner richColors />
+                </NotificationProvider>
+              </Providers>
+            </NextUiProviders>
           </PostHogProvider>
         </body>
       </ClientProviders>

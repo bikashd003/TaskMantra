@@ -8,7 +8,8 @@ import {
     SquareChartGantt,
     ClipboardCheck,
     Calendar,
-    ServerCog
+  ServerCog,
+  Bell
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { UserProfile } from './UserProfile';
@@ -32,6 +33,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
             label: "Main",
             items: [
               { icon: Home, label: "Home", path: "/home" },
+              { icon: Bell, label: "Notifications", path: "/notifications" },
               {
                 icon: SquareChartGantt,
                 label: "Projects",

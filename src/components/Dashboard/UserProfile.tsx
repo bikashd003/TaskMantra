@@ -1,13 +1,15 @@
 import React from 'react';
 import { signOut } from 'next-auth/react';
 import { Avatar } from "@heroui/react";
-import { ChevronRight, LogOut } from 'lucide-react';
+import { ChevronRight, LogOut, Wifi, WifiOff } from 'lucide-react';
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { useAuth } from '@/context/AuthProvider';
+import { useNotifications } from '@/hooks/useNotifications';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface UserProfileProps {
     isExpanded: boolean;
@@ -16,15 +18,34 @@ interface UserProfileProps {
 
 export function UserProfile({ isExpanded }: UserProfileProps) {
     const session = useAuth().session;
+    const { isConnected } = useNotifications()
     return (
-        <div className="border-t border-gray-700/50 shadow-lg">
+        <div className="border-t border-gray-700/50 shadow-lg relative">
             <div className={`
       px-4 py-2 border-b border-gray-700
       flex items-center gap-4
       ${isExpanded ? '' : 'justify-center'}
     `}>
-                {session?.user?.image && <Avatar src={session?.user?.image} radius='full' size='md' />}
-                {!session?.user?.image && <Avatar name={session?.user?.name?.charAt(0)} color="primary" radius='full' size='md' />}
+                <div className="relative">
+                    {session?.user?.image && <Avatar src={session?.user?.image} radius='full' size='md' />}
+                    {!session?.user?.image && <Avatar name={session?.user?.name?.charAt(0)} color="primary" radius='full' size='md' />}
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-gray-800">
+                                    {isConnected ? (
+                                        <Wifi className="h-3 w-3 text-green-500" />
+                                    ) : (
+                                        <WifiOff className="h-3 w-3 text-red-500" />
+                                    )}
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{isConnected ? 'Connected' : 'Disconnected'}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
 
                 {isExpanded && (
                     <>
