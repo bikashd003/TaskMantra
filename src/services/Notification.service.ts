@@ -33,20 +33,39 @@ export class NotificationService {
       return notification;
   }
 
-  static async getNotifications(userId: string, page = 0, limit = 10): Promise<any> {
+  static async getNotifications(userId: string, page = 0, limit = 10, filter = 'all', search = ''): Promise<any> {
       await connectDB();
 
       const skip = page * limit;
 
-      const notifications = await Notification.find({ userId })
+    // Build query based on filters
+    const query: any = { userId };
+
+    // Apply filter
+    if (filter === 'unread') {
+      query.read = false;
+    } else if (filter !== 'all') {
+      query.type = filter; // For 'mention', 'task', 'team', etc.
+    }
+
+    // Apply search if provided
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const notifications = await Notification.find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit);
 
-      const total = await Notification.countDocuments({ userId });
+    const total = await Notification.countDocuments(query);
 
       return {
         notifications,
+        total,
         nextPage: skip + notifications.length < total ? page + 1 : null,
         hasMore: skip + notifications.length < total
       };

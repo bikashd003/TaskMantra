@@ -22,7 +22,7 @@ app.use('*', logger());
 app.use('*', async (c, next) => {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (session?.user) {
       const userData = {
         id: session.user.id || '',
@@ -45,12 +45,14 @@ app.get('/', async (c) => {
     if (!user) {
       return c.json({ error: 'User not authenticated' }, 401);
     }
-    
+
     const page = parseInt(c.req.query('page') || '0');
     const limit = parseInt(c.req.query('limit') || '10');
-    
-    const result = await NotificationService.getNotifications(user.id, page, limit);
-    
+    const filter = c.req.query('filter') || 'all';
+    const search = c.req.query('search') || '';
+
+    const result = await NotificationService.getNotifications(user.id, page, limit, filter, search);
+
     return c.json(result);
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -64,9 +66,9 @@ app.get('/unread-count', async (c) => {
     if (!user) {
       return c.json({ error: 'User not authenticated' }, 401);
     }
-    
+
     const count = await NotificationService.getUnreadCount(user.id);
-    
+
     return c.json({ count });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -80,11 +82,11 @@ app.patch('/:id/read', async (c) => {
     if (!user) {
       return c.json({ error: 'User not authenticated' }, 401);
     }
-    
+
     const notificationId = c.req.param('id');
-    
+
     const result = await NotificationService.markAsRead(notificationId, user.id);
-    
+
     return c.json({ success: true, notification: result });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -98,9 +100,9 @@ app.patch('/mark-all-read', async (c) => {
     if (!user) {
       return c.json({ error: 'User not authenticated' }, 401);
     }
-    
+
     const result = await NotificationService.markAllAsRead(user.id);
-    
+
     return c.json({ success: true, result });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -114,9 +116,9 @@ app.delete('/clear-all', async (c) => {
     if (!user) {
       return c.json({ error: 'User not authenticated' }, 401);
     }
-    
+
     const result = await NotificationService.clearAllNotifications(user.id);
-    
+
     return c.json({ success: true, result });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -130,9 +132,9 @@ app.post('/test', async (c) => {
     if (!user) {
       return c.json({ error: 'User not authenticated' }, 401);
     }
-    
+
     const { type = 'system' } = await c.req.json();
-    
+
     const notification = await NotificationService.createNotification({
       userId: user.id,
       title: 'Test Notification',
@@ -140,7 +142,7 @@ app.post('/test', async (c) => {
       type: type as any,
       link: '/dashboard'
     });
-    
+
     return c.json({ success: true, notification });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
