@@ -22,7 +22,8 @@
       {
         "varsIgnorePattern": "^_",
         "argsIgnorePattern": "^_",
-        "destructuredArrayIgnorePattern": "^_"
+        "destructuredArrayIgnorePattern": "^_",
+        "ignorePattern": "^KanbanColumnProps$"
       }
     ]
   },
@@ -41,3 +42,4 @@
     }
   }
 }
+
