@@ -42,21 +42,27 @@ export default function TasksPage() {
         queryKey: ['tasks'],
         queryFn: async () => {
             const apiTasks = await TaskService.getAllTasks();
-            // Transform API tasks to UI tasks
+            // Transform API tasks to UI tasks if needed
             return apiTasks.map((apiTask: any) => ({
                 id: apiTask.id || apiTask._id,
-                title: apiTask.title || apiTask.name,
+                name: apiTask.name,
                 description: apiTask.description || "",
-                status: (apiTask.status || "To Do").toLowerCase().replace(" ", "-") as TaskStatus,
-                priority: (apiTask.priority || "Medium").toLowerCase() as TaskPriority,
-                dueDate: apiTask.dueDate ? new Date(apiTask.dueDate).toISOString() : new Date().toISOString(),
-                assignee: {
-                    name: apiTask.assignee?.name || "Unassigned",
-                    avatar: apiTask.assignee?.avatar || "",
-                    initials: apiTask.assignee?.initials || "UA"
-                },
+                status: apiTask.status || "To Do",
+                priority: apiTask.priority || "Medium",
+                dueDate: apiTask.dueDate ? new Date(apiTask.dueDate) : new Date(),
+                startDate: apiTask.startDate ? new Date(apiTask.startDate) : new Date(),
+                estimatedTime: apiTask.estimatedTime || 0,
+                loggedTime: apiTask.loggedTime || 0,
+                createdBy: apiTask.createdBy || "",
+                projectId: apiTask.projectId || null,
+                dependencies: apiTask.dependencies || [],
+                subtasks: apiTask.subtasks || [],
+                comments: apiTask.comments || [],
+                assignedTo: apiTask.assignedTo || [],
+                completed: apiTask.completed || false,
                 tags: apiTask.tags || [],
-                project: apiTask.project || apiTask.projectId || ""
+                createdAt: apiTask.createdAt ? new Date(apiTask.createdAt) : undefined,
+                updatedAt: apiTask.updatedAt ? new Date(apiTask.updatedAt) : undefined
             }));
         }
     });
@@ -111,16 +117,18 @@ export default function TasksPage() {
 
         return tasksData.filter((task: Task) => {
             const matchesSearch =
-                task.title.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
+                task.name.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
                 task.description.toLowerCase().includes(filters.searchQuery.toLowerCase());
-            const matchesStatus = filters.status === "all" || task.status === filters.status;
-            const matchesPriority = filters.priority === "all" || task.priority === filters.priority;
+            const matchesStatus = filters.status === "all" ||
+                task.status.toLowerCase().replace(" ", "-") === filters.status.toLowerCase();
+            const matchesPriority = filters.priority === "all" ||
+                task.priority.toLowerCase() === filters.priority.toLowerCase();
             return matchesSearch && matchesStatus && matchesPriority;
         }).sort((a: Task, b: Task) => {
             if (!currentSort.field) return 0;
 
-            const fieldA = a[currentSort.field];
-            const fieldB = b[currentSort.field];
+            const fieldA = a[currentSort.field as keyof Task];
+            const fieldB = b[currentSort.field as keyof Task];
 
             if (typeof fieldA === 'string' && typeof fieldB === 'string') {
                 return currentSort.direction === 'asc'
@@ -134,9 +142,10 @@ export default function TasksPage() {
 
     // Group tasks for kanban view
     const groupedTasks = React.useMemo(() => ({
-        todo: filteredTasks.filter((task: Task) => task.status === "todo"),
-        inProgress: filteredTasks.filter((task: Task) => task.status === "in-progress"),
-        completed: filteredTasks.filter((task: Task) => task.status === "completed")
+        todo: filteredTasks.filter((task: Task) => task.status === "To Do" || task.status.toLowerCase() === "todo"),
+        inProgress: filteredTasks.filter((task: Task) => task.status === "In Progress" || task.status.toLowerCase() === "in progress"),
+        review: filteredTasks.filter((task: Task) => task.status === "Review" || task.status.toLowerCase() === "review"),
+        completed: filteredTasks.filter((task: Task) => task.status === "Completed" || task.status.toLowerCase() === "completed")
     }), [filteredTasks]);
 
     // Event handlers
@@ -158,37 +167,35 @@ export default function TasksPage() {
 
     const handleCreateTask = useCallback((taskData: any) => {
         createTaskMutation.mutate({
-            name: taskData.title,
-            title: taskData.title,
+            name: taskData.name,
             description: taskData.description,
-            status: taskData.status.charAt(0).toUpperCase() + taskData.status.slice(1).replace("-", " "),
-            priority: taskData.priority.toUpperCase(),
+            status: taskData.status,
+            priority: taskData.priority,
             dueDate: new Date(taskData.dueDate),
-            startDate: new Date(),
-            estimatedTime: 0,
-            loggedTime: 0,
+            startDate: taskData.startDate ? new Date(taskData.startDate) : new Date(),
+            estimatedTime: taskData.estimatedTime || 0,
+            loggedTime: taskData.loggedTime || 0,
             createdBy: '',
-            dependencies: [],
-            assignedTo: [],
-            subtasks: [],
-            comments: [],
-            completed: false,
-            tags: taskData.tags,
-            project: taskData.project,
-            assignee: taskData.assignee
+            projectId: null, //TODO: get project id from created project dropdown
+            dependencies: taskData.dependencies || [],
+            assignedTo: taskData.assignedTo || [],
+            subtasks: taskData.subtasks || [],
+            comments: taskData.comments || [],
+            completed: taskData.completed || false,
+            tags: taskData.tags || []
         });
     }, [createTaskMutation]);
 
     const renderPriorityBadge = useCallback((priority: TaskPriority) => {
-        const colors: Record<TaskPriority, string> = {
-            low: "bg-green-100 text-green-800 hover:bg-green-100",
-            medium: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-            high: "bg-red-100 text-red-800 hover:bg-red-100"
+        const colors: Record<string, string> = {
+            'Low': "bg-green-100 text-green-800 hover:bg-green-100",
+            'Medium': "bg-blue-100 text-blue-800 hover:bg-blue-100",
+            'High': "bg-red-100 text-red-800 hover:bg-red-100"
         };
 
         return (
-            <Badge className={`${colors[priority]} border-none`} variant="outline">
-                {priority.charAt(0).toUpperCase() + priority.slice(1)}
+            <Badge className={`${colors[priority] || colors['Medium']} border-none`} variant="outline">
+                {priority}
             </Badge>
         );
     }, []);
@@ -244,14 +251,10 @@ export default function TasksPage() {
                 onCreateTask={(taskData) => handleCreateTask({
                     ...taskData,
                     status: taskData.status as TaskStatus,
-                    priority: taskData.priority.toLowerCase() as TaskPriority,
-                    assignee: {
-                        name: 'Unassigned',
-                        avatar: '',
-                        initials: 'UA'
-                    },
+                    priority: taskData.priority as TaskPriority,
+                    assignedTo: taskData.assignedTo || [],
                     tags: taskData.tags || [],
-                    project: taskData.project || ''
+                    projectId: taskData.projectId || ''
                 })}
                 isLoading={createTaskMutation.isPending}
             />

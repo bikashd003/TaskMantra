@@ -29,7 +29,7 @@ const KanbanCard: React.FC<TaskCardProps> = ({
       <Card className="shadow-sm hover:shadow-md transition-all">
         <CardHeader className="p-3 pb-0">
           <div className="flex justify-between items-start">
-            <CardTitle className="text-sm font-medium">{task.title}</CardTitle>
+            <CardTitle className="text-sm font-medium">{task.name}</CardTitle>
             <TaskActions
               task={task}
               onStatusChange={onStatusChange}
@@ -49,20 +49,33 @@ const KanbanCard: React.FC<TaskCardProps> = ({
           </div>
           <div className="flex items-center justify-between">
             <div className="flex -space-x-2">
-              <Avatar className="h-6 w-6 border-2 border-background">
-                <AvatarImage
-                  src={task.assignee.avatar}
-                  alt={task.assignee.name}
-                />
-                <AvatarFallback className="text-xs">
-                  {task.assignee.initials}
-                </AvatarFallback>
-              </Avatar>
+              {task.assignedTo && task.assignedTo.length > 0 ? (
+                task.assignedTo.slice(0, 3).map((user, index) => (
+                  <Avatar key={index} className="h-6 w-6 border-2 border-background">
+                    <AvatarImage
+                      src={user.avatar}
+                      alt={user.name}
+                    />
+                    <AvatarFallback className="text-xs">
+                      {user.initials || user.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                ))
+              ) : (
+                <Avatar className="h-6 w-6 border-2 border-background">
+                  <AvatarFallback className="text-xs">UA</AvatarFallback>
+                </Avatar>
+              )}
+              {task.assignedTo && task.assignedTo.length > 3 && (
+                <Avatar className="h-6 w-6 border-2 border-background">
+                  <AvatarFallback className="text-xs">+{task.assignedTo.length - 3}</AvatarFallback>
+                </Avatar>
+              )}
             </div>
-            {task.tags.length > 0 && (
+            {(task?.tags ?? []).length > 0 && (
               <Badge variant="secondary" className="text-xs">
-                {task.tags[0]}
-                {task.tags.length > 1 && `+${task.tags.length - 1}`}
+                {(task?.tags ?? [])[0]}
+                {(task?.tags ?? []).length > 1 && `+${(task?.tags ?? []).length - 1}`}
               </Badge>
             )}
           </div>

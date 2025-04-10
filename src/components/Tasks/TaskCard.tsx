@@ -28,19 +28,19 @@ const TaskCard: React.FC<TaskCardProps> = ({
           <div className="flex justify-between items-start">
             <div className="flex items-center space-x-2">
               <Checkbox
-                checked={task.status === "completed"}
+                checked={task.status === "Completed"}
                 onCheckedChange={(checked) => {
-                  onStatusChange(task.id, checked ? "completed" : "todo");
+                  onStatusChange(task.id, checked ? "Completed" : "To Do");
                 }}
               />
               <CardTitle
                 className={`text-lg ${
-                  task.status === "completed"
+                  task.status === "Completed"
                     ? "line-through text-muted-foreground"
                     : ""
                 }`}
               >
-                {task.title}
+                {task.name}
               </CardTitle>
             </div>
             <TaskActions

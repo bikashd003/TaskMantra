@@ -7,7 +7,7 @@ const TaskMetadata: React.FC<TaskMetadataProps> = ({ task, renderPriorityBadge }
   return (
     <>
       <div className="flex flex-wrap gap-2 mb-4">
-        {task.tags.map((tag) => (
+        {task.tags && task.tags.map((tag) => (
           <Badge key={tag} variant="secondary" className="text-xs">
             <Tag className="h-3 w-3 mr-1" /> {tag}
           </Badge>
@@ -19,10 +19,10 @@ const TaskMetadata: React.FC<TaskMetadataProps> = ({ task, renderPriorityBadge }
           <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
         </div>
         <div>{renderPriorityBadge(task.priority)}</div>
-        {task.project && (
+        {task.projectId && (
           <div className="flex items-center">
             <Badge variant="outline" className="font-normal">
-              {task.project}
+              {task.projectId}
             </Badge>
           </div>
         )}

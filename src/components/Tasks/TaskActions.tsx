@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TaskActionsProps } from "./types";
 
-const TaskActions: React.FC<TaskActionsProps> = ({ 
-  task, 
-  onStatusChange, 
-  onDelete 
+const TaskActions: React.FC<TaskActionsProps> = ({
+  task,
+  onStatusChange,
+  onDelete
 }) => {
   return (
     <DropdownMenu>
@@ -27,21 +27,27 @@ const TaskActions: React.FC<TaskActionsProps> = ({
           <Edit className="mr-2 h-4 w-4" /> Edit
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem 
+        <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => onStatusChange(task.id, "todo")}
+          onClick={() => onStatusChange(task.id, "To Do")}
         >
           Mark as To Do
         </DropdownMenuItem>
-        <DropdownMenuItem 
+        <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => onStatusChange(task.id, "in-progress")}
+          onClick={() => onStatusChange(task.id, "In Progress")}
         >
           Mark as In Progress
         </DropdownMenuItem>
-        <DropdownMenuItem 
+        <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => onStatusChange(task.id, "completed")}
+          onClick={() => onStatusChange(task.id, "Review")}
+        >
+          Mark as Review
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => onStatusChange(task.id, "Completed")}
         >
           Mark as Completed
         </DropdownMenuItem>
