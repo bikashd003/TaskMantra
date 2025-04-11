@@ -63,6 +63,8 @@ export interface KanbanColumnProps {
   onStatusChange: (taskId: string, newStatus: TaskStatus) => void;
   onDelete: (taskId: string) => void;
   renderPriorityBadge: (priority: TaskPriority) => React.ReactNode;
+  id?: string;
+  onTaskClick?: (taskId: string) => void;
 }
 
 export interface TaskActionsProps {

@@ -85,6 +85,23 @@ app.post('/', async (c) => {
   }
 });
 
+app.patch('/:taskId', async (c) => {
+  const taskId = c.req.param('taskId');
+  const user = c.get('user');
+
+  if (!user) {
+    return c.json({ error: 'User not authenticated' }, 401);
+  }
+
+  try {
+    const taskData = await c.req.json();
+    const task = await Task.findByIdAndUpdate(taskId, taskData, { new: true });
+    return c.json({ task });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 
 export const GET = handle(app);
 export const POST = handle(app);
