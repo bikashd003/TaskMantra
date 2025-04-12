@@ -9,6 +9,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import ClientProviders from "@/context/ClientProviders";
 import { PostHogProvider } from "@/components/Providers/PostHogProvider";
 import { NotificationProvider } from "@/components/Providers/NotificationProvider";
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -40,7 +41,10 @@ export default function RootLayout({
             <NextUiProviders>
               <Providers>
                 <NotificationProvider>
-                  <main>{children}</main>
+                  <main>
+                    {children}
+                    <Analytics />
+                  </main>
                   <Toaster />
                   <Sonner richColors />
                 </NotificationProvider>

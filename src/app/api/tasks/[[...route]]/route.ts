@@ -22,7 +22,7 @@ app.use('*', logger());
 app.use('*', async (c, next) => {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (session?.user) {
       const userData = {
         id: session.user.id || '',
@@ -45,7 +45,45 @@ app.get('/', async (c) => {
   }
 
   try {
-    const tasks = await Task.find({ createdBy: user.id });
+    // Get query parameters
+    const searchQuery = c.req.query('search') || '';
+    const status = c.req.query('status') || 'all';
+    const priority = c.req.query('priority') || 'all';
+    const sortField = c.req.query('sortField') || 'dueDate';
+    const sortDirection = c.req.query('sortDirection') || 'desc';
+
+    // Build the query
+    const query: any = { createdBy: user.id };
+
+    // Add search filter if provided
+    if (searchQuery) {
+      query.$or = [
+        { name: { $regex: searchQuery, $options: 'i' } },
+        { description: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
+
+    // Add status filter if not 'all'
+    if (status !== 'all') {
+      // Handle hyphenated status values from frontend
+      const formattedStatus = status.includes('-')
+        ? status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        : status;
+      query.status = formattedStatus;
+    }
+
+    // Add priority filter if not 'all'
+    if (priority !== 'all') {
+      query.priority = priority.charAt(0).toUpperCase() + priority.slice(1);
+    }
+
+    // Create sort object
+    const sort: any = {};
+    sort[sortField] = sortDirection === 'asc' ? 1 : -1;
+
+    // Execute query with filters and sorting
+    const tasks = await Task.find(query).sort(sort);
+
     return c.json({ tasks });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);

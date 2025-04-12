@@ -2,9 +2,41 @@ import { Task } from '@/types/task';
 import axios from 'axios';
 
 export class TaskService {
-    static async getAllTasks(): Promise<Task[]> {
+    static async getAllTasks(filters?: {
+        searchQuery?: string;
+        status?: string;
+        priority?: string;
+        sortField?: string;
+        sortDirection?: 'asc' | 'desc';
+    }): Promise<Task[]> {
         try {
-            const response = await axios.get('/api/tasks');
+            // Build query parameters
+            const params = new URLSearchParams();
+
+            if (filters?.searchQuery) {
+                params.append('search', filters.searchQuery);
+            }
+
+            if (filters?.status && filters.status !== 'all') {
+                params.append('status', filters.status);
+            }
+
+            if (filters?.priority && filters.priority !== 'all') {
+                params.append('priority', filters.priority);
+            }
+
+            if (filters?.sortField) {
+                params.append('sortField', filters.sortField);
+            }
+
+            if (filters?.sortDirection) {
+                params.append('sortDirection', filters.sortDirection);
+            }
+
+            const queryString = params.toString();
+            const url = queryString ? `/api/tasks?${queryString}` : '/api/tasks';
+
+            const response = await axios.get(url);
             return response.data?.tasks || [];
         } catch (error) {
             throw new Error('Failed to fetch tasks');
