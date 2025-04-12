@@ -1,9 +1,12 @@
-import { Bell, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthProvider';
 import { Playfair_Display } from 'next/font/google';
 import { Button } from '../ui/button';
 import { TeamLoggerPopover } from './TeamLogger';
+import { useDisclosure } from "@heroui/react";
+import InviteModal from './InviteModal';
+import { NotificationsPopover } from './NotificationsPopover';
 
 const playwrite = Playfair_Display({
   subsets: ['latin'],
@@ -11,6 +14,7 @@ const playwrite = Playfair_Display({
 })
 
 const Header = () => {
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [currentTime, setCurrentTime] = useState(new Date());
   const { session } = useAuth();
 
@@ -38,12 +42,13 @@ const Header = () => {
         <p className="text-sm opacity-80">{formatDate(currentTime)}</p>
       </div>
       <div className="flex space-x-6 items-center">
-        <Bell className="w-6 h-6 cursor-pointer hover:text-yellow-300 transition-colors duration-300" />
+        <NotificationsPopover />
         <TeamLoggerPopover />
-        <Button variant="ghost" size="default" className='border shadow-sm bg-gray-100'>
+        <Button variant="ghost" size="default" className='border shadow-sm bg-gray-100' onClick={onOpen}>
           <UserPlus className="w-6 h-6 cursor-pointer hover:text-gray-200" />
           Invite
         </Button>
+        <InviteModal isOpen={isOpen} onOpenChange={onOpenChange} />
       </div>
     </header>
   );
