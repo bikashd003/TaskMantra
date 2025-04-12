@@ -155,4 +155,43 @@ export class NotificationService {
       metadata: { organizationName }
     });
   }
+
+  /**
+   * Create a task status change notification
+   */
+  static async createTaskStatusChangeNotification(
+    userId: string,
+    taskId: string,
+    taskName: string,
+    oldStatus: string,
+    newStatus: string
+  ): Promise<any> {
+    return this.createNotification({
+      userId,
+      title: 'Task Status Changed',
+      description: `Task "${taskName}" moved from ${oldStatus} to ${newStatus}`,
+      type: 'task',
+      link: `/tasks?id=${taskId}`,
+      metadata: { taskId, oldStatus, newStatus }
+    });
+  }
+
+  /**
+   * Create a task comment notification
+   */
+  static async createTaskCommentNotification(
+    userId: string,
+    taskId: string,
+    taskName: string,
+    commenterName: string
+  ): Promise<any> {
+    return this.createNotification({
+      userId,
+      title: 'New Comment on Task',
+      description: `${commenterName} commented on task "${taskName}"`,
+      type: 'task',
+      link: `/tasks?id=${taskId}`,
+      metadata: { taskId, commenterName }
+    });
+  }
 }

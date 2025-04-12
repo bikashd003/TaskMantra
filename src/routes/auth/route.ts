@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { connectDB } from "@/Utility/db";
 import { User } from "@/models/User";
 

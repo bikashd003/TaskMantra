@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -37,11 +37,30 @@ export default function TasksPage() {
     const [currentSort, setCurrentSort] = useState<TaskSortOption>(sortOptions[0]);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 
-    // Fetch tasks
+    // Debounce search query to prevent excessive API calls
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
+
+    // Update debounced search query after a delay
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(filters.searchQuery);
+        }, 500); // 500ms delay
+
+        return () => clearTimeout(timer);
+    }, [filters.searchQuery]);
+
+    // Fetch tasks with filters applied on the backend
     const { data: tasksData = [], isLoading } = useQuery({
-        queryKey: ['tasks'],
+        queryKey: ['tasks', debouncedSearchQuery, filters.status, filters.priority, currentSort],
         queryFn: async () => {
-            const apiTasks = await TaskService.getAllTasks();
+            const apiTasks = await TaskService.getAllTasks({
+                searchQuery: debouncedSearchQuery,
+                status: filters.status,
+                priority: filters.priority,
+                sortField: currentSort.field as string,
+                sortDirection: currentSort.direction
+            });
+
             // Transform API tasks to UI tasks if needed
             return apiTasks.map((apiTask: any) => ({
                 id: apiTask.id || apiTask._id,
@@ -64,7 +83,11 @@ export default function TasksPage() {
                 createdAt: apiTask.createdAt ? new Date(apiTask.createdAt) : undefined,
                 updatedAt: apiTask.updatedAt ? new Date(apiTask.updatedAt) : undefined
             }));
-        }
+        },
+        // These settings will override the global defaults if needed
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchOnWindowFocus: true,
+        refetchOnMount: false, // Don't refetch when component mounts if data is fresh
     });
 
     // Mutations
@@ -90,6 +113,7 @@ export default function TasksPage() {
             });
         },
         onSuccess: () => {
+            // Invalidate all task queries regardless of filters
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             toast.success('Task updated successfully');
         },
@@ -102,6 +126,7 @@ export default function TasksPage() {
     const deleteTaskMutation = useMutation({
         mutationFn: TaskService.deleteTask,
         onSuccess: () => {
+            // Invalidate all task queries regardless of filters
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             toast.success('Task deleted successfully');
         },
@@ -111,34 +136,11 @@ export default function TasksPage() {
         },
     });
 
-    // Filter and sort tasks
+    // Tasks are now filtered and sorted on the backend
     const filteredTasks = React.useMemo(() => {
         if (!tasksData) return [];
-
-        return tasksData.filter((task: Task) => {
-            const matchesSearch =
-                task.name.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-                task.description.toLowerCase().includes(filters.searchQuery.toLowerCase());
-            const matchesStatus = filters.status === "all" ||
-                task.status.toLowerCase().replace(" ", "-") === filters.status.toLowerCase();
-            const matchesPriority = filters.priority === "all" ||
-                task.priority.toLowerCase() === filters.priority.toLowerCase();
-            return matchesSearch && matchesStatus && matchesPriority;
-        }).sort((a: Task, b: Task) => {
-            if (!currentSort.field) return 0;
-
-            const fieldA = a[currentSort.field as keyof Task];
-            const fieldB = b[currentSort.field as keyof Task];
-
-            if (typeof fieldA === 'string' && typeof fieldB === 'string') {
-                return currentSort.direction === 'asc'
-                    ? fieldA.localeCompare(fieldB)
-                    : fieldB.localeCompare(fieldA);
-            }
-
-            return 0;
-        });
-    }, [tasksData, filters, currentSort]);
+        return tasksData;
+    }, [tasksData]);
 
     // Group tasks for kanban view
     const groupedTasks = React.useMemo(() => ({
