@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { TaskStatus, TaskPriority, statusOptions, priorityOptions, Subtask } from './types';
+import { TaskStatus, TaskPriority, statusOptions, priorityOptions, Subtask, Task } from './types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TaskData {
@@ -39,6 +39,8 @@ interface CreateTaskModalProps {
   onClose: () => void;
   onCreateTask: (task: TaskData) => void;
   isLoading: boolean;
+  initialDate?: Date | null;
+  editTask?: Task | null;
 }
 
 const initialTaskState: TaskData = {
@@ -81,9 +83,42 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   onClose,
   onCreateTask,
   isLoading,
+  initialDate,
+  editTask,
 }) => {
+  // Prepare initial values based on props
+  const getInitialValues = () => {
+    if (editTask) {
+      // If editing an existing task, use its values
+      return {
+        name: editTask.name || '',
+        description: editTask.description || '',
+        status: editTask.status || 'To Do',
+        priority: editTask.priority || 'Medium',
+        dueDate: editTask.dueDate ? new Date(editTask.dueDate).toISOString().split('T')[0] : '',
+        startDate: editTask.startDate ? new Date(editTask.startDate).toISOString().split('T')[0] : '',
+        estimatedTime: editTask.estimatedTime || 0,
+        loggedTime: editTask.loggedTime || 0,
+        projectId: editTask.projectId || '',
+        subtasks: editTask.subtasks || [],
+        assignedTo: editTask.assignedTo ? editTask.assignedTo.map(user => typeof user === 'string' ? user : user.id) : [],
+        tags: editTask.tags || [],
+      };
+    } else {
+      // For new tasks, use default values with initialDate if provided
+      const today = new Date();
+      const dateString = today.toISOString().split('T')[0];
+
+      return {
+        ...initialTaskState,
+        startDate: initialDate ? initialDate.toISOString().split('T')[0] : dateString,
+        dueDate: initialDate ? initialDate.toISOString().split('T')[0] : dateString,
+      };
+    }
+  };
+
   const formik = useFormik({
-    initialValues: initialTaskState,
+    initialValues: getInitialValues(),
     validationSchema: validationSchema,
     onSubmit: async (values) => {
       try {
@@ -91,7 +126,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         formik.resetForm();
         onClose();
       } catch (error) {
-        toast.error("Failed to create task", {
+        toast.error("Failed to " + (editTask ? "update" : "create") + " task", {
           description: error instanceof Error ? error.message : "Unknown error",
         });
       }
@@ -117,9 +152,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               <CheckCircle2 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold">Create New Task</h2>
+              <h2 className="text-xl font-semibold">{editTask ? 'Edit Task' : 'Create New Task'}</h2>
               <p className="text-sm text-muted-foreground">
-                Add a new task to your project
+                {editTask ? 'Update task details' : 'Add a new task to your project'}
               </p>
             </div>
           </div>
