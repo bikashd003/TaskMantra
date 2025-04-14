@@ -1,4 +1,61 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { format } from 'date-fns';
+
+// Add global styles for drag highlight
+const addGlobalStyles = () => {
+  const styleId = 'calendar-drag-styles';
+  if (!document.getElementById(styleId)) {
+    const styleEl = document.createElement('style');
+    styleEl.id = styleId;
+    styleEl.innerHTML = `
+      .calendar-day-highlight {
+        background-color: rgba(59, 130, 246, 0.15) !important;
+        box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.4) !important;
+        transition: all 0.1s ease-in-out;
+      }
+
+      .task-dragging {
+        opacity: 0.8;
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        z-index: 100 !important;
+      }
+
+      .task-resize-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 6px;
+        cursor: ew-resize;
+        transition: all 0.15s ease;
+        opacity: 0;
+      }
+
+      .task-resize-handle:hover,
+      .task-resize-handle:active {
+        background-color: rgba(59, 130, 246, 0.5);
+        opacity: 1;
+      }
+
+      .task-resize-handle-start {
+        left: 0;
+        border-top-left-radius: 4px;
+        border-bottom-left-radius: 4px;
+      }
+
+      .task-resize-handle-end {
+        right: 0;
+        border-top-right-radius: 4px;
+        border-bottom-right-radius: 4px;
+      }
+
+      .task-card:hover .task-resize-handle {
+        opacity: 0.5;
+      }
+    `;
+    document.head.appendChild(styleEl);
+  }
+};
 import { Task, TaskPriority } from './types';
 import {
   ChevronLeft,
@@ -45,6 +102,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   onAddTask,
   onTaskUpdate
 }) => {
+  // Add global styles for drag highlight
+  useEffect(() => {
+    addGlobalStyles();
+  }, []);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
@@ -64,6 +125,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragType, setDragType] = useState<'start' | 'end' | 'move' | null>(null);
+  const [mousePosition, setMousePosition] = useState<{ x: number, y: number } | null>(null);
+  const [hoverDate, setHoverDate] = useState<Date | null>(null);
 
   // Ref for calendar grid
   const calendarGridRef = useRef<HTMLDivElement | null>(null);
@@ -256,27 +319,27 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   // Function to get date from mouse position
   const getDateFromPosition = (x: number, y: number): Date | null => {
     if (!calendarGridRef.current) return null;
-    
+
     const grid = calendarGridRef.current;
     const gridRect = grid.getBoundingClientRect();
-    
+
     // Check if mouse is within grid bounds
     if (x < gridRect.left || x > gridRect.right || y < gridRect.top || y > gridRect.bottom) {
       return null;
     }
-    
+
     // Calculate which cell we're over
     const cellWidth = gridRect.width / 7; // 7 days per week
     const cellHeight = (gridRect.height - 30) / Math.ceil(calendarDays.length / 7); // Subtract header height
-    
+
     const colIndex = Math.floor((x - gridRect.left) / cellWidth);
     const rowIndex = Math.floor((y - gridRect.top - 30) / cellHeight); // Subtract header height
-    
+
     const dayIndex = rowIndex * 7 + colIndex;
     if (dayIndex >= 0 && dayIndex < calendarDays.length) {
       return calendarDays[dayIndex].date;
     }
-    
+
     return null;
   };
 
@@ -284,46 +347,118 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const handleTaskMouseDown = (e: React.MouseEvent, task: Task, type: 'start' | 'end' | 'move') => {
     e.stopPropagation();
     e.preventDefault();
-    
+
     setIsDragging(true);
     setDraggedTask(task);
     setDragType(type);
-    
+
     // Set up mouse move and mouse up handlers
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
-  
+
   // Handle mouse move during drag
-  const handleMouseMove = (_e: MouseEvent) => {
-    if (!isDragging || !draggedTask) return;
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging || !draggedTask || !dragType) return;
+
+    // Update mouse position
+    setMousePosition({ x: e.clientX, y: e.clientY });
+
+    // Get the date from the current mouse position
+    const targetDate = getDateFromPosition(e.clientX, e.clientY);
+    if (!targetDate) return;
+
+    // Update hover date
+    setHoverDate(targetDate);
+
+    // Add visual feedback during dragging
+    const dateElement = document.getElementById(targetDate.toISOString());
+    if (dateElement) {
+      // Remove highlight from all cells
+      document.querySelectorAll('.calendar-day-highlight').forEach(el => {
+        el.classList.remove('calendar-day-highlight');
+      });
+
+      // Add highlight to the target cell
+      dateElement.classList.add('calendar-day-highlight');
+
+      // Add visual preview of the task's new dates
+      if (dragType === 'start') {
+        // Preview start date change
+        const currentEndDate = new Date(draggedTask.dueDate);
+        if (targetDate <= currentEndDate) {
+          // Highlight all dates between new start date and current end date
+          highlightDateRange(targetDate, currentEndDate);
+        }
+      } else if (dragType === 'end') {
+        // Preview end date change
+        const currentStartDate = new Date(draggedTask.startDate);
+        if (targetDate >= currentStartDate) {
+          // Highlight all dates between current start date and new end date
+          highlightDateRange(currentStartDate, targetDate);
+        }
+      } else if (dragType === 'move') {
+        // Preview task move
+        const currentStartDate = new Date(draggedTask.startDate);
+        const currentEndDate = new Date(draggedTask.dueDate);
+        const duration = currentEndDate.getTime() - currentStartDate.getTime();
+        const newEndDate = new Date(targetDate.getTime() + duration);
+
+        // Highlight all dates in the new range
+        highlightDateRange(targetDate, newEndDate);
+      }
+    }
   };
-  
+
+  // Helper function to highlight a range of dates
+  const highlightDateRange = (startDate: Date, endDate: Date) => {
+    const dates = getDatesInRange(startDate, endDate);
+    dates.forEach(date => {
+      const dateElement = document.getElementById(date.toISOString());
+      if (dateElement) {
+        dateElement.classList.add('calendar-day-highlight');
+      }
+    });
+  };
+
   // Handle mouse up to end drag
   const handleMouseUp = (e: MouseEvent) => {
     if (!isDragging || !draggedTask || !dragType) {
       cleanupDrag();
       return;
     }
-    
+
     const targetDate = getDateFromPosition(e.clientX, e.clientY);
     if (!targetDate) {
       cleanupDrag();
       return;
     }
-    
+
+    // Normalize dates for comparison (remove time component)
+    const normalizeDate = (date: Date): Date => {
+      const normalized = new Date(date);
+      normalized.setHours(0, 0, 0, 0);
+      return normalized;
+    };
+
     // Update the task with new dates
     if (onTaskUpdate) {
       const updates: Partial<Task> = {};
-      
+
       if (dragType === 'start') {
         // Don't allow start date to be after end date
-        if (targetDate <= new Date(draggedTask.dueDate)) {
+        const normalizedTarget = normalizeDate(targetDate);
+        const normalizedDueDate = normalizeDate(new Date(draggedTask.dueDate));
+
+        if (normalizedTarget <= normalizedDueDate) {
           updates.startDate = targetDate;
         }
       } else if (dragType === 'end') {
         // Don't allow end date to be before start date
-        if (targetDate >= new Date(draggedTask.startDate)) {
+        const normalizedTarget = normalizeDate(targetDate);
+        const normalizedStartDate = normalizeDate(new Date(draggedTask.startDate));
+
+        if (normalizedTarget >= normalizedStartDate) {
           updates.dueDate = targetDate;
         }
       } else if (dragType === 'move') {
@@ -331,28 +466,37 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         const currentStartDate = new Date(draggedTask.startDate);
         const currentEndDate = new Date(draggedTask.dueDate);
         const duration = currentEndDate.getTime() - currentStartDate.getTime();
-        
+
         const newStartDate = new Date(targetDate);
         const newEndDate = new Date(newStartDate.getTime() + duration);
-        
+
         updates.startDate = newStartDate;
         updates.dueDate = newEndDate;
       }
-      
+
       if (Object.keys(updates).length > 0) {
+        // Apply the updates
         onTaskUpdate(draggedTask.id, updates);
       }
     }
-    
+
+    // Reset state
+    setMousePosition(null);
+    setHoverDate(null);
     cleanupDrag();
   };
-  
+
   // Clean up drag state and event listeners
   const cleanupDrag = () => {
     setIsDragging(false);
     setDraggedTask(null);
     setDragType(null);
-    
+
+    // Remove any highlight classes
+    document.querySelectorAll('.calendar-day-highlight').forEach(el => {
+      el.classList.remove('calendar-day-highlight');
+    });
+
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
   };
@@ -370,11 +514,38 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     setViewMode(mode);
   };
 
+  // Render a visual indicator for the mouse position during dragging
+  const renderDragIndicator = () => {
+    if (!isDragging || !mousePosition) return null;
+
+    return (
+      <div
+        className="fixed w-4 h-4 rounded-full bg-blue-500 shadow-lg pointer-events-none z-50 opacity-70"
+        style={{
+          left: mousePosition.x - 8,
+          top: mousePosition.y - 8,
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
+    );
+  };
+
   return (
     <div className={cn(
-      "bg-white rounded-lg shadow-sm border p-4 w-full transition-all",
-      isDragging && "bg-blue-50 border-blue-200"
+      "bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-md border border-slate-200/50 p-5 w-full transition-all backdrop-blur-sm relative",
+      isDragging && "from-blue-50 to-blue-100/70 border-blue-200"
     )}>
+      {/* Drag indicator */}
+      {renderDragIndicator()}
+
+      {/* Drag operation indicator */}
+      {isDragging && dragType && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg z-50 text-sm font-medium">
+          {dragType === 'start' && 'Changing start date...'}
+          {dragType === 'end' && 'Changing end date...'}
+          {dragType === 'move' && 'Moving task...'}
+        </div>
+      )}
       {/* Task Creation/Edit Modal */}
       <CreateTaskModal
         isOpen={isCreateModalOpen}
@@ -384,39 +555,50 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         initialDate={selectedDateForTask}
         editTask={taskToEdit}
       />
-      
+
       {/* Calendar Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 space-y-4 md:space-y-0">
-        <div className="flex items-center space-x-2">
-          <CalendarIcon className="h-5 w-5 text-gray-500" />
-          <h2 className="text-xl font-bold">
+        <div className="flex items-center space-x-3">
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2 rounded-lg shadow-md">
+            <CalendarIcon className="h-5 w-5 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
             {MONTHS[currentMonth]} {currentYear}
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           {/* View Mode Toggle */}
-          <div className="flex border rounded-md overflow-hidden">
+          <div className="flex bg-slate-100/80 rounded-xl overflow-hidden p-1 shadow-inner">
             <Button
-              variant={viewMode === 'month' ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              className={`rounded-none ${viewMode === 'month' ? '' : 'text-gray-500'}`}
+              className={cn(
+                "rounded-lg transition-all duration-200",
+                viewMode === 'month' ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-blue-500"
+              )}
               onClick={() => handleViewModeChange('month')}
             >
               Month
             </Button>
             <Button
-              variant={viewMode === 'week' ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              className={`rounded-none ${viewMode === 'week' ? '' : 'text-gray-500'}`}
+              className={cn(
+                "rounded-lg transition-all duration-200",
+                viewMode === 'week' ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-blue-500"
+              )}
               onClick={() => handleViewModeChange('week')}
             >
               Week
             </Button>
             <Button
-              variant={viewMode === 'day' ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              className={`rounded-none ${viewMode === 'day' ? '' : 'text-gray-500'}`}
+              className={cn(
+                "rounded-lg transition-all duration-200",
+                viewMode === 'day' ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-blue-500"
+              )}
               onClick={() => handleViewModeChange('day')}
             >
               Day
@@ -426,47 +608,49 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           {/* Filter Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1">
-                <Filter className="h-4 w-4" /> Filters
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1 bg-white/80 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm"
+              >
+                <Filter className="h-4 w-4 text-blue-500" /> Filters
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <div className="p-2 flex flex-col space-y-4">
+            <DropdownMenuContent align="end" className="w-56 rounded-xl border-slate-200 shadow-lg bg-white/95 backdrop-blur-sm">
+              <div className="p-3 flex flex-col space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">Show Completed</span>
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    <span className="text-sm font-medium">Show Completed</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={taskFilter.showCompleted}
-                    onChange={(e) => toggleTaskFilter('showCompleted', e.target.checked)}
-                    className="h-4 w-4"
-                  />
+                  <div className="relative inline-flex h-5 w-10 items-center rounded-full bg-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white cursor-pointer"
+                    onClick={() => toggleTaskFilter('showCompleted', !taskFilter.showCompleted)}
+                  >
+                    <span className={cn("absolute mx-0.5 h-4 w-4 rounded-full bg-white transition-transform", taskFilter.showCompleted ? "translate-x-5 shadow-md" : "translate-x-0")} />
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm">Overdue Only</span>
+                    <AlertCircle className="h-4 w-4 text-rose-500" />
+                    <span className="text-sm font-medium">Overdue Only</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={taskFilter.overdueOnly}
-                    onChange={(e) => toggleTaskFilter('overdueOnly', e.target.checked)}
-                    className="h-4 w-4"
-                  />
+                  <div className="relative inline-flex h-5 w-10 items-center rounded-full bg-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white cursor-pointer"
+                    onClick={() => toggleTaskFilter('overdueOnly', !taskFilter.overdueOnly)}
+                  >
+                    <span className={cn("absolute mx-0.5 h-4 w-4 rounded-full bg-white transition-transform", taskFilter.overdueOnly ? "translate-x-5 shadow-md" : "translate-x-0")} />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm">Priority</span>
+                    <Tag className="h-4 w-4 text-indigo-500" />
+                    <span className="text-sm font-medium">Priority</span>
                   </div>
                   <select
                     value={taskFilter.priorityFilter}
                     onChange={(e) => toggleTaskFilter('priorityFilter', e.target.value)}
-                    className="w-full text-sm p-1 border rounded"
+                    className="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   >
                     <option value="all">All Priorities</option>
                     <option value="High">High</option>
@@ -478,15 +662,30 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline" size="sm" onClick={goToToday}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToToday}
+            className="bg-white/80 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm font-medium"
+          >
             Today
           </Button>
-          <div className="flex items-center space-x-1">
-            <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
-              <ChevronLeft className="h-4 w-4" />
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={goToPreviousMonth}
+              className="bg-white/80 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm h-8 w-8"
+            >
+              <ChevronLeft className="h-4 w-4 text-slate-600" />
             </Button>
-            <Button variant="outline" size="icon" onClick={goToNextMonth}>
-              <ChevronRight className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={goToNextMonth}
+              className="bg-white/80 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm h-8 w-8"
+            >
+              <ChevronRight className="h-4 w-4 text-slate-600" />
             </Button>
           </div>
         </div>
@@ -494,14 +693,17 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
       {/* Calendar Grid - Only show for month view */}
       {viewMode === 'month' && (
-        <div className="grid grid-cols-7 border-t border-l" ref={calendarGridRef}>
+        <div className="grid grid-cols-7 rounded-xl overflow-hidden shadow-sm border border-slate-200/70 bg-white/50" ref={calendarGridRef}>
           {/* Day Headers */}
           {DAYS.map((day, index) => (
             <div
               key={index}
-              className="text-center text-xs font-medium text-gray-500 py-2 border-r border-b bg-gray-50"
+              className={cn(
+                "text-center font-medium py-3 border-b bg-gradient-to-b from-slate-50 to-slate-100/80",
+                index === 0 || index === 6 ? "text-blue-500" : "text-slate-600"
+              )}
             >
-              {day.slice(0, 3)}
+              <span className="text-xs tracking-wide uppercase">{day.slice(0, 3)}</span>
             </div>
           ))}
 
@@ -517,21 +719,25 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                 key={index}
                 id={date.toISOString()}
                 className={cn(
-                  "min-h-[100px] p-1 border-r border-b relative",
-                  isCurrentMonth ? "bg-white" : "bg-gray-50/50",
-                  isToday(date) ? "bg-blue-50/30" : "",
-                  isSelected(date) ? "ring-1 ring-inset ring-blue-500" : "",
-                  isWeekend && "bg-gray-50/30",
-                  "transition-all hover:bg-gray-50/70"
+                  "min-h-[120px] p-2 relative group",
+                  index % 7 !== 6 ? "border-r border-slate-100" : "",
+                  index < calendarDays.length - 7 ? "border-b border-slate-100" : "",
+                  isCurrentMonth ? "bg-white" : "bg-slate-50/30",
+                  isToday(date) ? "bg-blue-50/40" : "",
+                  isSelected(date) ? "ring-2 ring-inset ring-blue-400" : "",
+                  isWeekend && isCurrentMonth && "bg-slate-50/50",
+                  "transition-all duration-200 hover:bg-blue-50/20"
                 )}
                 onClick={() => handleDateClick(date)}
               >
-                <div className="flex justify-between items-start p-1">
+                <div className="flex justify-between items-start">
                   <span
                     className={cn(
-                      "text-xs font-medium rounded-full h-6 w-6 flex items-center justify-center",
-                      isToday(date) ? "bg-blue-500 text-white" : "",
-                      !isCurrentMonth ? "text-gray-400" : ""
+                      "font-medium rounded-full h-7 w-7 flex items-center justify-center transition-all duration-200",
+                      isToday(date) ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md" : "",
+                      isSelected(date) && !isToday(date) ? "bg-blue-100 text-blue-700" : "",
+                      !isCurrentMonth ? "text-slate-400 text-xs" : "text-slate-700",
+                      isCurrentMonth && !isToday(date) && !isSelected(date) ? "group-hover:bg-blue-100 group-hover:text-blue-700" : ""
                     )}
                   >
                     {date.getDate()}
@@ -541,13 +747,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-all duration-200 hover:bg-blue-100 hover:text-blue-600 rounded-full"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleAddTask(date);
                       }}
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-3.5 w-3.5" />
                     </Button>
                   )}
                 </div>
@@ -575,15 +781,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     const getStatusColor = () => {
                       switch (task.status) {
                         case "To Do":
-                          return "bg-slate-200 hover:bg-slate-300 border-slate-300";
+                          return "bg-gradient-to-r from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 border-slate-300 shadow-sm";
                         case "In Progress":
-                          return "bg-blue-200 hover:bg-blue-300 border-blue-300";
+                          return "bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 border-blue-300 shadow-sm";
                         case "Review":
-                          return "bg-amber-200 hover:bg-amber-300 border-amber-300";
+                          return "bg-gradient-to-r from-amber-100 to-amber-200 hover:from-amber-200 hover:to-amber-300 border-amber-300 shadow-sm";
                         case "Completed":
-                          return "bg-green-200 hover:bg-green-300 border-green-300";
+                          return "bg-gradient-to-r from-emerald-100 to-emerald-200 hover:from-emerald-200 hover:to-emerald-300 border-emerald-300 shadow-sm";
                         default:
-                          return "bg-gray-200 hover:bg-gray-300 border-gray-300";
+                          return "bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 border-gray-300 shadow-sm";
                       }
                     };
 
@@ -610,12 +816,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                       <div
                         key={task.id}
                         className={cn(
-                          "absolute h-5 rounded-sm border text-xs flex items-center overflow-hidden cursor-pointer transition-all",
+                          "absolute h-6 rounded-md border text-xs flex items-center overflow-hidden cursor-pointer transition-all duration-200 task-card",
                           getStatusColor(),
-                          isMultiDayTask ? "z-10" : "mx-1"
+                          isMultiDayTask ? "z-10" : "mx-1",
+                          isDragging && draggedTask?.id === task.id ? "task-dragging" : "",
+                          hoverDate && isDragging && draggedTask?.id === task.id ? "pointer-events-none" : ""
                         )}
                         style={{
-                          top: `${(taskIndex * 24) + 30}px`,
+                          top: `${(taskIndex * 26) + 32}px`,
                           left: isMultiDayTask ? 0 : '4px',
                           width: isMultiDayTask ? `calc(${taskDuration * 100}% - 2px)` : 'calc(100% - 8px)',
                           zIndex: isMultiDayTask ? 10 + taskIndex : 5
@@ -627,28 +835,28 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                         onMouseDown={(e) => handleTaskMouseDown(e, task, 'move')}
                       >
                         {/* Task content */}
-                        <div className="flex items-center h-full w-full px-1">
+                        <div className="flex items-center h-full w-full px-2">
                           {/* Assignee avatar */}
-                          <div className="flex-shrink-0 mr-1">
-                            <div className={cn("w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold", getAvatarColor())}>
+                          <div className="flex-shrink-0 mr-1.5">
+                            <div className={cn("w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold shadow-sm", getAvatarColor())}>
                               {getAssigneeInitials()}
                             </div>
                           </div>
 
                           {/* Task name */}
-                          <span className="truncate flex-grow">{task.name}</span>
+                          <span className="truncate flex-grow font-medium">{task.name}</span>
 
                           {/* Edit button - only show on hover */}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 hover:opacity-100 ml-auto"
+                            className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 hover:opacity-100 ml-auto hover:bg-white/50 rounded-full"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEditTask(task);
                             }}
                           >
-                            <Edit className="h-2 w-2" />
+                            <Edit className="h-2.5 w-2.5" />
                           </Button>
                         </div>
 
@@ -656,12 +864,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                         {isMultiDayTask && (
                           <>
                             <div
-                              className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-blue-400 hover:w-2"
+                              className="task-resize-handle task-resize-handle-start"
                               onMouseDown={(e) => handleTaskMouseDown(e, task, 'start')}
+                              title="Drag to change start date"
                             />
                             <div
-                              className="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-blue-400 hover:w-2"
+                              className="task-resize-handle task-resize-handle-end"
                               onMouseDown={(e) => handleTaskMouseDown(e, task, 'end')}
+                              title="Drag to change end date"
                             />
                           </>
                         )}
@@ -670,11 +880,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   })}
 
                   {dayTasks.length > 3 && (
-                    <div className="mt-2">
+                    <div className="mt-3">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-xs w-full h-6"
+                        className="text-xs w-full h-6 bg-slate-100/80 hover:bg-slate-200/80 text-slate-600 hover:text-slate-800 rounded-md transition-all duration-200 shadow-sm"
                         onClick={(e) => e.stopPropagation()}
                       >
                         +{dayTasks.length - 3} more
@@ -685,7 +895,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   {/* Indicator for overdue tasks */}
                   {hasOverdueTasks && (
                     <div className="absolute top-1 right-1">
-                      <div className="h-2 w-2 bg-red-500 rounded-full"></div>
+                      <div className="h-3 w-3 bg-gradient-to-br from-red-400 to-red-600 rounded-full shadow-sm animate-pulse"></div>
                     </div>
                   )}
                 </div>
@@ -696,18 +906,46 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       )}
 
       {viewMode === 'week' && (
-        <div className="border rounded-lg p-4">
-          <h3 className="text-lg font-medium mb-4">Week View</h3>
-          <p className="text-gray-500">Week view is coming soon</p>
+        <div className="border border-slate-200 rounded-xl p-6 bg-white/80 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-lg shadow-md">
+              <CalendarIcon className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+              Week View
+            </h3>
+          </div>
+          <div className="flex items-center justify-center py-16 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-lg border border-slate-200/70">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 mb-4">
+                <CalendarIcon className="h-8 w-8 text-indigo-500" />
+              </div>
+              <p className="text-slate-600 font-medium">Week view is coming soon</p>
+              <p className="text-slate-500 text-sm mt-1">Check back for updates</p>
+            </div>
+          </div>
         </div>
       )}
 
       {viewMode === 'day' && (
-        <div className="border rounded-lg p-4">
-          <h3 className="text-lg font-medium mb-4">
-            {selectedDate ? selectedDate.toDateString() : currentDate.toDateString()}
-          </h3>
-          <p className="text-gray-500">Day view is coming soon</p>
+        <div className="border border-slate-200 rounded-xl p-6 bg-white/80 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-2 rounded-lg shadow-md">
+              <CalendarIcon className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600">
+              {selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : format(currentDate, 'EEEE, MMMM d, yyyy')}
+            </h3>
+          </div>
+          <div className="flex items-center justify-center py-16 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-lg border border-slate-200/70">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
+                <CalendarIcon className="h-8 w-8 text-blue-500" />
+              </div>
+              <p className="text-slate-600 font-medium">Day view is coming soon</p>
+              <p className="text-slate-500 text-sm mt-1">Check back for updates</p>
+            </div>
+          </div>
         </div>
       )}
     </div>
