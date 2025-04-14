@@ -91,13 +91,28 @@ export default function TasksPage() {
         },
     });
 
-    const updateTaskMutation = useMutation({
+    const updateTaskStatusMutation = useMutation({
         mutationFn: ({ id, status }: { id: string; status: string }) => {
             // Convert UI status format to API status format
             const apiStatus = status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ");
             return TaskService.updateTask(id, {
                 status: apiStatus as any // Use type assertion to bypass type checking
             });
+        },
+        onSuccess: () => {
+            // Invalidate all task queries regardless of filters
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            toast.success('Task updated successfully');
+        },
+        onError: (error: Error) => {
+            toast.error('Failed to update task');
+            console.error('Update task error:', error);
+        },
+    });
+
+    const updateTaskMutation = useMutation({
+        mutationFn: ({ id, ...updates }: { id: string;[key: string]: any }) => {
+            return TaskService.updateTask(id, updates);
         },
         onSuccess: () => {
             // Invalidate all task queries regardless of filters
@@ -132,8 +147,8 @@ export default function TasksPage() {
     // Event handlers
 
     const handleStatusChange = useCallback((taskId: string, newStatus: TaskStatus) => {
-        updateTaskMutation.mutate({ id: taskId, status: newStatus });
-    }, [updateTaskMutation]);
+        updateTaskStatusMutation.mutate({ id: taskId, status: newStatus });
+    }, [updateTaskStatusMutation]);
 
     const handleDeleteTask = useCallback((taskId: string) => {
         deleteTaskMutation.mutate(taskId);
@@ -159,6 +174,10 @@ export default function TasksPage() {
             tags: taskData.tags || []
         });
     }, [createTaskMutation]);
+
+    const handleUpdateTask = useCallback((taskId: string, updates: any) => {
+        updateTaskMutation.mutate({ id: taskId, ...updates });
+    }, [updateTaskMutation]);
 
     const renderPriorityBadge = useCallback((priority: TaskPriority) => {
         const colors: Record<string, string> = {
@@ -189,6 +208,7 @@ export default function TasksPage() {
                 renderPriorityBadge={renderPriorityBadge}
                 isLoading={isLoading}
                 onCreateTask={() => setIsCreateModalOpen(true)}
+                onUpdateTask={handleUpdateTask}
             />
 
             <CreateTaskModal

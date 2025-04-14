@@ -19,6 +19,7 @@ interface TaskBoardProps {
   renderPriorityBadge: (priority: TaskPriority) => React.ReactNode;
   isLoading?: boolean;
   onCreateTask?: () => void;
+  onUpdateTask?: (taskId: string, updates: Partial<Task>) => void;
 }
 
 const TaskBoard: React.FC<TaskBoardProps> = ({
@@ -29,6 +30,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   renderPriorityBadge,
   isLoading,
   onCreateTask,
+  onUpdateTask,
 }) => {
   // View state
   const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'calendar'>('list');
@@ -255,16 +257,13 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
           <CalendarView
             tasks={filteredTasks}
             onTaskClick={(taskId: string) => {
-              // Find the task and handle it
               const task = filteredTasks.find(t => t.id === taskId);
               if (task && onCreateTask) {
-                // Here you would typically open a task detail sidebar
-                // For now, we'll just log it
-                console.log('Task clicked:', task);
               }
             }}
             renderPriorityBadge={renderPriorityBadge}
             onAddTask={handleAddTaskFromCalendar}
+            onTaskUpdate={onUpdateTask}
           />
         )}
       </ScrollArea>
