@@ -173,7 +173,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       onAddTask(newTask);
     }
   };
-
   return (
     <div className="flex flex-col space-y-4 h-full">
       {/* Header with New Task Button */}

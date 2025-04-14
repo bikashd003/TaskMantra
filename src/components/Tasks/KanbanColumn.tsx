@@ -11,7 +11,7 @@ import { ChevronDown, ChevronUp, Plus, X, Trash2 } from "lucide-react";
 
 const defaultColumns = [
   { id: "todo", title: "To Do" },
-  { id: "inprogress", title: "In Progress" },
+  { id: "inProgress", title: "In Progress" },
   { id: "completed", title: "Done" },
   { id: "review", title: "Review" },
 ];

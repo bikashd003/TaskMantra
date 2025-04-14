@@ -57,7 +57,7 @@ app.get('/', async (c) => {
       // Create default settings
       const defaultColumns = [
         { id: "todo", title: "To Do", order: 0 },
-        { id: "inprogress", title: "In Progress", order: 1 },
+        { id: "inProgress", title: "In Progress", order: 1 },
         { id: "review", title: "Review", order: 2 },
         { id: "completed", title: "Completed", order: 3 },
       ];

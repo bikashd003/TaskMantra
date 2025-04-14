@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { Edit } from 'lucide-react';
+import { Edit, GripHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Task } from '../types';
+import { motion } from 'framer-motion';
 
 interface TaskItemProps {
   task: Task;
@@ -30,6 +31,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
     return null;
   }
 
+  // Create separate draggable instances for the main task and resize handles
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: {
@@ -37,6 +39,37 @@ const TaskItem: React.FC<TaskItemProps> = ({
       type: 'move',
     },
   });
+
+  // Create draggable for start date handle
+  const {
+    attributes: startAttributes,
+    listeners: startListeners,
+    setNodeRef: setStartNodeRef,
+    isDragging: isStartDragging
+  } = useDraggable({
+    id: `${task.id}-start`,
+    data: {
+      task,
+      type: 'start',
+    },
+  });
+
+  // Create draggable for end date handle
+  const {
+    attributes: endAttributes,
+    listeners: endListeners,
+    setNodeRef: setEndNodeRef,
+    isDragging: isEndDragging
+  } = useDraggable({
+    id: `${task.id}-end`,
+    data: {
+      task,
+      type: 'end',
+    },
+  });
+
+  // State for hover effect
+  const [isHovered, setIsHovered] = useState(false);
 
   // Get status color
   const getStatusColor = () => {
@@ -78,7 +111,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   } : undefined;
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={{
         ...style,
@@ -92,12 +125,20 @@ const TaskItem: React.FC<TaskItemProps> = ({
         "h-6 rounded-md border text-xs flex items-center overflow-hidden cursor-pointer transition-all duration-200 task-card",
         getStatusColor(),
         isMultiDayTask ? "z-10" : "mx-1",
-        isDragging ? "task-dragging" : ""
+        isDragging || isStartDragging || isEndDragging ? "task-dragging" : ""
       )}
       onClick={(e) => {
         e.stopPropagation();
         onTaskClick(task.id);
       }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ y: -1, boxShadow: '0 3px 10px rgba(0,0,0,0.1)' }}
+      animate={{
+        scale: isDragging || isStartDragging || isEndDragging ? 1.02 : 1,
+        opacity: isDragging || isStartDragging || isEndDragging ? 0.8 : 1
+      }}
+      transition={{ duration: 0.2 }}
       {...attributes}
       {...listeners}
     >
@@ -127,8 +168,43 @@ const TaskItem: React.FC<TaskItemProps> = ({
         </Button>
       </div>
 
-      {/* Resize handles for multi-day tasks will be handled separately */}
-    </div>
+      {/* Resize handles for multi-day tasks */}
+      {isMultiDayTask && (
+        <>
+          {/* Start date resize handle */}
+          <div
+            ref={setStartNodeRef}
+            className={cn(
+              "task-resize-handle task-resize-handle-start",
+              isHovered || isStartDragging ? "opacity-100" : ""
+            )}
+            {...startAttributes}
+            {...startListeners}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="h-full flex items-center justify-center">
+              <GripHorizontal className="h-3 w-3 text-blue-500" />
+            </div>
+          </div>
+
+          {/* End date resize handle */}
+          <div
+            ref={setEndNodeRef}
+            className={cn(
+              "task-resize-handle task-resize-handle-end",
+              isHovered || isEndDragging ? "opacity-100" : ""
+            )}
+            {...endAttributes}
+            {...endListeners}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="h-full flex items-center justify-center">
+              <GripHorizontal className="h-3 w-3 text-blue-500" />
+            </div>
+          </div>
+        </>
+      )}
+    </motion.div>
   );
 };
 

@@ -52,7 +52,7 @@ interface ColumnDefinition extends KanbanColumnType { }
 
 const statusMap: Record<string, TaskStatus> = {
   "todo": "To Do",
-  "inprogress": "In Progress",
+  "inProgress": "In Progress",
   "review": "Review",
   "completed": "Completed",
 };
@@ -78,7 +78,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   // Define default columns
   const defaultColumns: ColumnDefinition[] = [
     { id: "todo", title: "To Do", order: 0 },
-    { id: "inprogress", title: "In Progress", order: 1 },
+    { id: "inProgress", title: "In Progress", order: 1 },
     { id: "review", title: "Review", order: 2 },
     { id: "completed", title: "Completed", order: 3 },
   ];

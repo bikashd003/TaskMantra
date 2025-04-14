@@ -66,7 +66,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
       ref={setNodeRef}
       id={date.toISOString()}
       className={cn(
-        "min-h-[120px] p-2 relative group",
+        "min-h-[120px] p-2 relative group calendar-day",
         "border-r border-slate-100",
         "border-b border-slate-100",
         isCurrentMonth ? "bg-white" : "bg-slate-50/30",

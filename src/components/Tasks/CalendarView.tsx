@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import {
   DndContext,
@@ -50,6 +50,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
+  // Local state for tasks to enable smooth updates
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
+  const [_activeDragTask, setActiveDragTask] = useState<Task | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
   // Ref for calendar grid
   const calendarGridRef = useRef<HTMLDivElement | null>(null);
 
@@ -93,12 +98,19 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     return dates;
   };
 
+  // Update local tasks when props tasks change (except during drag)
+  useEffect(() => {
+    if (!isDragging) {
+      setLocalTasks(tasks);
+    }
+  }, [tasks, isDragging]);
+
   // Filter tasks by date and other filters
   const tasksByDate = useMemo(() => {
     const grouped: Record<string, Task[]> = {};
 
     // Apply filters
-    const filteredTasks = tasks.filter(task => {
+    const filteredTasks = localTasks.filter(task => {
       // Filter by completion status
       if (!taskFilter.showCompleted && task.status === 'Completed') {
         return false;
@@ -215,13 +227,42 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
-    // We can add visual feedback here if needed
-    console.log('Drag started', event);
+    if (event.active.data.current?.task) {
+      const task = event.active.data.current.task as Task;
+      setActiveDragTask(task);
+      setIsDragging(true);
+
+      // Add visual feedback for the dragged element
+      const draggedElement = document.getElementById(event.active.id.toString());
+      if (draggedElement) {
+        draggedElement.classList.add('task-dragging');
+      }
+
+      // Highlight potential drop targets
+      const calendarDays = document.querySelectorAll('.calendar-day');
+      calendarDays.forEach(day => {
+        day.classList.add('calendar-day-highlight');
+      });
+    }
   };
 
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setIsDragging(false);
+    setActiveDragTask(null);
+
+    // Remove visual feedback
+    const draggedElement = document.getElementById(active.id.toString());
+    if (draggedElement) {
+      draggedElement.classList.remove('task-dragging');
+    }
+
+    // Remove highlights from calendar days
+    const calendarDays = document.querySelectorAll('.calendar-day');
+    calendarDays.forEach(day => {
+      day.classList.remove('calendar-day-highlight');
+    });
 
     if (!over || !active.data.current?.task) return;
 
@@ -246,6 +287,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
         if (normalizedTarget <= normalizedDueDate) {
           updates.startDate = targetDate;
+
+          // Update local state immediately for smooth UI
+          setLocalTasks(prevTasks =>
+            prevTasks.map(t =>
+              t.id === task.id ? { ...t, startDate: targetDate } : t
+            )
+          );
         }
       } else if (type === 'end') {
         // Don't allow end date to be before start date
@@ -254,6 +302,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
         if (normalizedTarget >= normalizedStartDate) {
           updates.dueDate = targetDate;
+
+          // Update local state immediately for smooth UI
+          setLocalTasks(prevTasks =>
+            prevTasks.map(t =>
+              t.id === task.id ? { ...t, dueDate: targetDate } : t
+            )
+          );
         }
       } else if (type === 'move') {
         // Move the entire task (preserving duration)
@@ -266,11 +321,21 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
         updates.startDate = newStartDate;
         updates.dueDate = newEndDate;
+
+        // Update local state immediately for smooth UI
+        setLocalTasks(prevTasks =>
+          prevTasks.map(t =>
+            t.id === task.id ? {
+              ...t,
+              startDate: newStartDate,
+              dueDate: newEndDate
+            } : t
+          )
+        );
       }
 
       if (Object.keys(updates).length > 0) {
-        // Apply the updates
-        console.log('Updating task', updates);
+        // Apply the updates to the backend
         onTaskUpdate(task.id, updates);
       }
     }
@@ -279,7 +344,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
 
   return (
-    <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-md border border-slate-200/50 p-5 w-full transition-all backdrop-blur-sm relative">
+    <div className="bg-gradient-to-br from-white to-slate-50 rounded-xl shadow-lg border border-slate-200/50 p-5 w-full transition-all backdrop-blur-sm relative hover:shadow-xl">
+      {/* Visual indicator for drag operation */}
+      {isDragging && (
+        <div className="absolute inset-0 rounded-xl border-2 border-blue-400 pointer-events-none z-10 animate-pulse opacity-50"></div>
+      )}
       {/* Task Creation/Edit Modal */}
       <CreateTaskModal
         isOpen={isCreateModalOpen}
