@@ -27,7 +27,6 @@ import {
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { KanbanSettingsService, KanbanColumn as KanbanColumnType } from "@/services/KanbanSettings.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import CalendarView from "./CalendarView";
 import { ScrollArea } from "../ui/scroll-area";
 
 interface KanbanBoardProps {
@@ -214,23 +213,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     updateSettingsMutation.mutate({ showCompletedTasks: checked });
   };
 
-  // Handle add task from calendar
-  const handleAddTaskFromCalendar = (date: Date) => {
-    // Create a task with the selected date
-    if (onAddTask) {
-      const newTask: Partial<Task> = {
-        name: "",
-        status: "To Do",
-        priority: "Medium",
-        dueDate: date,
-        subtasks: [],
-        assignedTo: [],
-        comments: [],
-        dependencies: [],
-      };
-      onAddTask(newTask);
-    }
-  };
 
   // Configure sensors for drag detection with a small delay to avoid accidental drags
   const sensors = useSensors(
@@ -516,7 +498,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </div>
 
-        {viewMode === 'kanban' ? (
           <div className="overflow-x-auto pb-4">
             <SortableContext items={columns.map(col => `column-${col.id}`)} strategy={horizontalListSortingStrategy}>
               <div className="flex space-x-4 min-w-max">
@@ -539,16 +520,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               </div>
             </SortableContext>
           </div>
-        ) : (
-          <div className="pb-4">
-            <CalendarView
-              tasks={Object.values(tasks).filter((taskArray): taskArray is Task[] => taskArray !== undefined).flat()}
-              onTaskClick={handleOpenTaskDetails}
-                renderPriorityBadge={renderPriorityBadge}
-                onAddTask={handleAddTaskFromCalendar}
-              />
-            </div>
-        )}
+
 
         {typeof window !== "undefined" &&
           createPortal(

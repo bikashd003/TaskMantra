@@ -3,13 +3,12 @@ import { Task, TaskPriority, TaskStatus, TaskFilterState, TaskSortOption, sortOp
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Plus, List, LayoutGrid, Calendar, Network } from "lucide-react";
-import BatchOperations from "./BatchOperations";
 import TaskList from "./TaskList";
 import KanbanBoard from "./KanbanBoard";
 import BigCalendarView from "./BigCalendarView";
 import TaskFilters from "./TaskFilters";
 import TaskDependencyGraph from "./TaskDependencyGraph";
-
+import { Skeleton } from "@heroui/skeleton";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { KanbanSettingsService } from "@/services/KanbanSettings.service";
 
@@ -157,32 +156,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
     updateSettingsMutation.mutate({ defaultView: mode });
   };
 
-  // Handle task update
-  const handleTaskUpdate = (updatedTask: Task) => {
-    if (onUpdateTask) {
-      // onUpdateTask(updatedTask);
-    }
-  };
 
-  // Handle batch task update
-  const handleBatchTaskUpdate = (updatedTasks: Task[]) => {
-    if (onUpdateTask) {
-      // Update each task individually
-      updatedTasks.forEach(task => {
-        // onUpdateTask(task);
-      });
-    }
-  };
-
-  // Handle batch task delete
-  const handleBatchTaskDelete = (taskIds: string[]) => {
-    if (onDelete) {
-      // Delete each task individually
-      taskIds.forEach(taskId => {
-        onDelete(taskId);
-      });
-    }
-  };
 
   // Handle add task from calendar
   const handleAddTaskFromCalendar = (date: Date) => {
@@ -224,15 +198,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
           onSortChange={handleSortChange}
           currentSort={currentSort}
         />
-
-        {/* Batch Operations */}
-        {viewMode === 'list' && (
-          <BatchOperations
-            tasks={filteredTasks}
-            onUpdateTasks={handleBatchTaskUpdate}
-            onDeleteTasks={handleBatchTaskDelete}
-          />
-        )}
       </div>
 
       {/* View Mode Toggle */}
