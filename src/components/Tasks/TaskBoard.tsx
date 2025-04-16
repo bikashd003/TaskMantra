@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Task, TaskPriority, TaskStatus, TaskFilterState, TaskSortOption, sortOptions } from "./types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Plus, List, LayoutGrid, Calendar } from "lucide-react";
+import { Plus, List, LayoutGrid, Calendar, Network } from "lucide-react";
+import BatchOperations from "./BatchOperations";
 import TaskList from "./TaskList";
 import KanbanBoard from "./KanbanBoard";
-import CalendarView from "./CalendarView";
+import BigCalendarView from "./BigCalendarView";
 import TaskFilters from "./TaskFilters";
+import TaskDependencyGraph from "./TaskDependencyGraph";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { KanbanSettingsService } from "@/services/KanbanSettings.service";
@@ -33,7 +35,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   onUpdateTask,
 }) => {
   // View state
-  const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'calendar'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'calendar' | 'dependencies'>('list');
 
   // Filter and sort state
   const [filters, setFilters] = useState<TaskFilterState>({
@@ -150,9 +152,36 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   };
 
   // Handle view mode change
-  const handleViewModeChange = (mode: 'list' | 'kanban' | 'calendar') => {
+  const handleViewModeChange = (mode: 'list' | 'kanban' | 'calendar' | 'dependencies') => {
     setViewMode(mode);
     updateSettingsMutation.mutate({ defaultView: mode });
+  };
+
+  // Handle task update
+  const handleTaskUpdate = (updatedTask: Task) => {
+    if (onUpdateTask) {
+      // onUpdateTask(updatedTask);
+    }
+  };
+
+  // Handle batch task update
+  const handleBatchTaskUpdate = (updatedTasks: Task[]) => {
+    if (onUpdateTask) {
+      // Update each task individually
+      updatedTasks.forEach(task => {
+        // onUpdateTask(task);
+      });
+    }
+  };
+
+  // Handle batch task delete
+  const handleBatchTaskDelete = (taskIds: string[]) => {
+    if (onDelete) {
+      // Delete each task individually
+      taskIds.forEach(taskId => {
+        onDelete(taskId);
+      });
+    }
   };
 
   // Handle add task from calendar
@@ -188,12 +217,23 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       </div>
 
       {/* Search and Filters */}
-      <TaskFilters
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onSortChange={handleSortChange}
-        currentSort={currentSort}
-      />
+      <div className="flex flex-col space-y-4">
+        <TaskFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onSortChange={handleSortChange}
+          currentSort={currentSort}
+        />
+
+        {/* Batch Operations */}
+        {viewMode === 'list' && (
+          <BatchOperations
+            tasks={filteredTasks}
+            onUpdateTasks={handleBatchTaskUpdate}
+            onDeleteTasks={handleBatchTaskDelete}
+          />
+        )}
+      </div>
 
       {/* View Mode Toggle */}
       <div className="flex border rounded-md overflow-hidden self-start">
@@ -220,6 +260,14 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
           onClick={() => handleViewModeChange('calendar')}
         >
           <Calendar className="h-4 w-4 mr-1" /> Calendar
+        </Button>
+        <Button
+          variant={viewMode === 'dependencies' ? "default" : "ghost"}
+          size="sm"
+          className={`rounded-none ${viewMode === 'dependencies' ? '' : 'text-gray-500'}`}
+          onClick={() => handleViewModeChange('dependencies')}
+        >
+          <Network className="h-4 w-4 mr-1" /> Dependencies
         </Button>
       </div>
 
@@ -253,7 +301,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         )}
 
         {viewMode === 'calendar' && (
-          <CalendarView
+          <BigCalendarView
             tasks={filteredTasks}
             onTaskClick={(taskId: string) => {
               const task = filteredTasks.find(t => t.id === taskId);
@@ -263,6 +311,18 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
             renderPriorityBadge={renderPriorityBadge}
             onAddTask={handleAddTaskFromCalendar}
             onTaskUpdate={onUpdateTask}
+          />
+        )}
+
+        {viewMode === 'dependencies' && (
+          <TaskDependencyGraph
+            tasks={filteredTasks}
+            onTaskClick={(taskId: string) => {
+              const task = filteredTasks.find(t => t.id === taskId);
+              if (task && onCreateTask) {
+                // Open task details
+              }
+            }}
           />
         )}
       </ScrollArea>

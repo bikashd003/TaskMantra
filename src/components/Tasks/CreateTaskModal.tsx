@@ -1,5 +1,6 @@
-import React from 'react';
 import { CalendarDays, CheckCircle2, Flag, Folder, Tags, Clock, Users, Trash, Plus } from 'lucide-react';
+import { RecurrenceRule } from './types/RecurringTask';
+import RecurringTaskForm from './RecurringTaskForm';
 import Modal from '@/components/Global/Modal';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +33,12 @@ interface TaskData {
   subtasks: Subtask[];
   assignedTo: string[];
   tags: string[];
+  color?: string;
+  category?: string;
+  recurring?: {
+    isRecurring: boolean;
+    recurrenceRule?: RecurrenceRule;
+  };
 }
 
 interface CreateTaskModalProps {
@@ -56,6 +63,11 @@ const initialTaskState: TaskData = {
   subtasks: [],
   assignedTo: [],
   tags: [],
+  color: '',
+  category: '',
+  recurring: {
+    isRecurring: false
+  }
 };
 
 const validationSchema = Yup.object().shape({
@@ -248,9 +260,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             </div>
 
             <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid grid-cols-4 mb-4">
+              <TabsList className="grid grid-cols-5 mb-4">
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="dates">Dates & Time</TabsTrigger>
+                <TabsTrigger value="recurring">Recurring</TabsTrigger>
                 <TabsTrigger value="subtasks">Subtasks</TabsTrigger>
                 <TabsTrigger value="assignments">Assignments</TabsTrigger>
               </TabsList>
@@ -305,6 +318,84 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                       className="h-10 pl-9"
                       disabled={isLoading}
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-sm font-medium">
+                      Category
+                    </Label>
+                    <Select
+                      value={formik.values.category || ''}
+                      onValueChange={(value) => formik.setFieldValue('category', value)}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger id="category" className="h-10">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="development">Development</SelectItem>
+                        <SelectItem value="design">Design</SelectItem>
+                        <SelectItem value="marketing">Marketing</SelectItem>
+                        <SelectItem value="research">Research</SelectItem>
+                        <SelectItem value="planning">Planning</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="color" className="text-sm font-medium">
+                      Color
+                    </Label>
+                    <Select
+                      value={formik.values.color || ''}
+                      onValueChange={(value) => formik.setFieldValue('color', value)}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger id="color" className="h-10">
+                        <SelectValue placeholder="Select color" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-gray-300"></div>
+                            <span>Default</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="#3b82f6">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+                            <span>Blue</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="#10b981">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                            <span>Green</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="#ef4444">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                            <span>Red</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="#f59e0b">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-amber-500"></div>
+                            <span>Yellow</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="#8b5cf6">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-purple-500"></div>
+                            <span>Purple</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </TabsContent>
@@ -381,6 +472,25 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     </div>
                   </div>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="recurring" className="space-y-4">
+                <RecurringTaskForm
+                  initialRule={formik.values.recurring?.recurrenceRule}
+                  isRecurring={formik.values.recurring?.isRecurring || false}
+                  onSave={(rule, isRecurring) => {
+                    formik.setFieldValue('recurring', {
+                      isRecurring,
+                      recurrenceRule: rule
+                    });
+                  }}
+                  onToggleRecurring={(isRecurring) => {
+                    formik.setFieldValue('recurring', {
+                      ...formik.values.recurring,
+                      isRecurring
+                    });
+                  }}
+                />
               </TabsContent>
 
               <TabsContent value="subtasks" className="space-y-4">
