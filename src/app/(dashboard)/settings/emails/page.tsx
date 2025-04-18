@@ -85,7 +85,7 @@ export default function EmailTemplates() {
   });
 
   function onSubmit(values: z.infer<typeof emailTemplateSchema>) {
-    // console.log(values)
+    console.log(values);
     // TODO: Implement template creation/update logic
   }
 
