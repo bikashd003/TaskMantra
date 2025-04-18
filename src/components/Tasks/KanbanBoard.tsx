@@ -27,7 +27,7 @@ import {
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { KanbanSettingsService, KanbanColumn as KanbanColumnType } from "@/services/KanbanSettings.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ScrollArea } from "../ui/scroll-area";
+import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 
 interface KanbanBoardProps {
   tasks: {
@@ -425,8 +425,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Task Board</h2>
+        <div className="flex justify-end items-center mb-4">
           <div className="flex space-x-2">
 
             {viewMode === 'kanban' && (
@@ -498,9 +497,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </div>
 
-          <div className="overflow-x-auto pb-4">
+        <ScrollArea className="w-full">
+          <div className="min-w-max pb-4 overflow-x-auto">
             <SortableContext items={columns.map(col => `column-${col.id}`)} strategy={horizontalListSortingStrategy}>
-              <div className="flex space-x-4 min-w-max">
+              <div className="flex space-x-4">
                 {columns.map((column) => (
                   <KanbanColumn
                     key={column.id}
@@ -520,6 +520,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               </div>
             </SortableContext>
           </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
 
         {typeof window !== "undefined" &&
