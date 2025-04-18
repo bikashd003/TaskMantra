@@ -1,10 +1,10 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Settings } from "lucide-react";
-import { Task } from "./types";
-import { Button } from "@/components/ui/button";
-import { WorkflowState, WorkflowTransition } from "@/services/WorkflowSettings.service";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowRight, Settings } from 'lucide-react';
+import { Task } from './types';
+import { Button } from '@/components/ui/button';
+import { WorkflowState, WorkflowTransition } from '@/services/WorkflowSettings.service';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface WorkflowViewProps {
   tasks: Task[];
@@ -25,9 +25,9 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
   const sortedStates = [...workflowStates].sort((a, b) => a.order - b.order);
 
   // Get transitions for visualization
-  const getTransitionsForState = (stateId: string) => {
-    return workflowTransitions.filter(t => t.fromState === stateId);
-  };
+  // const getTransitionsForState = (stateId: string) => {
+  //   return workflowTransitions.filter(t => t.fromState === stateId);
+  // };
 
   // Count tasks in each state
   const getTaskCountForState = (stateName: string) => {
@@ -44,12 +44,7 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={onEditWorkflow}
-                      className="gap-2"
-                    >
+                    <Button variant="outline" size="sm" onClick={onEditWorkflow} className="gap-2">
                       <Settings className="h-4 w-4" />
                       Customize Workflow
                     </Button>
@@ -61,12 +56,12 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
               </TooltipProvider>
             )}
           </div>
-          
+
           <div className="flex items-center justify-between max-w-4xl mx-auto py-8 overflow-x-auto">
             {sortedStates.map((state, index) => (
               <React.Fragment key={state.id}>
                 <div className="flex flex-col items-center min-w-[100px]">
-                  <div 
+                  <div
                     className="w-16 h-16 rounded-full flex items-center justify-center text-white font-medium"
                     style={{ backgroundColor: state.color }}
                   >
@@ -80,21 +75,22 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
               </React.Fragment>
             ))}
           </div>
-          
+
           <div className="mt-8 space-y-4">
             <h4 className="text-md font-medium">Task Status Transition Rules:</h4>
             <ul className="list-disc pl-5 space-y-2 text-sm text-gray-600">
-              {workflowTransitions.map((transition) => {
+              {workflowTransitions.map(transition => {
                 const fromState = workflowStates.find(s => s.id === transition.fromState);
                 const toState = workflowStates.find(s => s.id === transition.toState);
-                
+
                 if (!fromState || !toState) return null;
-                
+
                 return (
                   <li key={`${transition.fromState}-${transition.toState}`}>
                     <span className="font-medium text-slate-700">
                       {fromState.name} → {toState.name}:
-                    </span> {transition.description || transition.name}
+                    </span>{' '}
+                    {transition.description || transition.name}
                   </li>
                 );
               })}

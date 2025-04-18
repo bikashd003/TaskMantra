@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useEffect, useRef } from 'react';
 import { Task } from './types';
@@ -6,7 +6,7 @@ import * as d3 from 'd3';
 
 interface TaskDependencyGraphProps {
   tasks: Task[];
-  onTaskClick: (taskId: string) => void;
+  onTaskClick: (_taskId: string) => void;
 }
 
 interface Node {
@@ -18,8 +18,8 @@ interface Node {
 }
 
 interface Link {
-  source: string;
-  target: string;
+  source: Node;
+  target: Node;
 }
 
 const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({ tasks, onTaskClick }) => {
@@ -37,7 +37,7 @@ const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({ tasks, onTask
       name: task.name,
       status: task.status,
       priority: task.priority,
-      color: task.color
+      color: task.color,
     }));
 
     const links: Link[] = [];
@@ -46,10 +46,14 @@ const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({ tasks, onTask
         task.dependencies.forEach(dependencyId => {
           // Check if the dependency exists in our tasks
           if (tasks.some(t => t.id === dependencyId)) {
-            links.push({
-              source: dependencyId,
-              target: task.id
-            });
+            const sourceNode = nodes.find(n => n.id === dependencyId);
+            const targetNode = nodes.find(n => n.id === task.id);
+            if (sourceNode && targetNode) {
+              links.push({
+                source: sourceNode,
+                target: targetNode,
+              });
+            }
           }
         });
       }
@@ -73,20 +77,30 @@ const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({ tasks, onTask
     const height = 400;
 
     // Create a force simulation
-    const simulation = d3.forceSimulation<any, any>()
-      .force('link', d3.forceLink().id((d: any) => d.id).distance(100))
+    const simulation = d3
+      .forceSimulation<any, any>()
+      .force(
+        'link',
+        d3
+          .forceLink()
+          .id((d: any) => d.id)
+          .distance(100)
+      )
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius(60));
 
     // Create the SVG elements
-    const svg = d3.select(svgRef.current)
+    const svg = d3
+      .select(svgRef.current)
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', [0, 0, width, height]);
 
     // Define arrow marker for links
-    svg.append('defs').append('marker')
+    svg
+      .append('defs')
+      .append('marker')
       .attr('id', 'arrowhead')
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 20)
@@ -99,7 +113,8 @@ const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({ tasks, onTask
       .attr('fill', '#999');
 
     // Create links
-    const link = svg.append('g')
+    const link = svg
+      .append('g')
       .selectAll('line')
       .data(links)
       .join('line')
@@ -109,19 +124,18 @@ const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({ tasks, onTask
       .attr('marker-end', 'url(#arrowhead)');
 
     // Create node groups
-    const node = svg.append('g')
+    const node = svg
+      .append('g')
       .selectAll('.node')
       .data(nodes)
       .join('g')
       .attr('class', 'node')
-      .call(d3.drag<any, any>()
-        .on('start', dragstarted)
-        .on('drag', dragged)
-        .on('end', dragended))
-      .on('click', (event, d) => onTaskClick(d.id));
+      .call(d3.drag<any, any>().on('start', dragstarted).on('drag', dragged).on('end', dragended))
+      .on('click', (_event, d) => onTaskClick(d.id));
 
     // Add task cards
-    node.append('rect')
+    node
+      .append('rect')
       .attr('width', 120)
       .attr('height', 50)
       .attr('rx', 6)
@@ -130,38 +144,50 @@ const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({ tasks, onTask
         if (d.color) return `${d.color}20`;
 
         switch (d.status) {
-          case 'To Do': return '#f1f5f9';
-          case 'In Progress': return '#dbeafe';
-          case 'Review': return '#fef3c7';
-          case 'Completed': return '#dcfce7';
-          default: return '#f1f5f9';
+          case 'To Do':
+            return '#f1f5f9';
+          case 'In Progress':
+            return '#dbeafe';
+          case 'Review':
+            return '#fef3c7';
+          case 'Completed':
+            return '#dcfce7';
+          default:
+            return '#f1f5f9';
         }
       })
       .attr('stroke', d => {
         if (d.color) return d.color;
 
         switch (d.status) {
-          case 'To Do': return '#cbd5e1';
-          case 'In Progress': return '#3b82f6';
-          case 'Review': return '#f59e0b';
-          case 'Completed': return '#10b981';
-          default: return '#cbd5e1';
+          case 'To Do':
+            return '#cbd5e1';
+          case 'In Progress':
+            return '#3b82f6';
+          case 'Review':
+            return '#f59e0b';
+          case 'Completed':
+            return '#10b981';
+          default:
+            return '#cbd5e1';
         }
       })
       .attr('stroke-width', 2)
       .attr('cursor', 'pointer');
 
     // Add task names
-    node.append('text')
+    node
+      .append('text')
       .attr('x', 60)
       .attr('y', 20)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .attr('class', 'text-xs font-medium')
-      .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name);
+      .text(d => (d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name));
 
     // Add status indicators
-    node.append('text')
+    node
+      .append('text')
       .attr('x', 60)
       .attr('y', 35)
       .attr('text-anchor', 'middle')
@@ -170,29 +196,33 @@ const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({ tasks, onTask
       .text(d => d.status);
 
     // Add priority indicators
-    node.append('circle')
+    node
+      .append('circle')
       .attr('cx', 110)
       .attr('cy', 10)
       .attr('r', 4)
       .attr('fill', d => {
         switch (d.priority) {
-          case 'High': return '#ef4444';
-          case 'Medium': return '#f59e0b';
-          case 'Low': return '#10b981';
-          default: return '#94a3b8';
+          case 'High':
+            return '#ef4444';
+          case 'Medium':
+            return '#f59e0b';
+          case 'Low':
+            return '#10b981';
+          default:
+            return '#94a3b8';
         }
       });
 
     // Update positions on simulation tick
     simulation.nodes(nodes).on('tick', () => {
       link
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
+        .attr('x1', d => (d.source as any).x)
+        .attr('y1', d => (d.source as any).y)
+        .attr('x2', d => (d.target as any).x)
+        .attr('y2', d => (d.target as any).y);
 
-      node
-        .attr('transform', d => `translate(${d.x - 60}, ${d.y - 25})`);
+      node.attr('transform', d => `translate(${(d as any).x - 60}, ${(d as any).y - 25})`);
     });
 
     simulation.force<d3.ForceLink<any, any>>('link')!.links(links);
