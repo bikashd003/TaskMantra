@@ -1,21 +1,32 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { WorkflowState, WorkflowTransition } from "@/services/WorkflowSettings.service";
-import { Plus, Save, Trash2, ArrowRight, MoveHorizontal, ArrowRightCircle } from "lucide-react";
-import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { WorkflowState, WorkflowTransition } from '@/services/WorkflowSettings.service';
+import { Plus, Save, Trash2, ArrowRight, ArrowRightCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 interface FlowCreatorProps {
   initialStates?: WorkflowState[];
   initialTransitions?: WorkflowTransition[];
-  onSave: (states: WorkflowState[], transitions: WorkflowTransition[], name: string, description: string) => Promise<void>;
+  onSave: (
+    states: WorkflowState[],
+    transitions: WorkflowTransition[],
+    name: string,
+    description: string
+  ) => Promise<void>;
   onCancel: () => void;
   isOpen: boolean;
 }
@@ -25,26 +36,56 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
   initialTransitions = [],
   onSave,
   onCancel,
-  isOpen
+  isOpen,
 }) => {
   // State for the flow creator
-  const [states, setStates] = useState<WorkflowState[]>(initialStates.length > 0 ? initialStates : [
-    { id: "state-1", name: "To Do", color: "#6b7280", order: 0, description: "Tasks that need to be started" },
-    { id: "state-2", name: "In Progress", color: "#3b82f6", order: 1, description: "Tasks currently being worked on" },
-  ]);
-  const [transitions, setTransitions] = useState<WorkflowTransition[]>(initialTransitions.length > 0 ? initialTransitions : [
-    { fromState: "state-1", toState: "state-2", name: "Start Work", description: "Begin working on the task" },
-  ]);
-  const [workflowName, setWorkflowName] = useState<string>("New Workflow");
-  const [workflowDescription, setWorkflowDescription] = useState<string>("Custom workflow for tasks");
+  const [states, setStates] = useState<WorkflowState[]>(
+    initialStates.length > 0
+      ? initialStates
+      : [
+          {
+            id: 'state-1',
+            name: 'To Do',
+            color: '#6b7280',
+            order: 0,
+            description: 'Tasks that need to be started',
+          },
+          {
+            id: 'state-2',
+            name: 'In Progress',
+            color: '#3b82f6',
+            order: 1,
+            description: 'Tasks currently being worked on',
+          },
+        ]
+  );
+  const [transitions, setTransitions] = useState<WorkflowTransition[]>(
+    initialTransitions.length > 0
+      ? initialTransitions
+      : [
+          {
+            fromState: 'state-1',
+            toState: 'state-2',
+            name: 'Start Work',
+            description: 'Begin working on the task',
+          },
+        ]
+  );
+  const [workflowName, setWorkflowName] = useState<string>('New Workflow');
+  const [workflowDescription, setWorkflowDescription] = useState<string>(
+    'Custom workflow for tasks'
+  );
   const [selectedStateId, setSelectedStateId] = useState<string | null>(null);
   const [selectedTransitionIndex, setSelectedTransitionIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isAddingTransition, setIsAddingTransition] = useState(false);
-  const [newTransition, setNewTransition] = useState<{ fromState: string; toState: string }>({ fromState: "", toState: "" });
+  const [newTransition, setNewTransition] = useState<{ fromState: string; toState: string }>({
+    fromState: '',
+    toState: '',
+  });
 
   // Refs for the flow canvas
-  const canvasRef = useRef<HTMLDivElement>(null);
+  // const canvasRef = useRef<HTMLDivElement>(null);
 
   // Generate a unique ID for new states
   const generateStateId = () => {
@@ -57,7 +98,7 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
       id: generateStateId(),
       name: `New State ${states.length + 1}`,
       color: getRandomColor(),
-      description: "",
+      description: '',
       order: states.length,
     };
     setStates([...states, newState]);
@@ -66,7 +107,7 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
 
   // Update a state
   const handleUpdateState = (id: string, field: keyof WorkflowState, value: any) => {
-    const updatedStates = states.map(state => 
+    const updatedStates = states.map(state =>
       state.id === id ? { ...state, [field]: value } : state
     );
     setStates(updatedStates);
@@ -75,19 +116,17 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
   // Remove a state
   const handleRemoveState = (id: string) => {
     // Remove any transitions that involve this state
-    const filteredTransitions = transitions.filter(
-      t => t.fromState !== id && t.toState !== id
-    );
-    
+    const filteredTransitions = transitions.filter(t => t.fromState !== id && t.toState !== id);
+
     // Remove the state
     const updatedStates = states.filter(state => state.id !== id);
-    
+
     // Update order for remaining states
     const reorderedStates = updatedStates.map((state, idx) => ({
       ...state,
       order: idx,
     }));
-    
+
     setStates(reorderedStates);
     setTransitions(filteredTransitions);
     setSelectedStateId(null);
@@ -97,7 +136,7 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
   const handleMoveState = (id: string, direction: 'left' | 'right') => {
     const stateIndex = states.findIndex(s => s.id === id);
     if (
-      (direction === 'left' && stateIndex === 0) || 
+      (direction === 'left' && stateIndex === 0) ||
       (direction === 'right' && stateIndex === states.length - 1)
     ) {
       return;
@@ -105,23 +144,26 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
 
     const newIndex = direction === 'left' ? stateIndex - 1 : stateIndex + 1;
     const updatedStates = [...states];
-    
+
     // Swap the states
-    [updatedStates[stateIndex], updatedStates[newIndex]] = [updatedStates[newIndex], updatedStates[stateIndex]];
-    
+    [updatedStates[stateIndex], updatedStates[newIndex]] = [
+      updatedStates[newIndex],
+      updatedStates[stateIndex],
+    ];
+
     // Update order values
     const reorderedStates = updatedStates.map((state, idx) => ({
       ...state,
       order: idx,
     }));
-    
+
     setStates(reorderedStates);
   };
 
   // Start adding a transition
   const handleStartAddTransition = () => {
     if (states.length < 2) {
-      toast.error("You need at least two states to create a transition");
+      toast.error('You need at least two states to create a transition');
       return;
     }
     setIsAddingTransition(true);
@@ -131,7 +173,7 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
   // Confirm adding a transition
   const handleConfirmAddTransition = () => {
     if (!newTransition.fromState || !newTransition.toState) {
-      toast.error("Please select both from and to states");
+      toast.error('Please select both from and to states');
       return;
     }
 
@@ -141,7 +183,7 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
     );
 
     if (existingTransition) {
-      toast.error("This transition already exists");
+      toast.error('This transition already exists');
       return;
     }
 
@@ -149,18 +191,18 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
       fromState: newTransition.fromState,
       toState: newTransition.toState,
       name: `${states.find(s => s.id === newTransition.fromState)?.name} to ${states.find(s => s.id === newTransition.toState)?.name}`,
-      description: "",
+      description: '',
     };
 
     setTransitions([...transitions, newTransitionObj]);
     setIsAddingTransition(false);
-    setNewTransition({ fromState: "", toState: "" });
+    setNewTransition({ fromState: '', toState: '' });
   };
 
   // Cancel adding a transition
   const handleCancelAddTransition = () => {
     setIsAddingTransition(false);
-    setNewTransition({ fromState: "", toState: "" });
+    setNewTransition({ fromState: '', toState: '' });
   };
 
   // Update a transition
@@ -181,22 +223,22 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
   // Save the workflow
   const handleSave = async () => {
     if (states.length < 2) {
-      toast.error("You need at least two states in your workflow");
+      toast.error('You need at least two states in your workflow');
       return;
     }
 
     if (transitions.length < 1) {
-      toast.error("You need at least one transition in your workflow");
+      toast.error('You need at least one transition in your workflow');
       return;
     }
 
     setIsSaving(true);
     try {
       await onSave(states, transitions, workflowName, workflowDescription);
-      toast.success("Workflow saved successfully");
+      toast.success('Workflow saved successfully');
     } catch (error) {
-      toast.error("Failed to save workflow");
-      console.error("Error saving workflow:", error);
+      toast.error('Failed to save workflow');
+      console.error('Error saving workflow:', error);
     } finally {
       setIsSaving(false);
     }
@@ -240,7 +282,7 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                 <Input
                   id="workflow-name"
                   value={workflowName}
-                  onChange={(e) => setWorkflowName(e.target.value)}
+                  onChange={e => setWorkflowName(e.target.value)}
                   className="mt-1"
                 />
               </div>
@@ -249,14 +291,14 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                 <Textarea
                   id="workflow-description"
                   value={workflowDescription}
-                  onChange={(e) => setWorkflowDescription(e.target.value)}
+                  onChange={e => setWorkflowDescription(e.target.value)}
                   className="mt-1"
                   rows={3}
                 />
               </div>
-              
+
               <Separator />
-              
+
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <Label>States</Label>
@@ -266,17 +308,19 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                 </div>
                 <ScrollArea className="h-[200px] pr-4">
                   <div className="space-y-2">
-                    {states.map((state) => (
-                      <div 
+                    {states.map(state => (
+                      <div
                         key={state.id}
                         className={`p-2 border rounded-md cursor-pointer flex items-center justify-between ${
-                          selectedStateId === state.id ? 'border-primary bg-primary/5' : 'hover:bg-muted'
+                          selectedStateId === state.id
+                            ? 'border-primary bg-primary/5'
+                            : 'hover:bg-muted'
                         }`}
                         onClick={() => setSelectedStateId(state.id)}
                       >
                         <div className="flex items-center">
-                          <div 
-                            className="w-4 h-4 rounded-full mr-2" 
+                          <div
+                            className="w-4 h-4 rounded-full mr-2"
                             style={{ backgroundColor: state.color }}
                           />
                           <span>{state.name}</span>
@@ -287,23 +331,30 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                   </div>
                 </ScrollArea>
               </div>
-              
+
               <Separator />
-              
+
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <Label>Transitions</Label>
-                  <Button onClick={handleStartAddTransition} size="sm" variant="outline" className="h-8">
+                  <Button
+                    onClick={handleStartAddTransition}
+                    size="sm"
+                    variant="outline"
+                    className="h-8"
+                  >
                     <ArrowRightCircle className="h-4 w-4 mr-1" /> Add
                   </Button>
                 </div>
                 <ScrollArea className="h-[200px] pr-4">
                   <div className="space-y-2">
                     {transitions.map((transition, index) => (
-                      <div 
+                      <div
                         key={`${transition.fromState}-${transition.toState}`}
                         className={`p-2 border rounded-md cursor-pointer ${
-                          selectedTransitionIndex === index ? 'border-primary bg-primary/5' : 'hover:bg-muted'
+                          selectedTransitionIndex === index
+                            ? 'border-primary bg-primary/5'
+                            : 'hover:bg-muted'
                         }`}
                         onClick={() => setSelectedTransitionIndex(index)}
                       >
@@ -337,7 +388,7 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                   {(() => {
                     const state = states.find(s => s.id === selectedStateId);
                     if (!state) return null;
-                    
+
                     return (
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
@@ -346,61 +397,63 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                             <Input
                               id="state-name"
                               value={state.name}
-                              onChange={(e) => handleUpdateState(state.id, 'name', e.target.value)}
+                              onChange={e => handleUpdateState(state.id, 'name', e.target.value)}
                               className="mt-1"
                             />
                           </div>
                           <div>
                             <Label htmlFor="state-color">Color</Label>
                             <div className="flex items-center mt-1 gap-2">
-                              <div 
-                                className="w-6 h-6 rounded-full" 
+                              <div
+                                className="w-6 h-6 rounded-full"
                                 style={{ backgroundColor: state.color }}
                               />
                               <Input
                                 id="state-color"
                                 type="color"
                                 value={state.color}
-                                onChange={(e) => handleUpdateState(state.id, 'color', e.target.value)}
+                                onChange={e => handleUpdateState(state.id, 'color', e.target.value)}
                                 className="w-full h-8"
                               />
                             </div>
                           </div>
                         </div>
-                        
+
                         <div>
                           <Label htmlFor="state-description">Description</Label>
                           <Textarea
                             id="state-description"
-                            value={state.description || ""}
-                            onChange={(e) => handleUpdateState(state.id, 'description', e.target.value)}
+                            value={state.description || ''}
+                            onChange={e =>
+                              handleUpdateState(state.id, 'description', e.target.value)
+                            }
                             className="mt-1"
                             rows={3}
                           />
                         </div>
-                        
+
                         <div className="flex justify-between">
                           <div className="space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleMoveState(state.id, 'left')}
                               disabled={state.order === 0}
                             >
                               ← Move Left
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleMoveState(state.id, 'right')}
                               disabled={state.order === states.length - 1}
                             >
                               Move Right →
                             </Button>
                           </div>
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
+                          <Button
+                            variant="destructive"
+                            size="sm"
                             onClick={() => handleRemoveState(state.id)}
                             disabled={states.length <= 2}
                           >
@@ -424,53 +477,65 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                   {(() => {
                     const transition = transitions[selectedTransitionIndex];
                     if (!transition) return null;
-                    
+
                     const fromState = getStateById(transition.fromState);
                     const toState = getStateById(transition.toState);
-                    
+
                     return (
                       <div className="space-y-4">
                         <div className="flex items-center justify-center space-x-2 py-2">
-                          <Badge 
-                            className="px-3 py-1 text-white" 
+                          <Badge
+                            className="px-3 py-1 text-white"
                             style={{ backgroundColor: fromState?.color }}
                           >
                             {fromState?.name}
                           </Badge>
                           <ArrowRight className="h-5 w-5" />
-                          <Badge 
-                            className="px-3 py-1 text-white" 
+                          <Badge
+                            className="px-3 py-1 text-white"
                             style={{ backgroundColor: toState?.color }}
                           >
                             {toState?.name}
                           </Badge>
                         </div>
-                        
+
                         <div>
                           <Label htmlFor="transition-name">Name</Label>
                           <Input
                             id="transition-name"
                             value={transition.name}
-                            onChange={(e) => handleUpdateTransition(selectedTransitionIndex, 'name', e.target.value)}
+                            onChange={e =>
+                              handleUpdateTransition(
+                                selectedTransitionIndex,
+                                'name',
+                                e.target.value
+                              )
+                            }
                             className="mt-1"
                           />
                         </div>
-                        
+
                         <div>
                           <Label htmlFor="transition-description">Description</Label>
                           <Textarea
                             id="transition-description"
-                            value={transition.description || ""}
-                            onChange={(e) => handleUpdateTransition(selectedTransitionIndex, 'description', e.target.value)}
+                            value={transition.description || ''}
+                            onChange={e =>
+                              handleUpdateTransition(
+                                selectedTransitionIndex,
+                                'description',
+                                e.target.value
+                              )
+                            }
                             className="mt-1"
                             rows={3}
                           />
                         </div>
-                        
+
                         <div className="flex justify-end">
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
+                          <Button
+                            variant="destructive"
+                            size="sm"
                             onClick={() => handleRemoveTransition(selectedTransitionIndex)}
                           >
                             <Trash2 className="h-4 w-4 mr-1" /> Remove
@@ -497,11 +562,13 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                         <select
                           id="from-state"
                           value={newTransition.fromState}
-                          onChange={(e) => setNewTransition({ ...newTransition, fromState: e.target.value })}
+                          onChange={e =>
+                            setNewTransition({ ...newTransition, fromState: e.target.value })
+                          }
                           className="w-full mt-1 p-2 border rounded-md"
                         >
                           <option value="">Select a state</option>
-                          {states.map((state) => (
+                          {states.map(state => (
                             <option key={`from-${state.id}`} value={state.id}>
                               {state.name}
                             </option>
@@ -513,11 +580,13 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                         <select
                           id="to-state"
                           value={newTransition.toState}
-                          onChange={(e) => setNewTransition({ ...newTransition, toState: e.target.value })}
+                          onChange={e =>
+                            setNewTransition({ ...newTransition, toState: e.target.value })
+                          }
                           className="w-full mt-1 p-2 border rounded-md"
                         >
                           <option value="">Select a state</option>
-                          {states.map((state) => (
+                          {states.map(state => (
                             <option key={`to-${state.id}`} value={state.id}>
                               {state.name}
                             </option>
@@ -525,14 +594,12 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                         </select>
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-end space-x-2">
                       <Button variant="outline" onClick={handleCancelAddTransition}>
                         Cancel
                       </Button>
-                      <Button onClick={handleConfirmAddTransition}>
-                        Add Transition
-                      </Button>
+                      <Button onClick={handleConfirmAddTransition}>Add Transition</Button>
                     </div>
                   </div>
                 </CardContent>
@@ -551,7 +618,7 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
                     .map((state, index) => (
                       <React.Fragment key={state.id}>
                         <div className="flex flex-col items-center min-w-[100px]">
-                          <div 
+                          <div
                             className="w-16 h-16 rounded-full flex items-center justify-center text-white font-medium"
                             style={{ backgroundColor: state.color }}
                           >
@@ -571,7 +638,9 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
         </div>
 
         <DialogFooter className="p-6 pt-2">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
           <Button onClick={handleSave} disabled={isSaving} className="gap-2">
             {isSaving && <span className="animate-spin">⏳</span>}
             <Save className="h-4 w-4" /> Save Workflow
