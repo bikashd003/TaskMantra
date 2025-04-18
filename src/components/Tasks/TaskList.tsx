@@ -1,4 +1,4 @@
-import React, { JSX, useState, useEffect } from "react";
+import React, { JSX, useState } from "react";
 import { Task, TaskPriority, TaskStatus } from "./types";
 import TaskCard from "./TaskCard";
 import EmptyState from "./EmptyState";
@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowUpDown, Calendar, Clock, List, Filter, Tag, MoreHorizontal, CheckCircle2, Circle, AlertCircle } from "lucide-react";
+import { ArrowUpDown, Calendar, List, Filter, Tag, MoreHorizontal, CheckCircle2, Circle, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";

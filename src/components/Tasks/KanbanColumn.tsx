@@ -105,10 +105,13 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   return (
     <div
       ref={setSortableRef}
-      className={`space-y-4 ${isColumnDragging ? 'opacity-50' : ''}`}
+      className={`space-y-4 ${isColumnDragging ? 'opacity-50' : ''} overflow-x-auto`}
       style={{
         ...columnTransform,
-        width: `${columnWidth}px`
+        width: `${columnWidth}px`,
+        minWidth: '220px',
+        maxWidth: '90vw',
+        flex: '0 0 auto'
       }}
       {...attributes}
     >
@@ -211,7 +214,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       {!isCollapsed && (
         <div
           ref={setDroppableRef}
-          className={`min-h-[200px] rounded-lg transition-colors ${isOver ? 'bg-primary/5 border-2 border-dashed border-primary/30' : 'border border-dashed border-gray-200'}`}
+          className={`min-h-[200px] max-h-[calc(100vh-20rem)] overflow-y-auto rounded-lg transition-colors ${isOver ? 'bg-primary/5 border-2 border-dashed border-primary/30' : 'border border-dashed border-gray-200'}`}
         >
           {tasks.length === 0 && !isAddingTask ? (
             <div className="h-full p-4 flex flex-col items-center justify-center text-center text-muted-foreground text-sm">
