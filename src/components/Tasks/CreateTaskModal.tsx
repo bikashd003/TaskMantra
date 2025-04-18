@@ -1,24 +1,35 @@
-import { CalendarDays, CheckCircle2, Flag, Folder, Tags, Clock, Users, Trash, Plus } from 'lucide-react';
+import {
+  CalendarDays,
+  CheckCircle2,
+  Flag,
+  Folder,
+  Tags,
+  Clock,
+  Users,
+  Trash,
+  Plus,
+} from 'lucide-react';
 import { RecurrenceRule } from './types/RecurringTask';
 import RecurringTaskForm from './RecurringTaskForm';
 import Modal from '@/components/Global/Modal';
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { TaskStatus, TaskPriority, statusOptions, priorityOptions, Subtask, Task } from './types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React from 'react';
 
 interface TaskData {
   name: string;
@@ -66,14 +77,16 @@ const initialTaskState: TaskData = {
   color: '',
   category: '',
   recurring: {
-    isRecurring: false
-  }
+    isRecurring: false,
+  },
 };
 
 const validationSchema = Yup.object().shape({
   name: Yup.string().required('Task name is required'),
   description: Yup.string(),
-  status: Yup.string().oneOf(['To Do', 'In Progress', 'Review', 'Completed']).required('Status is required'),
+  status: Yup.string()
+    .oneOf(['To Do', 'In Progress', 'Review', 'Completed'])
+    .required('Status is required'),
   priority: Yup.string().oneOf(['High', 'Medium', 'Low']).required('Priority is required'),
   dueDate: Yup.date(),
   startDate: Yup.date(),
@@ -83,7 +96,7 @@ const validationSchema = Yup.object().shape({
   subtasks: Yup.array().of(
     Yup.object().shape({
       name: Yup.string().required('Subtask name is required'),
-      completed: Yup.boolean().default(false)
+      completed: Yup.boolean().default(false),
     })
   ),
   assignedTo: Yup.array().of(Yup.string()),
@@ -108,12 +121,16 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         status: editTask.status || 'To Do',
         priority: editTask.priority || 'Medium',
         dueDate: editTask.dueDate ? new Date(editTask.dueDate).toISOString().split('T')[0] : '',
-        startDate: editTask.startDate ? new Date(editTask.startDate).toISOString().split('T')[0] : '',
+        startDate: editTask.startDate
+          ? new Date(editTask.startDate).toISOString().split('T')[0]
+          : '',
         estimatedTime: editTask.estimatedTime || 0,
         loggedTime: editTask.loggedTime || 0,
         projectId: editTask.projectId || '',
         subtasks: editTask.subtasks || [],
-        assignedTo: editTask.assignedTo ? editTask.assignedTo.map(user => typeof user === 'string' ? user : user.id) : [],
+        assignedTo: editTask.assignedTo
+          ? editTask.assignedTo.map(user => (typeof user === 'string' ? user : user.id))
+          : [],
         tags: editTask.tags || [],
       };
     } else {
@@ -132,14 +149,14 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const formik = useFormik({
     initialValues: getInitialValues(),
     validationSchema: validationSchema,
-    onSubmit: async (values) => {
+    onSubmit: async values => {
       try {
         await onCreateTask(values);
         formik.resetForm();
         onClose();
       } catch (error) {
-        toast.error("Failed to " + (editTask ? "update" : "create") + " task", {
-          description: error instanceof Error ? error.message : "Unknown error",
+        toast.error('Failed to ' + (editTask ? 'update' : 'create') + ' task', {
+          description: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     },
@@ -151,11 +168,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      size='xl'
-    >
+    <Modal isOpen={isOpen} onClose={handleClose} size="xl">
       <div className="max-h-[85vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between gap-3 border-b pb-4">
@@ -164,7 +177,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               <CheckCircle2 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold">{editTask ? 'Edit Task' : 'Create New Task'}</h2>
+              <h2 className="text-xl font-semibold">
+                {editTask ? 'Edit Task' : 'Create New Task'}
+              </h2>
               <p className="text-sm text-muted-foreground">
                 {editTask ? 'Update task details' : 'Add a new task to your project'}
               </p>
@@ -198,7 +213,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 </Label>
                 <Select
                   value={formik.values.status}
-                  onValueChange={(value) => formik.setFieldValue('status', value)}
+                  onValueChange={value => formik.setFieldValue('status', value)}
                   disabled={isLoading}
                 >
                   <SelectTrigger id="status" className="h-10">
@@ -206,10 +221,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {statusOptions.map(option => (
-                      <SelectItem
-                        key={option.value}
-                        value={option.value}
-                      >
+                      <SelectItem key={option.value} value={option.value}>
                         <span className="flex items-center gap-2">
                           <div className={cn('w-2 h-2 rounded-full', option.color)} />
                           {option.label}
@@ -229,7 +241,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 </Label>
                 <Select
                   value={formik.values.priority}
-                  onValueChange={(value) => formik.setFieldValue('priority', value)}
+                  onValueChange={value => formik.setFieldValue('priority', value)}
                   disabled={isLoading}
                 >
                   <SelectTrigger id="priority" className="h-10">
@@ -237,16 +249,15 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {priorityOptions.map(option => (
-                      <SelectItem
-                        key={option.value}
-                        value={option.value}
-                      >
+                      <SelectItem key={option.value} value={option.value}>
                         <span className="flex items-center gap-2">
-                          <Flag className={cn('h-4 w-4', {
-                            'text-green-500': option.value === 'Low',
-                            'text-yellow-500': option.value === 'Medium',
-                            'text-red-500': option.value === 'High',
-                          })} />
+                          <Flag
+                            className={cn('h-4 w-4', {
+                              'text-green-500': option.value === 'Low',
+                              'text-yellow-500': option.value === 'Medium',
+                              'text-red-500': option.value === 'High',
+                            })}
+                          />
                           {option.label}
                         </span>
                       </SelectItem>
@@ -295,14 +306,17 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                       id="tags"
                       placeholder="Enter tags separated by commas"
                       value={formik.values.tags.join(', ')}
-                      onChange={(e) => formik.setFieldValue('tags', e.target.value.split(',').map(tag => tag.trim()))}
+                      onChange={e =>
+                        formik.setFieldValue(
+                          'tags',
+                          e.target.value.split(',').map(tag => tag.trim())
+                        )
+                      }
                       className="h-10 pl-9"
                       disabled={isLoading}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Example: design, frontend, urgent
-                  </p>
+                  <p className="text-xs text-muted-foreground">Example: design, frontend, urgent</p>
                 </div>
 
                 <div className="space-y-2">
@@ -328,7 +342,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     </Label>
                     <Select
                       value={formik.values.category || ''}
-                      onValueChange={(value) => formik.setFieldValue('category', value)}
+                      onValueChange={value => formik.setFieldValue('category', value)}
                       disabled={isLoading}
                     >
                       <SelectTrigger id="category" className="h-10">
@@ -351,7 +365,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     </Label>
                     <Select
                       value={formik.values.color || ''}
-                      onValueChange={(value) => formik.setFieldValue('color', value)}
+                      onValueChange={value => formik.setFieldValue('color', value)}
                       disabled={isLoading}
                     >
                       <SelectTrigger id="color" className="h-10">
@@ -481,13 +495,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   onSave={(rule, isRecurring) => {
                     formik.setFieldValue('recurring', {
                       isRecurring,
-                      recurrenceRule: rule
+                      recurrenceRule: rule,
                     });
                   }}
-                  onToggleRecurring={(isRecurring) => {
+                  onToggleRecurring={isRecurring => {
                     formik.setFieldValue('recurring', {
                       ...formik.values.recurring,
-                      isRecurring
+                      isRecurring,
                     });
                   }}
                 />
@@ -506,7 +520,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                       onClick={() => {
                         formik.setFieldValue('subtasks', [
                           ...formik.values.subtasks,
-                          { name: '', completed: false }
+                          { name: '', completed: false },
                         ]);
                       }}
                       disabled={isLoading}
@@ -521,16 +535,21 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                         <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <p className="text-sm font-medium">No subtasks yet</p>
-                      <p className="text-xs text-muted-foreground mt-1">Add subtasks to break down this task</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Add subtasks to break down this task
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
                       {formik.values.subtasks.map((subtask, index) => (
-                        <div key={index} className="flex items-center gap-2 bg-muted/30 rounded-md p-2">
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 bg-muted/30 rounded-md p-2"
+                        >
                           <Input
                             placeholder="Subtask name"
                             value={subtask.name}
-                            onChange={(e) => {
+                            onChange={e => {
                               const newSubtasks = [...formik.values.subtasks];
                               newSubtasks[index].name = e.target.value;
                               formik.setFieldValue('subtasks', newSubtasks);
@@ -543,7 +562,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                             variant="ghost"
                             size="icon"
                             onClick={() => {
-                              const newSubtasks = formik.values.subtasks.filter((_, i) => i !== index);
+                              const newSubtasks = formik.values.subtasks.filter(
+                                (_, i) => i !== index
+                              );
                               formik.setFieldValue('subtasks', newSubtasks);
                             }}
                             disabled={isLoading}
@@ -569,7 +590,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                       id="assignedTo"
                       placeholder="Assign to users"
                       value={formik.values.assignedTo.join(', ')}
-                      onChange={(e) => formik.setFieldValue('assignedTo', e.target.value.split(',').map(id => id.trim()))}
+                      onChange={e =>
+                        formik.setFieldValue(
+                          'assignedTo',
+                          e.target.value.split(',').map(id => id.trim())
+                        )
+                      }
                       className="h-10 pl-9"
                       disabled={isLoading}
                     />
@@ -597,7 +623,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             variant="default"
             disabled={!formik.isValid || !formik.dirty || isLoading}
             className="h-9 px-4"
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault();
               formik.handleSubmit();
             }}

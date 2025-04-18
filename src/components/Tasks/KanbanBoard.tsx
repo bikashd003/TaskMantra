@@ -1,18 +1,25 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Task, TaskPriority, TaskStatus } from "./types";
-import KanbanColumn from "./KanbanColumn";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import TaskDetailSidebar from "./TaskDetailSidebar";
-import { createPortal } from "react-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Plus, Settings } from "lucide-react";
+/* eslint-disable no-undef */
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Task, TaskPriority, TaskStatus } from './types';
+import KanbanColumn from './KanbanColumn';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import TaskDetailSidebar from './TaskDetailSidebar';
+import { createPortal } from 'react-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Slider } from '@/components/ui/slider';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Plus, Settings } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
@@ -23,11 +30,14 @@ import {
   DragStartEvent,
   DragEndEvent,
   defaultDropAnimationSideEffects,
-} from "@dnd-kit/core";
-import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { KanbanSettingsService, KanbanColumn as KanbanColumnType } from "@/services/KanbanSettings.service";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ScrollArea, ScrollBar } from "../ui/scroll-area";
+} from '@dnd-kit/core';
+import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+  KanbanSettingsService,
+  KanbanColumn as KanbanColumnType,
+} from '@/services/KanbanSettings.service';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ScrollArea, ScrollBar } from '../ui/scroll-area';
 
 interface KanbanBoardProps {
   tasks: {
@@ -47,13 +57,13 @@ interface KanbanBoardProps {
   viewMode: 'kanban' | 'calendar' | 'list';
 }
 
-interface ColumnDefinition extends KanbanColumnType { }
+type ColumnDefinition = KanbanColumnType;
 
 const statusMap: Record<string, TaskStatus> = {
-  "todo": "To Do",
-  "inProgress": "In Progress",
-  "review": "Review",
-  "completed": "Completed",
+  todo: 'To Do',
+  inProgress: 'In Progress',
+  review: 'Review',
+  completed: 'Completed',
 };
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({
@@ -64,7 +74,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onAddTask,
   renderPriorityBadge,
   isLoading,
-  viewMode
+  viewMode,
 }) => {
   const { toast } = useToast();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -72,22 +82,20 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAddColumnDialogOpen, setIsAddColumnDialogOpen] = useState(false);
-  const [newColumnTitle, setNewColumnTitle] = useState("");
+  const [newColumnTitle, setNewColumnTitle] = useState('');
 
   // Define default columns
   const defaultColumns: ColumnDefinition[] = [
-    { id: "todo", title: "To Do", order: 0 },
-    { id: "inProgress", title: "In Progress", order: 1 },
-    { id: "review", title: "Review", order: 2 },
-    { id: "completed", title: "Completed", order: 3 },
+    { id: 'todo', title: 'To Do', order: 0 },
+    { id: 'inProgress', title: 'In Progress', order: 1 },
+    { id: 'review', title: 'Review', order: 2 },
+    { id: 'completed', title: 'Completed', order: 3 },
   ];
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [columnWidth, setColumnWidth] = useState(280);
   const [compactView, setCompactView] = useState(false);
   const [showCompletedTasks, setShowCompletedTasks] = useState(true);
-
-
 
   // Query client for cache invalidation
   const queryClient = useQueryClient();
@@ -127,17 +135,17 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kanban-settings'] });
       toast({
-        title: "Columns updated",
-        description: "Your column layout has been saved",
+        title: 'Columns updated',
+        description: 'Your column layout has been saved',
       });
     },
     onError: () => {
       toast({
-        title: "Failed to update columns",
-        description: "Please try again later",
-        variant: "destructive",
+        title: 'Failed to update columns',
+        description: 'Please try again later',
+        variant: 'destructive',
       });
-    }
+    },
   });
 
   // Mutation for updating settings
@@ -146,17 +154,17 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kanban-settings'] });
       toast({
-        title: "Settings updated",
-        description: "Your preferences have been saved",
+        title: 'Settings updated',
+        description: 'Your preferences have been saved',
       });
     },
     onError: () => {
       toast({
-        title: "Failed to update settings",
-        description: "Please try again later",
-        variant: "destructive",
+        title: 'Failed to update settings',
+        description: 'Please try again later',
+        variant: 'destructive',
       });
-    }
+    },
   });
 
   // Track if columns were changed by the user or by the API response
@@ -166,15 +174,18 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Debounced column update function
-  const debouncedUpdateColumns = useCallback((columnsToUpdate: ColumnDefinition[]) => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
+  const debouncedUpdateColumns = useCallback(
+    (columnsToUpdate: ColumnDefinition[]) => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
 
-    debounceTimerRef.current = setTimeout(() => {
-      updateColumnsMutation.mutate(columnsToUpdate);
-    }, 1000); // 1 second delay
-  }, [updateColumnsMutation]);
+      debounceTimerRef.current = setTimeout(() => {
+        updateColumnsMutation.mutate(columnsToUpdate);
+      }, 1000); // 1 second delay
+    },
+    [updateColumnsMutation]
+  );
 
   // Save columns when they change due to user actions
   useEffect(() => {
@@ -183,7 +194,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
       // Ensure each column has an order property
       const columnsWithOrder = columns.map((col, index) => ({
         ...col,
-        order: col.order !== undefined ? col.order : index
+        order: col.order !== undefined ? col.order : index,
       }));
 
       // Use debounced update
@@ -213,7 +224,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     updateSettingsMutation.mutate({ showCompletedTasks: checked });
   };
 
-
   // Configure sensors for drag detection with a small delay to avoid accidental drags
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -238,8 +248,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     // Here you would typically call your API to update the task
     // For now, we'll just show a toast
     toast({
-      title: "Task updated",
-      description: "Task details have been updated",
+      title: 'Task updated',
+      description: 'Task details have been updated',
     });
   };
 
@@ -247,14 +257,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const handleAddColumn = () => {
     if (!newColumnTitle.trim()) return;
 
-    const newColumnId = newColumnTitle.toLowerCase().replace(/\s+/g, "");
+    const newColumnId = newColumnTitle.toLowerCase().replace(/\s+/g, '');
 
     // Check if column with this ID already exists
     if (columns.some(col => col.id === newColumnId)) {
       toast({
-        title: "Column already exists",
-        description: "Please use a different name",
-        variant: "destructive",
+        title: 'Column already exists',
+        description: 'Please use a different name',
+        variant: 'destructive',
       });
       return;
     }
@@ -270,14 +280,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
     const updatedColumns = [...columns, newColumn];
     setColumns(updatedColumns);
-    setNewColumnTitle("");
+    setNewColumnTitle('');
     setIsAddColumnDialogOpen(false);
 
     // Add the new status to the statusMap
     statusMap[newColumnId] = newColumnTitle.trim() as TaskStatus;
 
     toast({
-      title: "Column added",
+      title: 'Column added',
       description: `${newColumnTitle.trim()} column has been added`,
     });
   };
@@ -287,9 +297,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     // Don't allow deleting if it's the last column
     if (columns.length <= 1) {
       toast({
-        title: "Cannot delete column",
-        description: "You must have at least one column",
-        variant: "destructive",
+        title: 'Cannot delete column',
+        description: 'You must have at least one column',
+        variant: 'destructive',
       });
       return;
     }
@@ -298,9 +308,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     const tasksInColumn = tasks[columnId] || [];
     if (tasksInColumn.length > 0) {
       toast({
-        title: "Cannot delete column",
-        description: "This column contains tasks. Move or delete them first.",
-        variant: "destructive",
+        title: 'Cannot delete column',
+        description: 'This column contains tasks. Move or delete them first.',
+        variant: 'destructive',
       });
       return;
     }
@@ -311,7 +321,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     // Update order for remaining columns
     const reorderedColumns = updatedColumns.map((col, index) => ({
       ...col,
-      order: index
+      order: index,
     }));
 
     // Set the user action flag
@@ -320,8 +330,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     setColumns(reorderedColumns);
 
     toast({
-      title: "Column deleted",
-      description: "The column has been removed",
+      title: 'Column deleted',
+      description: 'The column has been removed',
     });
   };
 
@@ -338,8 +348,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
 
     // Check if it's a column being dragged
-    if (activeId.startsWith("column-")) {
-      setActiveColumn(activeId.replace("column-", ""));
+    if (activeId.startsWith('column-')) {
+      setActiveColumn(activeId.replace('column-', ''));
     }
   };
 
@@ -356,9 +366,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     const overId = String(over.id);
 
     // Handle column reordering
-    if (activeId.startsWith("column-") && overId.startsWith("column-")) {
-      const activeColumnId = activeId.replace("column-", "");
-      const overColumnId = overId.replace("column-", "");
+    if (activeId.startsWith('column-') && overId.startsWith('column-')) {
+      const activeColumnId = activeId.replace('column-', '');
+      const overColumnId = overId.replace('column-', '');
 
       if (activeColumnId !== overColumnId) {
         const oldIndex = columns.findIndex(col => col.id === activeColumnId);
@@ -374,7 +384,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           // Update the order property for each column
           const updatedColumns = newColumns.map((col, index) => ({
             ...col,
-            order: index
+            order: index,
           }));
 
           setColumns(updatedColumns);
@@ -411,7 +421,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     sideEffects: defaultDropAnimationSideEffects({
       styles: {
         active: {
-          opacity: "0.5",
+          opacity: '0.5',
         },
       },
     }),
@@ -427,23 +437,15 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
       >
         <div className="flex justify-end items-center mb-4">
           <div className="flex space-x-2">
-
             {viewMode === 'kanban' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsAddColumnDialogOpen(true)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setIsAddColumnDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Add Column
               </Button>
             )}
 
             <Popover open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                >
+                <Button variant="outline" size="sm">
                   <Settings className="h-4 w-4 mr-1" /> Settings
                 </Button>
               </PopoverTrigger>
@@ -454,7 +456,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   {viewMode === 'kanban' && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="column-width" className="text-sm">Column Width</Label>
+                        <Label htmlFor="column-width" className="text-sm">
+                          Column Width
+                        </Label>
                         <span className="text-xs text-muted-foreground">{columnWidth}px</span>
                       </div>
                       <Slider
@@ -470,7 +474,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                   <div className="flex items-center justify-between space-y-0">
                     <div className="space-y-0.5">
-                      <Label htmlFor="compact-view" className="text-sm">Compact View</Label>
+                      <Label htmlFor="compact-view" className="text-sm">
+                        Compact View
+                      </Label>
                       <p className="text-xs text-muted-foreground">Show less details on cards</p>
                     </div>
                     <Switch
@@ -482,8 +488,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                   <div className="flex items-center justify-between space-y-0">
                     <div className="space-y-0.5">
-                      <Label htmlFor="show-completed" className="text-sm">Show Completed Tasks</Label>
-                      <p className="text-xs text-muted-foreground">Display tasks marked as completed</p>
+                      <Label htmlFor="show-completed" className="text-sm">
+                        Show Completed Tasks
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Display tasks marked as completed
+                      </p>
                     </div>
                     <Switch
                       id="show-completed"
@@ -497,16 +507,20 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </div>
 
-
         <ScrollArea className="max-w-full">
-          <SortableContext items={columns.map(col => `column-${col.id}`)} strategy={horizontalListSortingStrategy}>
+          <SortableContext
+            items={columns.map(col => `column-${col.id}`)}
+            strategy={horizontalListSortingStrategy}
+          >
             <div className="flex space-x-4">
-              {columns.map((column) => (
+              {columns.map(column => (
                 <KanbanColumn
                   key={column.id}
                   id={column.id}
                   title={column.title}
-                  tasks={!showCompletedTasks && column.id === 'completed' ? [] : (tasks[column.id] || [])}
+                  tasks={
+                    !showCompletedTasks && column.id === 'completed' ? [] : tasks[column.id] || []
+                  }
                   onStatusChange={onStatusChange}
                   onDelete={onDelete}
                   renderPriorityBadge={renderPriorityBadge}
@@ -522,8 +536,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
 
-
-        {typeof window !== "undefined" &&
+        {typeof window !== 'undefined' &&
           createPortal(
             <DragOverlay dropAnimation={dropAnimation}>
               {activeTask ? (
@@ -544,7 +557,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   {/* Render the dragged column */}
                   <div className="bg-white p-4 rounded-lg shadow-lg border border-primary/20 w-80">
                     <h3 className="font-medium">
-                      {columns.find(col => col.id === activeColumn)?.title || "Column"}
+                      {columns.find(col => col.id === activeColumn)?.title || 'Column'}
                     </h3>
                   </div>
                 </div>
@@ -572,10 +585,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             <Input
               placeholder="Column name"
               value={newColumnTitle}
-              onChange={(e) => setNewColumnTitle(e.target.value)}
+              onChange={e => setNewColumnTitle(e.target.value)}
               className="mb-2"
               autoFocus
-              onKeyDown={(e) => {
+              onKeyDown={e => {
                 if (e.key === 'Enter' && newColumnTitle.trim()) {
                   handleAddColumn();
                 }
@@ -583,16 +596,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             />
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsAddColumnDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsAddColumnDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleAddColumn}
-              disabled={!newColumnTitle.trim()}
-            >
+            <Button onClick={handleAddColumn} disabled={!newColumnTitle.trim()}>
               Add Column
             </Button>
           </DialogFooter>
@@ -603,4 +610,3 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 };
 
 export default KanbanBoard;
-

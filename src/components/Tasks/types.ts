@@ -1,5 +1,3 @@
-
-
 // Task-related type definitions
 export type TaskStatus = 'To Do' | 'In Progress' | 'Review' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
@@ -28,6 +26,7 @@ export interface User {
   initials?: string;
 }
 
+import React from 'react';
 import { RecurringTaskInfo } from './types/RecurringTask';
 
 export interface CalendarMetadata {
