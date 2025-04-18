@@ -1,5 +1,3 @@
-
-
 // Task-related type definitions
 export type TaskStatus = 'To Do' | 'In Progress' | 'Review' | 'Completed';
 export type TaskPriority = 'High' | 'Medium' | 'Low';
@@ -28,6 +26,17 @@ export interface User {
   initials?: string;
 }
 
+import React from 'react';
+import { RecurringTaskInfo } from './types/RecurringTask';
+
+export interface CalendarMetadata {
+  isStartDate: boolean;
+  isEndDate: boolean;
+  isContinuation: boolean;
+  datePosition: number;
+  totalDates: number;
+}
+
 export interface Task {
   id: string;
   name: string;
@@ -48,6 +57,10 @@ export interface Task {
   tags?: string[];
   createdAt?: Date;
   updatedAt?: Date;
+  color?: string; // For color coding tasks
+  category?: string; // For categorizing tasks
+  recurring?: RecurringTaskInfo; // For recurring tasks
+  _calendarMeta?: CalendarMetadata; // Metadata for calendar rendering
 }
 
 export interface TaskCardProps {

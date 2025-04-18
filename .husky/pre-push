@@ -1,0 +1,25 @@
+echo "🔍 Running pre-push checks..."
+
+# Run TypeScript type checking
+echo "🔎 Running TypeScript type checking..."
+bun run tsc --noEmit || {
+  echo "❌ TypeScript check failed. Please fix the type errors before pushing."
+  exit 1
+}
+
+# Run ESLint (with --max-warnings flag)
+echo "🧹 Running ESLint..."
+bun run lint --max-warnings 50 || {
+  echo "❌ ESLint check failed. Please fix the linting errors before pushing."
+  exit 1
+}
+
+# Run build to ensure the app compiles
+echo "🏗️ Building the application..."
+bun run build || {
+  echo "❌ Build failed. Please fix the build errors before pushing."
+  exit 1
+}
+
+echo "✅ All checks passed! Pushing to remote..."
+

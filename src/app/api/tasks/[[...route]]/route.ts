@@ -51,6 +51,9 @@ app.get('/', async (c) => {
     const priority = c.req.query('priority') || 'all';
     const sortField = c.req.query('sortField') || 'dueDate';
     const sortDirection = c.req.query('sortDirection') || 'desc';
+    const fromDate = c.req.query('fromDate');
+    const toDate = c.req.query('toDate');
+    const assignedTo = c.req.query('assignedTo');
 
     // Build the query
     const query: any = { createdBy: user.id };
@@ -75,6 +78,28 @@ app.get('/', async (c) => {
     // Add priority filter if not 'all'
     if (priority !== 'all') {
       query.priority = priority.charAt(0).toUpperCase() + priority.slice(1);
+    }
+
+    // Add date range filter if provided
+    if (fromDate && toDate) {
+      query.$or = [
+        // Tasks that start within the range
+        { startDate: { $gte: new Date(fromDate), $lte: new Date(toDate) } },
+        // Tasks that end within the range
+        { dueDate: { $gte: new Date(fromDate), $lte: new Date(toDate) } },
+        // Tasks that span across the range (start before, end after)
+        {
+          $and: [
+            { startDate: { $lte: new Date(fromDate) } },
+            { dueDate: { $gte: new Date(toDate) } }
+          ]
+        }
+      ];
+    }
+
+    // Add assignedTo filter if provided
+    if (assignedTo) {
+      query.assignedTo = { $in: [assignedTo] };
     }
 
     // Create sort object

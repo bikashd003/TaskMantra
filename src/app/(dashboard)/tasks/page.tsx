@@ -1,26 +1,21 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { motion } from "framer-motion";
 
 // Import components
 import CreateTaskModal from "@/components/Tasks/CreateTaskModal";
-import TaskHeader from "@/components/Tasks/TaskHeader";
-import TaskFilters from "@/components/Tasks/TaskFilters";
-import TaskList from "@/components/Tasks/TaskList";
-import KanbanBoard from "@/components/Tasks/KanbanBoard";
+import TaskBoard from "@/components/Tasks/TaskBoard";
 
 // Import types
 import {
-    Task,
     TaskStatus,
     TaskPriority,
     TaskFilterState,
-    TaskSortOption,
     sortOptions
 } from "@/components/Tasks/types";
 
@@ -29,25 +24,17 @@ import { TaskService } from "@/services/Task.service";
 
 export default function TasksPage() {
     const queryClient = useQueryClient();
-    const [filters, setFilters] = useState<TaskFilterState>({
+    // Define filter and sort state for API calls
+    const filters = {
         searchQuery: "",
         status: "all",
         priority: "all"
-    });
-    const [currentSort, setCurrentSort] = useState<TaskSortOption>(sortOptions[0]);
+    } as TaskFilterState;
+    const currentSort = sortOptions[0];
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 
-    // Debounce search query to prevent excessive API calls
-    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
-
-    // Update debounced search query after a delay
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearchQuery(filters.searchQuery);
-        }, 500); // 500ms delay
-
-        return () => clearTimeout(timer);
-    }, [filters.searchQuery]);
+    // Use a constant for search query since we're not using the filter UI anymore
+    const debouncedSearchQuery = "";
 
     // Fetch tasks with filters applied on the backend
     const { data: tasksData = [], isLoading } = useQuery({
@@ -104,13 +91,28 @@ export default function TasksPage() {
         },
     });
 
-    const updateTaskMutation = useMutation({
+    const updateTaskStatusMutation = useMutation({
         mutationFn: ({ id, status }: { id: string; status: string }) => {
             // Convert UI status format to API status format
             const apiStatus = status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ");
             return TaskService.updateTask(id, {
                 status: apiStatus as any // Use type assertion to bypass type checking
             });
+        },
+        onSuccess: () => {
+            // Invalidate all task queries regardless of filters
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            toast.success('Task updated successfully');
+        },
+        onError: (error: Error) => {
+            toast.error('Failed to update task');
+            console.error('Update task error:', error);
+        },
+    });
+
+    const updateTaskMutation = useMutation({
+        mutationFn: ({ id, ...updates }: { id: string;[key: string]: any }) => {
+            return TaskService.updateTask(id, updates);
         },
         onSuccess: () => {
             // Invalidate all task queries regardless of filters
@@ -142,26 +144,11 @@ export default function TasksPage() {
         return tasksData;
     }, [tasksData]);
 
-    // Group tasks for kanban view
-    const groupedTasks = React.useMemo(() => ({
-        todo: filteredTasks.filter((task: Task) => task.status === "To Do" || task.status.toLowerCase() === "todo"),
-        inProgress: filteredTasks.filter((task: Task) => task.status === "In Progress" || task.status.toLowerCase() === "in progress"),
-        review: filteredTasks.filter((task: Task) => task.status === "Review" || task.status.toLowerCase() === "review"),
-        completed: filteredTasks.filter((task: Task) => task.status === "Completed" || task.status.toLowerCase() === "completed")
-    }), [filteredTasks]);
-
     // Event handlers
-    const handleFilterChange = useCallback((newFilters: Partial<TaskFilterState>) => {
-        setFilters(prev => ({ ...prev, ...newFilters }));
-    }, []);
-
-    const handleSortChange = useCallback((sortOption: TaskSortOption) => {
-        setCurrentSort(sortOption);
-    }, []);
 
     const handleStatusChange = useCallback((taskId: string, newStatus: TaskStatus) => {
-        updateTaskMutation.mutate({ id: taskId, status: newStatus });
-    }, [updateTaskMutation]);
+        updateTaskStatusMutation.mutate({ id: taskId, status: newStatus });
+    }, [updateTaskStatusMutation]);
 
     const handleDeleteTask = useCallback((taskId: string) => {
         deleteTaskMutation.mutate(taskId);
@@ -188,6 +175,10 @@ export default function TasksPage() {
         });
     }, [createTaskMutation]);
 
+    const handleUpdateTask = useCallback((taskId: string, updates: any) => {
+        updateTaskMutation.mutate({ id: taskId, ...updates });
+    }, [updateTaskMutation]);
+
     const renderPriorityBadge = useCallback((priority: TaskPriority) => {
         const colors: Record<string, string> = {
             'Low': "bg-green-100 text-green-800 hover:bg-green-100",
@@ -207,45 +198,18 @@ export default function TasksPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="bg-white px-4 rounded-md py-6"
+            className="bg-white px-4 rounded-md py-2 h-full"
         >
-            <TaskHeader onCreateTask={() => setIsCreateModalOpen(true)} />
-
-            <TaskFilters
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                onSortChange={handleSortChange}
-                currentSort={currentSort}
+            <TaskBoard
+                tasks={filteredTasks}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDeleteTask}
+                onAddTask={handleCreateTask}
+                renderPriorityBadge={renderPriorityBadge}
+                isLoading={isLoading}
+                onCreateTask={() => setIsCreateModalOpen(true)}
+                onUpdateTask={handleUpdateTask}
             />
-
-            <Tabs defaultValue="kanban" className="my-4">
-                <TabsList>
-                    <TabsTrigger value="list">List View</TabsTrigger>
-                    <TabsTrigger value="kanban">Kanban View</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="list" className="space-y-4">
-                    <TaskList
-                        tasks={filteredTasks}
-                        searchQuery={filters.searchQuery}
-                        onStatusChange={handleStatusChange}
-                        onDelete={handleDeleteTask}
-                        renderPriorityBadge={renderPriorityBadge}
-                        onCreateTask={() => setIsCreateModalOpen(true)}
-                        isLoading={isLoading}
-                    />
-                </TabsContent>
-
-                <TabsContent value="kanban">
-                    <KanbanBoard
-                        tasks={groupedTasks}
-                        onStatusChange={handleStatusChange}
-                        onDelete={handleDeleteTask}
-                        renderPriorityBadge={renderPriorityBadge}
-                        isLoading={isLoading}
-                    />
-                </TabsContent>
-            </Tabs>
 
             <CreateTaskModal
                 isOpen={isCreateModalOpen}

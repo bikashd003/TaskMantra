@@ -8,6 +8,11 @@ export class TaskService {
         priority?: string;
         sortField?: string;
         sortDirection?: 'asc' | 'desc';
+        dateRange?: {
+            from: string;
+            to: string;
+        };
+        assignedTo?: string;
     }): Promise<Task[]> {
         try {
             // Build query parameters
@@ -31,6 +36,15 @@ export class TaskService {
 
             if (filters?.sortDirection) {
                 params.append('sortDirection', filters.sortDirection);
+            }
+
+            if (filters?.dateRange) {
+                params.append('fromDate', filters.dateRange.from);
+                params.append('toDate', filters.dateRange.to);
+            }
+
+            if (filters?.assignedTo) {
+                params.append('assignedTo', filters.assignedTo);
             }
 
             const queryString = params.toString();

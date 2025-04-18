@@ -18,7 +18,7 @@ import {TaskSidebar} from "./TaskSidebar";
 
 const defaultColumns = [
   { id: "todo", title: "To Do" },
-  { id: "inprogress", title: "In Progress" },
+  { id: "inProgress", title: "In Progress" },
   { id: "completed", title: "Done" },
   { id: "review", title: "Review" },
 ];
