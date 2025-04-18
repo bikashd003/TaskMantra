@@ -48,18 +48,18 @@ export class WorkflowSettingsService {
       const response = await axios.get('/api/workflow-settings');
       return response.data.settings;
     } catch (error) {
-      console.error('Failed to fetch workflow settings:', error);
-      throw new Error('Failed to fetch workflow settings');
+      throw new Error('Failed to fetch workflow settings', { cause: error });
     }
   }
 
-  static async updateSettings(settings: Partial<WorkflowSettingsData>): Promise<WorkflowSettingsData> {
+  static async updateSettings(
+    settings: Partial<WorkflowSettingsData>
+  ): Promise<WorkflowSettingsData> {
     try {
       const response = await axios.patch('/api/workflow-settings', settings);
       return response.data.settings;
     } catch (error) {
-      console.error('Failed to update workflow settings:', error);
-      throw new Error('Failed to update workflow settings');
+      throw new Error('Failed to update workflow settings', { cause: error });
     }
   }
 
@@ -68,8 +68,7 @@ export class WorkflowSettingsService {
       const response = await axios.patch('/api/workflow-settings/states', { states });
       return response.data.settings;
     } catch (error) {
-      console.error('Failed to update workflow states:', error);
-      throw new Error('Failed to update workflow states');
+      throw new Error('Failed to update workflow states', { cause: error });
     }
   }
 
@@ -78,8 +77,7 @@ export class WorkflowSettingsService {
       const response = await axios.patch('/api/workflow-settings/transitions', { transitions });
       return response.data.settings;
     } catch (error) {
-      console.error('Failed to update workflow transitions:', error);
-      throw new Error('Failed to update workflow transitions');
+      throw new Error('Failed to update workflow transitions', { cause: error });
     }
   }
 
@@ -93,8 +91,7 @@ export class WorkflowSettingsService {
       const response = await axios.post('/api/workflow-settings/create', workflow);
       return response.data.settings;
     } catch (error) {
-      console.error('Failed to create workflow:', error);
-      throw new Error('Failed to create workflow');
+      throw new Error('Failed to create workflow', { cause: error });
     }
   }
 
@@ -103,8 +100,7 @@ export class WorkflowSettingsService {
       const response = await axios.get('/api/workflow-settings/templates');
       return response.data.templates;
     } catch (error) {
-      console.error('Failed to fetch workflow templates:', error);
-      throw new Error('Failed to fetch workflow templates');
+      throw new Error('Failed to fetch workflow templates', { cause: error });
     }
   }
 
@@ -113,8 +109,7 @@ export class WorkflowSettingsService {
       const response = await axios.post('/api/workflow-settings/templates', template);
       return response.data.template;
     } catch (error) {
-      console.error('Failed to create workflow template:', error);
-      throw new Error('Failed to create workflow template');
+      throw new Error('Failed to create workflow template', { cause: error });
     }
   }
 
@@ -123,8 +118,7 @@ export class WorkflowSettingsService {
       const response = await axios.post(`/api/workflow-settings/templates/${templateId}/apply`);
       return response.data.settings;
     } catch (error) {
-      console.error('Failed to apply workflow template:', error);
-      throw new Error('Failed to apply workflow template');
+      throw new Error('Failed to apply workflow template', { cause: error });
     }
   }
 }

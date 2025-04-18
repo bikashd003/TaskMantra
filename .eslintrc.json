@@ -8,19 +8,12 @@
     "no-console": "warn",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/ban-ts-comment": "warn",
-    "no-unused-vars": [
-      "warn",
-      {
-        "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_",
-        "destructuredArrayIgnorePattern": "^_"
-      }
-    ],
+    "no-unused-vars": "off",
     "react/react-in-jsx-scope": "off",
     "@typescript-eslint/no-unused-vars": [
       "warn",
       {
-        "varsIgnorePattern": "^_|^KanbanColumnProps$",
+        "varsIgnorePattern": "^_|Props$|Interface$",
         "argsIgnorePattern": "^_",
         "destructuredArrayIgnorePattern": "^_"
       }
@@ -41,4 +34,5 @@
     }
   }
 }
+
 

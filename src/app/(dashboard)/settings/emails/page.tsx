@@ -1,23 +1,30 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form"
-import { Textarea } from "@/components/ui/textarea"
-import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -25,60 +32,60 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Eye, Mail, Plus, Settings, Tags } from 'lucide-react'
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Eye, Mail, Plus, Settings, Tags } from 'lucide-react';
 
 const emailTemplateSchema = z.object({
-  name: z.string().min(2, { message: "Template name must be at least 2 characters." }),
-  subject: z.string().min(2, { message: "Subject is required." }),
-  content: z.string().min(10, { message: "Content must be at least 10 characters." }),
-  category: z.enum(["task", "member", "notification"]),
-})
+  name: z.string().min(2, { message: 'Template name must be at least 2 characters.' }),
+  subject: z.string().min(2, { message: 'Subject is required.' }),
+  content: z.string().min(10, { message: 'Content must be at least 10 characters.' }),
+  category: z.enum(['task', 'member', 'notification']),
+});
 
 const emailTemplates = [
   {
     id: 1,
-    name: "Task Assignment",
-    subject: "New Task Assigned: {{task_name}}",
-    category: "task",
-    lastModified: "2024-02-22",
+    name: 'Task Assignment',
+    subject: 'New Task Assigned: {{task_name}}',
+    category: 'task',
+    lastModified: '2024-02-22',
   },
   {
     id: 2,
-    name: "Welcome Email",
-    subject: "Welcome to TaskMantra, {{user_name}}!",
-    category: "member",
-    lastModified: "2024-02-21",
+    name: 'Welcome Email',
+    subject: 'Welcome to TaskMantra, {{user_name}}!',
+    category: 'member',
+    lastModified: '2024-02-21',
   },
   {
     id: 3,
-    name: "Due Date Reminder",
-    subject: "Task Due Soon: {{task_name}}",
-    category: "notification",
-    lastModified: "2024-02-20",
+    name: 'Due Date Reminder',
+    subject: 'Task Due Soon: {{task_name}}',
+    category: 'notification',
+    lastModified: '2024-02-20',
   },
-]
+];
 
 const variables = {
-  user: ["user_name", "user_email", "user_role"],
-  task: ["task_name", "task_description", "task_due_date", "task_status"],
-  project: ["project_name", "project_description", "project_deadline"],
-}
+  user: ['user_name', 'user_email', 'user_role'],
+  task: ['task_name', 'task_description', 'task_due_date', 'task_status'],
+  project: ['project_name', 'project_description', 'project_deadline'],
+};
 
 export default function EmailTemplates() {
   const form = useForm<z.infer<typeof emailTemplateSchema>>({
     resolver: zodResolver(emailTemplateSchema),
     defaultValues: {
-      name: "",
-      subject: "",
-      content: "",
-      category: "task",
+      name: '',
+      subject: '',
+      content: '',
+      category: 'task',
     },
-  })
+  });
 
   function onSubmit(values: z.infer<typeof emailTemplateSchema>) {
-    console.log(values)
+    // console.log(values)
     // TODO: Implement template creation/update logic
   }
 
@@ -106,9 +113,7 @@ export default function EmailTemplates() {
               <Mail className="h-5 w-5" />
               Email Templates
             </CardTitle>
-            <CardDescription>
-              Manage and customize your email templates
-            </CardDescription>
+            <CardDescription>Manage and customize your email templates</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="all" className="space-y-4">
@@ -130,7 +135,7 @@ export default function EmailTemplates() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {emailTemplates.map((template) => (
+                      {emailTemplates.map(template => (
                         <TableRow key={template.id}>
                           <TableCell>
                             <div className="space-y-0.5">
@@ -175,16 +180,14 @@ export default function EmailTemplates() {
               <Tags className="h-5 w-5" />
               Template Variables
             </CardTitle>
-            <CardDescription>
-              Available variables for your templates
-            </CardDescription>
+            <CardDescription>Available variables for your templates</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-medium mb-2">User Variables</h4>
                 <div className="flex flex-wrap gap-2">
-                  {variables.user.map((variable) => (
+                  {variables.user.map(variable => (
                     <Badge key={variable} variant="secondary" className="cursor-pointer">
                       {`{{${variable}}}`}
                     </Badge>
@@ -194,7 +197,7 @@ export default function EmailTemplates() {
               <div>
                 <h4 className="text-sm font-medium mb-2">Task Variables</h4>
                 <div className="flex flex-wrap gap-2">
-                  {variables.task.map((variable) => (
+                  {variables.task.map(variable => (
                     <Badge key={variable} variant="secondary" className="cursor-pointer">
                       {`{{${variable}}}`}
                     </Badge>
@@ -204,7 +207,7 @@ export default function EmailTemplates() {
               <div>
                 <h4 className="text-sm font-medium mb-2">Project Variables</h4>
                 <div className="flex flex-wrap gap-2">
-                  {variables.project.map((variable) => (
+                  {variables.project.map(variable => (
                     <Badge key={variable} variant="secondary" className="cursor-pointer">
                       {`{{${variable}}}`}
                     </Badge>
@@ -219,9 +222,7 @@ export default function EmailTemplates() {
         <Card className="md:col-span-12">
           <CardHeader>
             <CardTitle>Edit Template</CardTitle>
-            <CardDescription>
-              Create or modify an email template
-            </CardDescription>
+            <CardDescription>Create or modify an email template</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -273,7 +274,7 @@ export default function EmailTemplates() {
                         <Input placeholder="Enter email subject line" {...field} />
                       </FormControl>
                       <FormDescription>
-                        You can use variables like {"{{user_name}}"} in the subject
+                        You can use variables like {'{{user_name}}'} in the subject
                       </FormDescription>
                     </FormItem>
                   )}
@@ -309,5 +310,5 @@ export default function EmailTemplates() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

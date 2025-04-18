@@ -7,9 +7,9 @@ bun run tsc --noEmit || {
   exit 1
 }
 
-# Run ESLint
+# Run ESLint (with --max-warnings flag)
 echo "🧹 Running ESLint..."
-bun run lint || {
+bun run lint --max-warnings 50 || {
   echo "❌ ESLint check failed. Please fix the linting errors before pushing."
   exit 1
 }
@@ -22,3 +22,4 @@ bun run build || {
 }
 
 echo "✅ All checks passed! Pushing to remote..."
+

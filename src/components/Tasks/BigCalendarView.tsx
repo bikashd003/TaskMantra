@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { Calendar as BigCalendar, Views, momentLocalizer } from 'react-big-calendar';
@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 
 import CreateTaskModal from './CreateTaskModal';
 import CalendarHeader from './CalendarHeader';
+import { toast } from 'sonner';
 
 // Setup the localizer
 const localizer = momentLocalizer(moment);
@@ -51,9 +52,10 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
   tasks,
   onTaskClick,
   onAddTask,
-  onTaskUpdate
+  onTaskUpdate,
 }) => {
   // State for calendar view
+  const [isHovered, setIsHovered] = React.useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [view, setView] = useState<string>(Views.MONTH);
@@ -61,7 +63,7 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
     showCompleted: true,
     priorityFilter: 'all',
     overdueOnly: false,
-    projectFilter: null
+    projectFilter: null,
   });
 
   // State for task creation modal
@@ -119,7 +121,7 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
           resource: task,
           status: task.status,
           priority: task.priority,
-          color: task.color
+          color: task.color,
         };
       });
   }, [tasks, taskFilter]);
@@ -127,58 +129,52 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
   // Get task status color
   const getTaskStatusColor = (status: TaskStatus): string => {
     switch (status) {
-      case "To Do":
-        return "#d1d5db"; // gray-300
-      case "In Progress":
-        return "#3b82f6"; // blue-500
-      case "Review":
-        return "#f59e0b"; // amber-500
-      case "Completed":
-        return "#10b981"; // emerald-500
+      case 'To Do':
+        return '#d1d5db'; // gray-300
+      case 'In Progress':
+        return '#3b82f6'; // blue-500
+      case 'Review':
+        return '#f59e0b'; // amber-500
+      case 'Completed':
+        return '#10b981'; // emerald-500
       default:
-        return "#d1d5db"; // gray-300
+        return '#d1d5db'; // gray-300
     }
   };
 
   // Custom event styling
-  const eventStyleGetter = useCallback(
-    (event: CalendarEvent) => {
-      const backgroundColor = event.color || getTaskStatusColor(event.status);
-      const isPastDue = new Date(event.end) < new Date() && event.status !== 'Completed';
+  const eventStyleGetter = useCallback((event: CalendarEvent) => {
+    const backgroundColor = event.color || getTaskStatusColor(event.status);
+    const isPastDue = new Date(event.end) < new Date() && event.status !== 'Completed';
 
-      const style = {
-        backgroundColor,
-        borderRadius: '6px',
-        opacity: 0.85,
-        color: '#fff',
-        border: '0px',
-        display: 'block',
-        fontWeight: event.priority === 'High' ? '600' : '500',
-        boxShadow: isPastDue ? '0 0 0 1px rgba(239, 68, 68, 0.7)' : undefined,
-        borderLeft: event.priority === 'High' ? '3px solid rgba(255, 255, 255, 0.7)' : undefined
-      };
+    const style = {
+      backgroundColor,
+      borderRadius: '6px',
+      opacity: 0.85,
+      color: '#fff',
+      border: '0px',
+      display: 'block',
+      fontWeight: event.priority === 'High' ? '600' : '500',
+      boxShadow: isPastDue ? '0 0 0 1px rgba(239, 68, 68, 0.7)' : undefined,
+      borderLeft: event.priority === 'High' ? '3px solid rgba(255, 255, 255, 0.7)' : undefined,
+    };
 
-      return {
-        style,
-        className: cn(
-          event.priority === 'High' && 'high-priority-task',
-          isPastDue && 'past-due-task'
-        )
-      };
-    },
-    []
-  );
+    return {
+      style,
+      className: cn(
+        event.priority === 'High' && 'high-priority-task',
+        isPastDue && 'past-due-task'
+      ),
+    };
+  }, []);
 
   // Handle date selection
-  const handleSelectSlot = useCallback(
-    ({ start }: { start: Date }) => {
-      setSelectedDateForTask(start);
-      setIsEditingTask(false);
-      setTaskToEdit(null);
-      setIsCreateModalOpen(true);
-    },
-    []
-  );
+  const handleSelectSlot = useCallback(({ start }: { start: Date }) => {
+    setSelectedDateForTask(start);
+    setIsEditingTask(false);
+    setTaskToEdit(null);
+    setIsCreateModalOpen(true);
+  }, []);
 
   // Handle event selection (task click)
   const handleSelectEvent = useCallback(
@@ -196,7 +192,9 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
           }
         }
       } catch (error) {
-        console.error('Error handling task click:', error);
+        toast.error('Failed to handle task click', {
+          description: error instanceof Error ? error.message : 'Unknown error',
+        });
       }
     },
     [onTaskClick]
@@ -228,7 +226,7 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
   const toggleTaskFilter = (filterKey: keyof TaskFilter, value: any) => {
     setTaskFilter(prev => ({
       ...prev,
-      [filterKey]: value
+      [filterKey]: value,
     }));
   };
 
@@ -263,7 +261,6 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
     setCurrentDate(newDate);
   };
 
-
   return (
     <div className="bg-white rounded shadow-md border border-gray-200 p-4 w-full relative">
       {/* Task Creation/Edit Modal */}
@@ -295,10 +292,9 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
           eventPropGetter={eventStyleGetter}
           popup
           components={{
-            event: (props) => {
+            event: props => {
               const event = props.event as CalendarEvent;
               const task = event.resource as Task;
-              const [isHovered, setIsHovered] = React.useState(false);
 
               return (
                 <Popover open={isHovered}>
@@ -315,13 +311,15 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-base">{task.name}</h4>
-                        <div className={cn(
-                          "px-2 py-1 rounded-full text-xs font-medium",
-                          task.status === "To Do" && "bg-gray-100 text-gray-700",
-                          task.status === "In Progress" && "bg-blue-100 text-blue-700",
-                          task.status === "Review" && "bg-amber-100 text-amber-700",
-                          task.status === "Completed" && "bg-green-100 text-green-700"
-                        )}>
+                        <div
+                          className={cn(
+                            'px-2 py-1 rounded-full text-xs font-medium',
+                            task.status === 'To Do' && 'bg-gray-100 text-gray-700',
+                            task.status === 'In Progress' && 'bg-blue-100 text-blue-700',
+                            task.status === 'Review' && 'bg-amber-100 text-amber-700',
+                            task.status === 'Completed' && 'bg-green-100 text-green-700'
+                          )}
+                        >
                           {task.status}
                         </div>
                       </div>
@@ -331,17 +329,27 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex items-center gap-1.5">
                           <Clock className="h-3.5 w-3.5 text-gray-500" />
-                          <span className="text-gray-700">Start: {format(new Date(task.startDate), 'MMM d, yyyy')}</span>
+                          <span className="text-gray-700">
+                            Start: {format(new Date(task.startDate), 'MMM d, yyyy')}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Clock className="h-3.5 w-3.5 text-gray-500" />
-                          <span className="text-gray-700">Due: {format(new Date(task.dueDate), 'MMM d, yyyy')}</span>
+                          <span className="text-gray-700">
+                            Due: {format(new Date(task.dueDate), 'MMM d, yyyy')}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <AlertCircle className={cn("h-3.5 w-3.5",
-                            task.priority === "High" ? "text-red-500" :
-                            task.priority === "Medium" ? "text-amber-500" : "text-green-500"
-                          )} />
+                          <AlertCircle
+                            className={cn(
+                              'h-3.5 w-3.5',
+                              task.priority === 'High'
+                                ? 'text-red-500'
+                                : task.priority === 'Medium'
+                                  ? 'text-amber-500'
+                                  : 'text-green-500'
+                            )}
+                          />
                           <span className="text-gray-700">{task.priority} Priority</span>
                         </div>
                       </div>
@@ -350,7 +358,7 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
                         <Button
                           size="sm"
                           className="flex items-center gap-1"
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation();
                             setTaskToEdit(task);
                             setIsEditingTask(true);
@@ -365,21 +373,23 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
                 </Popover>
               );
             },
-            toolbar: () => <CalendarHeader
-              currentDate={currentDate}
-              setCurrentDate={setCurrentDate}
-              selectedDate={selectedDate}
-              setSelectedDate={setSelectedDate}
-              view={view}
-              setView={setView}
-              taskFilter={taskFilter}
-              toggleTaskFilter={toggleTaskFilter}
-              goToToday={goToToday}
-              goToPrevious={goToPrevious}
-              goToNext={goToNext}
-              handleViewChange={handleViewChange}
-              tasks={tasks}
-            />,
+            toolbar: () => (
+              <CalendarHeader
+                currentDate={currentDate}
+                setCurrentDate={setCurrentDate}
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+                view={view}
+                setView={setView}
+                taskFilter={taskFilter}
+                toggleTaskFilter={toggleTaskFilter}
+                goToToday={goToToday}
+                goToPrevious={goToPrevious}
+                goToNext={goToNext}
+                handleViewChange={handleViewChange}
+                tasks={tasks}
+              />
+            ),
           }}
         />
       </div>
@@ -388,5 +398,3 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
 };
 
 export default BigCalendarView;
-
-
