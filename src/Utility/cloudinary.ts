@@ -43,7 +43,6 @@ export const uploadToCloudinary = async (
       secure_url: result.secure_url,
       public_id: result.public_id,
     };
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     return {
       secure_url: '',
@@ -62,7 +61,6 @@ export const deleteFromCloudinary = async (publicId: string): Promise<boolean> =
   try {
     const result = await cloudinary.uploader.destroy(publicId);
     return result.result === 'ok';
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     return false;
   }
