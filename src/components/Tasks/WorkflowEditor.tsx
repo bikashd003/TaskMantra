@@ -1,15 +1,27 @@
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { WorkflowState, WorkflowTransition } from "@/services/WorkflowSettings.service";
-import { Plus, Trash2, ArrowRight, Save } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
+import React, { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { WorkflowState, WorkflowTransition } from '@/services/WorkflowSettings.service';
+import { Plus, Trash2, ArrowRight, Save } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from 'sonner';
 
 interface WorkflowEditorProps {
   isOpen: boolean;
@@ -29,7 +41,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
   // State for the editor
   const [states, setStates] = useState<WorkflowState[]>(workflowStates);
   const [transitions, setTransitions] = useState<WorkflowTransition[]>(workflowTransitions);
-  const [activeTab, setActiveTab] = useState("states");
+  const [activeTab, setActiveTab] = useState('states');
   const [isSaving, setIsSaving] = useState(false);
 
   // Generate a unique ID for new states
@@ -43,7 +55,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
       id: generateStateId(),
       name: `New State ${states.length + 1}`,
       color: getRandomColor(),
-      description: "",
+      description: '',
       order: states.length,
     };
     setStates([...states, newState]);
@@ -59,22 +71,22 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
   // Remove a state
   const handleRemoveState = (index: number) => {
     const stateToRemove = states[index];
-    
+
     // Remove any transitions that involve this state
     const filteredTransitions = transitions.filter(
       t => t.fromState !== stateToRemove.id && t.toState !== stateToRemove.id
     );
-    
+
     // Remove the state
     const updatedStates = [...states];
     updatedStates.splice(index, 1);
-    
+
     // Update order for remaining states
     const reorderedStates = updatedStates.map((state, idx) => ({
       ...state,
       order: idx,
     }));
-    
+
     setStates(reorderedStates);
     setTransitions(filteredTransitions);
   };
@@ -82,7 +94,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
   // Move a state up or down in the order
   const handleMoveState = (index: number, direction: 'up' | 'down') => {
     if (
-      (direction === 'up' && index === 0) || 
+      (direction === 'up' && index === 0) ||
       (direction === 'down' && index === states.length - 1)
     ) {
       return;
@@ -90,23 +102,26 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
 
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     const updatedStates = [...states];
-    
+
     // Swap the states
-    [updatedStates[index], updatedStates[newIndex]] = [updatedStates[newIndex], updatedStates[index]];
-    
+    [updatedStates[index], updatedStates[newIndex]] = [
+      updatedStates[newIndex],
+      updatedStates[index],
+    ];
+
     // Update order values
     const reorderedStates = updatedStates.map((state, idx) => ({
       ...state,
       order: idx,
     }));
-    
+
     setStates(reorderedStates);
   };
 
   // Add a new transition
   const handleAddTransition = () => {
     if (states.length < 2) {
-      toast.error("You need at least two states to create a transition");
+      toast.error('You need at least two states to create a transition');
       return;
     }
 
@@ -114,7 +129,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
       fromState: states[0].id,
       toState: states[1].id,
       name: `Transition ${transitions.length + 1}`,
-      description: "",
+      description: '',
     };
     setTransitions([...transitions, newTransition]);
   };
@@ -138,11 +153,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
     setIsSaving(true);
     try {
       await onSave(states, transitions);
-      toast.success("Workflow settings saved successfully");
+      toast.success('Workflow settings saved successfully');
       onClose();
     } catch (error) {
-      toast.error("Failed to save workflow settings");
-      console.error("Error saving workflow settings:", error);
+      toast.error('Failed to save workflow settings');
     } finally {
       setIsSaving(false);
     }
@@ -197,48 +211,48 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                         <Input
                           id={`state-name-${index}`}
                           value={state.name}
-                          onChange={(e) => handleUpdateState(index, 'name', e.target.value)}
+                          onChange={e => handleUpdateState(index, 'name', e.target.value)}
                           className="mt-1"
                         />
                       </div>
                       <div className="col-span-3">
                         <Label htmlFor={`state-color-${index}`}>Color</Label>
                         <div className="flex items-center mt-1 gap-2">
-                          <div 
-                            className="w-6 h-6 rounded-full" 
+                          <div
+                            className="w-6 h-6 rounded-full"
                             style={{ backgroundColor: state.color }}
                           />
                           <Input
                             id={`state-color-${index}`}
                             type="color"
                             value={state.color}
-                            onChange={(e) => handleUpdateState(index, 'color', e.target.value)}
+                            onChange={e => handleUpdateState(index, 'color', e.target.value)}
                             className="w-full h-8"
                           />
                         </div>
                       </div>
                       <div className="col-span-4 flex items-end gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleMoveState(index, 'up')}
                           disabled={index === 0}
                           className="flex-1"
                         >
                           ↑
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleMoveState(index, 'down')}
                           disabled={index === states.length - 1}
                           className="flex-1"
                         >
                           ↓
                         </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
+                        <Button
+                          variant="destructive"
+                          size="sm"
                           onClick={() => handleRemoveState(index)}
                           disabled={states.length <= 2}
                           className="flex-1"
@@ -250,8 +264,8 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                         <Label htmlFor={`state-desc-${index}`}>Description</Label>
                         <Textarea
                           id={`state-desc-${index}`}
-                          value={state.description || ""}
-                          onChange={(e) => handleUpdateState(index, 'description', e.target.value)}
+                          value={state.description || ''}
+                          onChange={e => handleUpdateState(index, 'description', e.target.value)}
                           className="mt-1"
                           rows={2}
                         />
@@ -274,20 +288,23 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
 
             <div className="space-y-4">
               {transitions.map((transition, index) => (
-                <Card key={`${transition.fromState}-${transition.toState}-${index}`} className="border">
+                <Card
+                  key={`${transition.fromState}-${transition.toState}-${index}`}
+                  className="border"
+                >
                   <CardContent className="p-4">
                     <div className="grid grid-cols-12 gap-4">
                       <div className="col-span-4">
                         <Label htmlFor={`transition-from-${index}`}>From State</Label>
                         <Select
                           value={transition.fromState}
-                          onValueChange={(value) => handleUpdateTransition(index, 'fromState', value)}
+                          onValueChange={value => handleUpdateTransition(index, 'fromState', value)}
                         >
                           <SelectTrigger id={`transition-from-${index}`} className="mt-1">
                             <SelectValue placeholder="Select a state" />
                           </SelectTrigger>
                           <SelectContent>
-                            {states.map((state) => (
+                            {states.map(state => (
                               <SelectItem key={`from-${state.id}`} value={state.id}>
                                 {state.name}
                               </SelectItem>
@@ -302,13 +319,13 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                         <Label htmlFor={`transition-to-${index}`}>To State</Label>
                         <Select
                           value={transition.toState}
-                          onValueChange={(value) => handleUpdateTransition(index, 'toState', value)}
+                          onValueChange={value => handleUpdateTransition(index, 'toState', value)}
                         >
                           <SelectTrigger id={`transition-to-${index}`} className="mt-1">
                             <SelectValue placeholder="Select a state" />
                           </SelectTrigger>
                           <SelectContent>
-                            {states.map((state) => (
+                            {states.map(state => (
                               <SelectItem key={`to-${state.id}`} value={state.id}>
                                 {state.name}
                               </SelectItem>
@@ -317,9 +334,9 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                         </Select>
                       </div>
                       <div className="col-span-3 flex items-end justify-end">
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
+                        <Button
+                          variant="destructive"
+                          size="sm"
                           onClick={() => handleRemoveTransition(index)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -330,7 +347,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                         <Input
                           id={`transition-name-${index}`}
                           value={transition.name}
-                          onChange={(e) => handleUpdateTransition(index, 'name', e.target.value)}
+                          onChange={e => handleUpdateTransition(index, 'name', e.target.value)}
                           className="mt-1"
                         />
                       </div>
@@ -338,8 +355,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                         <Label htmlFor={`transition-desc-${index}`}>Description</Label>
                         <Textarea
                           id={`transition-desc-${index}`}
-                          value={transition.description || ""}
-                          onChange={(e) => handleUpdateTransition(index, 'description', e.target.value)}
+                          value={transition.description || ''}
+                          onChange={e =>
+                            handleUpdateTransition(index, 'description', e.target.value)
+                          }
                           className="mt-1"
                           rows={2}
                         />
@@ -353,7 +372,9 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
         </Tabs>
 
         <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={handleSave} disabled={isSaving} className="gap-2">
             {isSaving && <span className="animate-spin">⏳</span>}
             <Save className="h-4 w-4" /> Save Workflow

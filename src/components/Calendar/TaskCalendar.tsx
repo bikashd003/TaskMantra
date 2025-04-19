@@ -1,10 +1,19 @@
 'use client';
 import React, { useState } from 'react';
-import { format, addDays, isToday, isSameDay, startOfDay, isAfter, isBefore, parseISO } from 'date-fns';
+import {
+  format,
+  addDays,
+  isToday,
+  isSameDay,
+  startOfDay,
+  isAfter,
+  isBefore,
+  parseISO,
+} from 'date-fns';
 import { motion } from 'framer-motion';
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { useCalendarStore } from "@/stores/calendarStore";
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { useCalendarStore } from '@/stores/calendarStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CalendarService } from '@/services/Calendar.service';
 import { Button } from '@/components/ui/button';
@@ -17,7 +26,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import TaskDetailSidebar from '../Tasks/TaskDetailSidebar';
 
 interface DayInfo {
@@ -39,7 +48,7 @@ const TaskCalendar = () => {
     setError,
     setSelectedTask,
     convertApiTaskToCalendarTask,
-    filters
+    filters,
   } = useCalendarStore();
 
   // State for task detail modal and sidebar
@@ -57,9 +66,8 @@ const TaskCalendar = () => {
       queryClient.invalidateQueries({ queryKey: ['calendar-tasks'] });
       toast.success('Task deleted successfully');
     },
-    onError: (error: Error) => {
+    onError: (_error: Error) => {
       toast.error('Failed to delete task');
-      console.error('Delete task error:', error);
     },
   });
 
@@ -72,9 +80,8 @@ const TaskCalendar = () => {
       queryClient.invalidateQueries({ queryKey: ['calendar-tasks'] });
       toast.success('Task status updated');
     },
-    onError: (error: Error) => {
+    onError: (_error: Error) => {
       toast.error('Failed to update task status');
-      console.error('Update task error:', error);
     },
   });
 
@@ -88,7 +95,7 @@ const TaskCalendar = () => {
           status: filters.status !== 'all' ? filters.status : undefined,
           priority: filters.priority !== 'all' ? filters.priority : undefined,
           assignedTo: filters.assignedTo || undefined,
-          searchQuery: filters.searchQuery || undefined
+          searchQuery: filters.searchQuery || undefined,
         });
         // Convert API tasks to calendar format
         const calendarTasks = apiTasks.map(convertApiTaskToCalendarTask);
@@ -104,7 +111,9 @@ const TaskCalendar = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const startDate = dateRange?.from ? startOfDay(new Date(dateRange.from)) : startOfDay(currentDate);
+  const startDate = dateRange?.from
+    ? startOfDay(new Date(dateRange.from))
+    : startOfDay(currentDate);
   const endDate = dateRange?.to ? startOfDay(new Date(dateRange.to)) : addDays(startDate, 6);
 
   // Generate days based on the range
@@ -114,9 +123,9 @@ const TaskCalendar = () => {
   while (currentDay <= endDate) {
     weekDays.push({
       date: currentDay,
-      dayName: format(currentDay, "EEE"),
-      dayNumber: format(currentDay, "d"),
-      fullDate: format(currentDay, "yyyy-MM-dd"),
+      dayName: format(currentDay, 'EEE'),
+      dayNumber: format(currentDay, 'd'),
+      fullDate: format(currentDay, 'yyyy-MM-dd'),
     });
     currentDay = addDays(currentDay, 1);
   }
@@ -146,7 +155,7 @@ const TaskCalendar = () => {
         ...task,
         isStartDate: true,
         isEndDate: isSameDay(taskStartDate, taskEndDate),
-        isContinuation: false
+        isContinuation: false,
       };
 
       // Add task to the date's array
@@ -154,18 +163,18 @@ const TaskCalendar = () => {
     }
   });
 
-// Filter weekDays based on dateRange
-const filteredWeekDays = weekDays.filter((day) => {
-  if (!dateRange?.from || !dateRange?.to) return true;
+  // Filter weekDays based on dateRange
+  const filteredWeekDays = weekDays.filter(day => {
+    if (!dateRange?.from || !dateRange?.to) return true;
 
-  const fromDate = startOfDay(new Date(dateRange.from));
-  const toDate = startOfDay(new Date(dateRange.to));
+    const fromDate = startOfDay(new Date(dateRange.from));
+    const toDate = startOfDay(new Date(dateRange.to));
 
-  return (
-    (isSameDay(day.date, fromDate) || isAfter(day.date, fromDate)) &&
-    (isSameDay(day.date, toDate) || isBefore(day.date, toDate))
-  );
-});
+    return (
+      (isSameDay(day.date, fromDate) || isAfter(day.date, fromDate)) &&
+      (isSameDay(day.date, toDate) || isBefore(day.date, toDate))
+    );
+  });
 
   // Handle opening task sidebar
   const handleTaskClick = (task: any, e: React.MouseEvent) => {
@@ -211,7 +220,9 @@ const filteredWeekDays = weekDays.filter((day) => {
   if (error) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-500 mb-4">Error loading calendar: {error instanceof Error ? error.message : 'Unknown error'}</p>
+        <p className="text-red-500 mb-4">
+          Error loading calendar: {error instanceof Error ? error.message : 'Unknown error'}
+        </p>
         <Button onClick={() => window.location.reload()}>Retry</Button>
       </div>
     );
@@ -221,17 +232,16 @@ const filteredWeekDays = weekDays.filter((day) => {
     <div className="p-4 bg-white rounded-xl shadow-sm">
       {/* Week days header */}
       <div className="grid grid-cols-7 gap-4 mb-4">
-        {filteredWeekDays.map((day) => (
-          <div
-            key={day.fullDate}
-            className="text-center"
-          >
+        {filteredWeekDays.map(day => (
+          <div key={day.fullDate} className="text-center">
             <div className="font-medium text-gray-400 text-sm">{day.dayName}</div>
-            <div className={cn(
-              "w-10 h-10 rounded-full mx-auto flex items-center justify-center text-sm transition-colors",
-              isToday(day.date) && "bg-blue-500 text-white font-semibold",
-              selectedDate && isSameDay(selectedDate, day.date) && "bg-blue-100"
-            )}>
+            <div
+              className={cn(
+                'w-10 h-10 rounded-full mx-auto flex items-center justify-center text-sm transition-colors',
+                isToday(day.date) && 'bg-blue-500 text-white font-semibold',
+                selectedDate && isSameDay(selectedDate, day.date) && 'bg-blue-100'
+              )}
+            >
               {day.dayNumber}
             </div>
           </div>
@@ -240,16 +250,16 @@ const filteredWeekDays = weekDays.filter((day) => {
 
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-4">
-        {filteredWeekDays.map((day) => (
+        {filteredWeekDays.map(day => (
           <motion.div
             key={day.fullDate}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
             className={cn(
-              "min-h-[200px] border rounded-xl p-3 transition-colors relative",
-              isToday(day.date) ? "border-blue-200 bg-blue-50/30" : "border-gray-100",
-              "hover:border-blue-200 cursor-pointer"
+              'min-h-[200px] border rounded-xl p-3 transition-colors relative',
+              isToday(day.date) ? 'border-blue-200 bg-blue-50/30' : 'border-gray-100',
+              'hover:border-blue-200 cursor-pointer'
             )}
             onClick={() => setSelectedDate(day.date)}
           >
@@ -258,7 +268,7 @@ const filteredWeekDays = weekDays.filter((day) => {
               size="sm"
               variant="ghost"
               className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleCreateTask(day.date);
               }}
@@ -275,26 +285,30 @@ const filteredWeekDays = weekDays.filter((day) => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className={cn(
-                    "p-3 rounded-lg shadow-sm border transition-all group relative",
-                    task.color || "bg-blue-100 hover:bg-blue-200 border-blue-200",
-                    task.isContinuation && "border-dashed",
-                    task.isStartDate && !task.isEndDate && "border-l-4 border-l-blue-500",
-                    !task.isStartDate && task.isEndDate && "border-r-4 border-r-blue-500"
+                    'p-3 rounded-lg shadow-sm border transition-all group relative',
+                    task.color || 'bg-blue-100 hover:bg-blue-200 border-blue-200',
+                    task.isContinuation && 'border-dashed',
+                    task.isStartDate && !task.isEndDate && 'border-l-4 border-l-blue-500',
+                    !task.isStartDate && task.isEndDate && 'border-r-4 border-r-blue-500'
                   )}
-                  onClick={(e) => handleTaskClick(task, e)}
+                  onClick={e => handleTaskClick(task, e)}
                 >
                   {/* Quick actions */}
                   {task.isStartDate && (
                     <div className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 p-0 hover:bg-gray-200/80">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 p-0 hover:bg-gray-200/80"
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               setSelectedTask(task);
                               setIsCreatingTask(false);
@@ -304,7 +318,7 @@ const filteredWeekDays = weekDays.filter((day) => {
                             <Pencil className="h-4 w-4 mr-2" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               if (confirm('Are you sure you want to delete this task?')) {
                                 deleteTaskMutation.mutate(task.id);
@@ -316,9 +330,12 @@ const filteredWeekDays = weekDays.filter((day) => {
                           </DropdownMenuItem>
                           {task.status !== 'Completed' ? (
                             <DropdownMenuItem
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation();
-                                updateTaskStatusMutation.mutate({ id: task.id, status: 'Completed' });
+                                updateTaskStatusMutation.mutate({
+                                  id: task.id,
+                                  status: 'Completed',
+                                });
                               }}
                               className="text-green-600 hover:text-green-700 hover:bg-green-50"
                             >
@@ -326,9 +343,12 @@ const filteredWeekDays = weekDays.filter((day) => {
                             </DropdownMenuItem>
                           ) : (
                             <DropdownMenuItem
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation();
-                                updateTaskStatusMutation.mutate({ id: task.id, status: 'In Progress' });
+                                updateTaskStatusMutation.mutate({
+                                  id: task.id,
+                                  status: 'In Progress',
+                                });
                               }}
                             >
                               <X className="h-4 w-4 mr-2" /> Mark Incomplete
@@ -342,16 +362,15 @@ const filteredWeekDays = weekDays.filter((day) => {
                     <div className="font-medium text-sm">{task.title}</div>
                     {!task.isContinuation && (
                       <div className="text-xs text-gray-600">
-                        {format(parseISO(task.startDate), 'MMM d')} - {format(parseISO(task.endDate), 'MMM d')}
+                        {format(parseISO(task.startDate), 'MMM d')} -{' '}
+                        {format(parseISO(task.endDate), 'MMM d')}
                       </div>
                     )}
                     {task.isStartDate && (
-                      <div className="text-xs text-gray-600 line-clamp-2">
-                        {task.description}
-                      </div>
+                      <div className="text-xs text-gray-600 line-clamp-2">{task.description}</div>
                     )}
                     <div className="flex gap-2 items-center mt-1">
-                      <Badge variant={task.completed ? "default" : "secondary"} className="text-xs">
+                      <Badge variant={task.completed ? 'default' : 'secondary'} className="text-xs">
                         {task.status}
                       </Badge>
                     </div>
@@ -366,7 +385,7 @@ const filteredWeekDays = weekDays.filter((day) => {
                     variant="outline"
                     size="sm"
                     className="text-xs"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleCreateTask(day.date);
                     }}
@@ -390,18 +409,20 @@ const filteredWeekDays = weekDays.filter((day) => {
       {/* Task Sidebar */}
       {isSidebarOpen && useCalendarStore.getState().selectedTask && (
         <TaskDetailSidebar
-          task={{
-            ...useCalendarStore.getState().selectedTask,
-            // Add missing properties required by Task type
-            createdBy: '',
-            estimatedTime: 0,
-            loggedTime: 0,
-            dependencies: [],
-            subtasks: [],
-            comments: [],
-            tags: [],
-            createdAt: new Date(),
-          } as any}
+          task={
+            {
+              ...useCalendarStore.getState().selectedTask,
+              // Add missing properties required by Task type
+              createdBy: '',
+              estimatedTime: 0,
+              loggedTime: 0,
+              dependencies: [],
+              subtasks: [],
+              comments: [],
+              tags: [],
+              createdAt: new Date(),
+            } as any
+          }
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           onTaskUpdate={() => {

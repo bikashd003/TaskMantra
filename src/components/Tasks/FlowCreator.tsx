@@ -238,7 +238,6 @@ const FlowCreator: React.FC<FlowCreatorProps> = ({
       toast.success('Workflow saved successfully');
     } catch (error) {
       toast.error('Failed to save workflow');
-      console.error('Error saving workflow:', error);
     } finally {
       setIsSaving(false);
     }

@@ -291,7 +291,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         toast.success('New workflow created successfully');
       } catch (error) {
         toast.error('Failed to create workflow');
-        console.error('Error creating workflow:', error);
       }
     },
     [queryClient]
@@ -306,7 +305,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         toast.success('Template applied successfully');
       } catch (error) {
         toast.error('Failed to apply template');
-        console.error('Error applying template:', error);
       }
     },
     [queryClient]

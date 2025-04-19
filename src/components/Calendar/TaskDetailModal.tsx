@@ -1,20 +1,32 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { useCalendarStore } from "@/stores/calendarStore";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarService } from "@/services/Calendar.service";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, Trash2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { useCalendarStore } from '@/stores/calendarStore';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from 'sonner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { CalendarService } from '@/services/Calendar.service';
 
 interface TaskDetailModalProps {
   isOpen: boolean;
@@ -22,7 +34,11 @@ interface TaskDetailModalProps {
   isCreating?: boolean;
 }
 
-const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCreating = false }) => {
+const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
+  isOpen,
+  onClose,
+  isCreating = false,
+}) => {
   const { selectedTask, selectedDate, setSelectedTask } = useCalendarStore();
   const queryClient = useQueryClient();
 
@@ -64,25 +80,23 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCr
       toast.success('Task created successfully');
       handleClose();
     },
-    onError: (error: Error) => {
+    onError: (_error: Error) => {
       toast.error('Failed to create task');
-      console.error('Create task error:', error);
       setIsSubmitting(false);
     },
   });
 
   // Update task mutation
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: any }) => 
+    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
       CalendarService.updateTask(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendar-tasks'] });
       toast.success('Task updated successfully');
       handleClose();
     },
-    onError: (error: Error) => {
+    onError: (_error: Error) => {
       toast.error('Failed to update task');
-      console.error('Update task error:', error);
       setIsSubmitting(false);
     },
   });
@@ -95,9 +109,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCr
       toast.success('Task deleted successfully');
       handleClose();
     },
-    onError: (error: Error) => {
+    onError: (_error: Error) => {
       toast.error('Failed to delete task');
-      console.error('Delete task error:', error);
     },
   });
 
@@ -134,9 +147,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCr
     if (isCreating) {
       createTaskMutation.mutate(taskData);
     } else if (selectedTask) {
-      updateTaskMutation.mutate({ 
-        id: selectedTask.id, 
-        updates: taskData 
+      updateTaskMutation.mutate({
+        id: selectedTask.id,
+        updates: taskData,
       });
     }
   };
@@ -167,7 +180,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCr
             <Input
               id="title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Task title"
             />
           </div>
@@ -176,7 +189,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCr
             <Textarea
               id="description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Task description"
               className="min-h-[100px]"
             />
@@ -189,12 +202,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCr
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
+                      'w-full justify-start text-left font-normal',
+                      !startDate && 'text-muted-foreground'
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : "Select date"}
+                    {startDate ? format(startDate, 'PPP') : 'Select date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -214,12 +227,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCr
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground"
+                      'w-full justify-start text-left font-normal',
+                      !endDate && 'text-muted-foreground'
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "PPP") : "Select date"}
+                    {endDate ? format(endDate, 'PPP') : 'Select date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -228,7 +241,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCr
                     selected={endDate}
                     onSelect={setEndDate}
                     initialFocus
-                    disabled={(date) => date < (startDate || new Date())}
+                    disabled={date => date < (startDate || new Date())}
                   />
                 </PopoverContent>
               </Popover>
@@ -267,9 +280,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCr
         <DialogFooter className="flex justify-between">
           <div>
             {!isCreating && (
-              <Button 
-                variant="outline" 
-                type="button" 
+              <Button
+                variant="outline"
+                type="button"
                 onClick={handleDelete}
                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
               >
@@ -282,11 +295,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ isOpen, onClose, isCr
             <Button variant="outline" type="button" onClick={handleClose}>
               Cancel
             </Button>
-            <Button 
-              type="button" 
-              onClick={handleSubmit} 
-              disabled={isSubmitting}
-            >
+            <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : isCreating ? 'Create' : 'Save'}
             </Button>
           </div>
