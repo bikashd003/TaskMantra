@@ -74,8 +74,8 @@ const initialTaskState: TaskData = {
   subtasks: [],
   assignedTo: [],
   tags: [],
-  color: '',
-  category: '',
+  color: 'default',
+  category: 'none',
   recurring: {
     isRecurring: false,
   },
@@ -341,7 +341,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                       Category
                     </Label>
                     <Select
-                      value={formik.values.category || ''}
+                      value={formik.values.category || 'none'}
                       onValueChange={value => formik.setFieldValue('category', value)}
                       disabled={isLoading}
                     >
@@ -349,7 +349,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         <SelectItem value="development">Development</SelectItem>
                         <SelectItem value="design">Design</SelectItem>
                         <SelectItem value="marketing">Marketing</SelectItem>
@@ -364,7 +364,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                       Color
                     </Label>
                     <Select
-                      value={formik.values.color || ''}
+                      value={formik.values.color || 'default'}
                       onValueChange={value => formik.setFieldValue('color', value)}
                       disabled={isLoading}
                     >
@@ -372,7 +372,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                         <SelectValue placeholder="Select color" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">
+                        <SelectItem value="default">
                           <div className="flex items-center gap-2">
                             <div className="w-4 h-4 rounded-full bg-gray-300"></div>
                             <span>Default</span>

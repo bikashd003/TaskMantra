@@ -1,31 +1,38 @@
-import React, { useState } from "react";
-import { format } from "date-fns";
-import { CalendarIcon, Filter, Plus, Search, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import React, { useState } from 'react';
+import { format } from 'date-fns';
+import { CalendarIcon, Filter, Plus, Search, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useCalendarStore } from '@/stores/calendarStore';
+import { Input } from '@/components/ui/input';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useCalendarStore } from "@/stores/calendarStore";
-import TaskDetailModal from "./TaskDetailModal";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import CreateTaskModal from '../Tasks/CreateTaskModal';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { TaskService } from '@/services/Task.service';
+import { toast } from 'sonner';
 
 const CalendarHeader = () => {
-  const dateRange = useCalendarStore((state) => state.dateRange);
-  const setDateRange = useCalendarStore((state) => state.setDateRange);
-  const setSelectedDate = useCalendarStore((state) => state.setSelectedDate);
-  const filters = useCalendarStore((state) => state.filters);
-  const setFilter = useCalendarStore((state) => state.setFilter);
-  const resetFilters = useCalendarStore((state) => state.resetFilters);
-  const tasks = useCalendarStore((state) => state.tasks);
+  const dateRange = useCalendarStore(state => state.dateRange);
+  const setDateRange = useCalendarStore(state => state.setDateRange);
+  const setSelectedDate = useCalendarStore(state => state.setSelectedDate);
+  const filters = useCalendarStore(state => state.filters);
+  const setFilter = useCalendarStore(state => state.setFilter);
+  const resetFilters = useCalendarStore(state => state.resetFilters);
+  const tasks = useCalendarStore(state => state.tasks);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Count tasks by priority
   const priorityCounts = tasks.reduce(
@@ -38,6 +45,19 @@ const CalendarHeader = () => {
     { high: 0, medium: 0, low: 0 }
   );
 
+  const handleCreateTask = useMutation({
+    mutationFn: (taskData: any) => {
+      setIsLoading(true);
+      return TaskService.createTask(taskData);
+    },
+    onSuccess: () => {
+      // Invalidate the tasks query to refetch the data
+      queryClient.invalidateQueries({ queryKey: ['calendar-tasks'] });
+      setIsLoading(false);
+      toast.success('Task created successfully');
+    },
+  });
+
   return (
     <header className="flex flex-wrap justify-between items-center p-4 border-b bg-white shadow-sm rounded-lg">
       {/* Title and priorities */}
@@ -48,7 +68,8 @@ const CalendarHeader = () => {
             <span className="w-2 h-2 rounded-full bg-red-500"></span> {priorityCounts.high} High
           </p>
           <p className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-yellow-400"></span> {priorityCounts.medium} Medium
+            <span className="w-2 h-2 rounded-full bg-yellow-400"></span> {priorityCounts.medium}{' '}
+            Medium
           </p>
           <p className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-green-500"></span> {priorityCounts.low} Low
@@ -66,19 +87,18 @@ const CalendarHeader = () => {
                 id="date"
                 variant="outline"
                 className={cn(
-                  "w-full md:w-[300px] justify-start text-left font-normal border-gray-300",
-                  !dateRange && "text-muted-foreground"
+                  'w-full md:w-[300px] justify-start text-left font-normal border-gray-300',
+                  !dateRange && 'text-muted-foreground'
                 )}
               >
                 <CalendarIcon className="w-5 h-5 mr-2 text-gray-500" />
                 {dateRange?.from ? (
                   dateRange.to ? (
                     <>
-                      {format(dateRange.from, "LLL dd, y")} -{" "}
-                      {format(dateRange.to, "LLL dd, y")}
+                      {format(dateRange.from, 'LLL dd, y')} - {format(dateRange.to, 'LLL dd, y')}
                     </>
                   ) : (
-                    format(dateRange.from, "LLL dd, y")
+                    format(dateRange.from, 'LLL dd, y')
                   )
                 ) : (
                   <span className="text-gray-500">Pick a date</span>
@@ -91,7 +111,7 @@ const CalendarHeader = () => {
                 mode="range"
                 defaultMonth={dateRange?.from}
                 selected={dateRange}
-                onSelect={(range) => range && setDateRange(range)}
+                onSelect={range => range && setDateRange(range)}
                 numberOfMonths={2}
                 className="p-2 mr-4"
               />
@@ -119,14 +139,20 @@ const CalendarHeader = () => {
               <Button
                 variant="outline"
                 className={cn(
-                  "flex items-center",
-                  (filters.status !== 'all' || filters.priority !== 'all' || filters.assignedTo !== '' || filters.searchQuery !== '') &&
-                  "border-blue-500 bg-blue-50 text-blue-600"
+                  'flex items-center',
+                  (filters.status !== 'all' ||
+                    filters.priority !== 'all' ||
+                    filters.assignedTo !== '' ||
+                    filters.searchQuery !== '') &&
+                    'border-blue-500 bg-blue-50 text-blue-600'
                 )}
               >
                 <Filter className="w-5 h-5 mr-2" />
                 Filter
-                {(filters.status !== 'all' || filters.priority !== 'all' || filters.assignedTo !== '' || filters.searchQuery !== '') && (
+                {(filters.status !== 'all' ||
+                  filters.priority !== 'all' ||
+                  filters.assignedTo !== '' ||
+                  filters.searchQuery !== '') && (
                   <Badge variant="secondary" className="ml-2 bg-blue-100">
                     {(filters.status !== 'all' ? 1 : 0) +
                       (filters.priority !== 'all' ? 1 : 0) +
@@ -148,7 +174,7 @@ const CalendarHeader = () => {
                       placeholder="Search tasks..."
                       className="pl-8"
                       value={filters.searchQuery}
-                      onChange={(e) => setFilter('searchQuery', e.target.value)}
+                      onChange={e => setFilter('searchQuery', e.target.value)}
                     />
                     {filters.searchQuery && (
                       <X
@@ -163,7 +189,7 @@ const CalendarHeader = () => {
                   <label className="text-sm font-medium">Status</label>
                   <Select
                     value={filters.status}
-                    onValueChange={(value) => setFilter('status', value)}
+                    onValueChange={value => setFilter('status', value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
@@ -182,7 +208,7 @@ const CalendarHeader = () => {
                   <label className="text-sm font-medium">Priority</label>
                   <Select
                     value={filters.priority}
-                    onValueChange={(value) => setFilter('priority', value)}
+                    onValueChange={value => setFilter('priority', value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select priority" />
@@ -209,10 +235,7 @@ const CalendarHeader = () => {
                   >
                     Reset
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setIsFilterOpen(false)}
-                  >
+                  <Button size="sm" onClick={() => setIsFilterOpen(false)}>
                     Apply Filters
                   </Button>
                 </div>
@@ -222,11 +245,11 @@ const CalendarHeader = () => {
         </div>
       </div>
 
-      {/* Task Detail Modal */}
-      <TaskDetailModal
+      <CreateTaskModal
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
-        isCreating={true}
+        onCreateTask={handleCreateTask.mutate}
+        isLoading={isLoading}
       />
     </header>
   );

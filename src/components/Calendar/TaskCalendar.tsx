@@ -18,7 +18,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CalendarService } from '@/services/Calendar.service';
 import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Trash2, Check, X, MoreHorizontal } from 'lucide-react';
-import TaskDetailModal from './TaskDetailModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
@@ -28,6 +27,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import TaskDetailSidebar from '../Tasks/TaskDetailSidebar';
+import { TaskService } from '@/services/Task.service';
+import QuickTaskForm from './QuickTaskForm';
 
 interface DayInfo {
   date: Date;
@@ -46,15 +47,14 @@ const TaskCalendar = () => {
     tasks,
     setIsLoading,
     setError,
+    selectedTask,
     setSelectedTask,
     convertApiTaskToCalendarTask,
     filters,
   } = useCalendarStore();
 
-  // State for task detail modal and sidebar
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [quickAddTaskDate, setQuickAddTaskDate] = useState<Date | null>(null);
 
   // Query client for cache invalidation
   const queryClient = useQueryClient();
@@ -108,7 +108,6 @@ const TaskCalendar = () => {
         setIsLoading(false);
       }
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const startDate = dateRange?.from
@@ -139,6 +138,7 @@ const TaskCalendar = () => {
     const taskEndDate = parseISO(task.endDate);
 
     // Only add if the start day is within our visible range
+
     if (
       (!dateRange?.from || taskStartDate >= dateRange.from) &&
       (!dateRange?.to || taskStartDate <= dateRange.to)
@@ -178,22 +178,42 @@ const TaskCalendar = () => {
 
   // Handle opening task sidebar
   const handleTaskClick = (task: any, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering day click
+    e.stopPropagation();
     setSelectedTask(task);
     setIsSidebarOpen(true);
   };
 
-  // Handle creating a new task
-  const handleCreateTask = (date: Date) => {
+  // Handle opening quick task form
+  const handleQuickAddTask = (date: Date, e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedDate(date);
-    setIsCreatingTask(true);
-    setIsTaskModalOpen(true);
+    setQuickAddTaskDate(date);
   };
 
+  // Create task mutation
+  const createTaskMutation = useMutation({
+    mutationFn: (taskData: any) => CalendarService.createTask(taskData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-tasks'] });
+      toast.success('Task created successfully');
+    },
+    onError: (_error: Error) => {
+      toast.error('Failed to create task');
+    },
+  });
+
   // Handle task update from sidebar
-  const handleTaskUpdate = () => {
-    queryClient.invalidateQueries({ queryKey: ['calendar-tasks'] });
-  };
+  const handleTaskUpdate = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
+      TaskService.updateTask(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-tasks'] });
+      toast.success('Task updated successfully');
+    },
+    onError: (_error: Error) => {
+      toast.error('Failed to update task');
+    },
+  });
 
   // Render loading skeleton
   if (isLoading) {
@@ -267,20 +287,17 @@ const TaskCalendar = () => {
             <Button
               size="sm"
               variant="ghost"
-              className="absolute top-1 right-1 h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
-              onClick={e => {
-                e.stopPropagation();
-                handleCreateTask(day.date);
-              }}
+              className="absolute top-0 right-0 h-7 w-7 p-0 rounded-full bg-white shadow-sm border border-gray-100 text-blue-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all z-10"
+              onClick={e => handleQuickAddTask(day.date, e)}
             >
               <Plus className="h-4 w-4" />
             </Button>
 
             {/* Tasks for the day */}
-            <div className="space-y-2 mt-2">
+            <div className="space-y-2 mt-4 h-full">
               {tasksByDate[day.fullDate]?.map((task: any) => (
                 <motion.div
-                  key={`${task.id}-${day.fullDate}`}
+                  key={`${task._id}-${day.fullDate}`}
                   layout
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -311,8 +328,7 @@ const TaskCalendar = () => {
                             onClick={e => {
                               e.stopPropagation();
                               setSelectedTask(task);
-                              setIsCreatingTask(false);
-                              setIsTaskModalOpen(true);
+                              setIsSidebarOpen(true);
                             }}
                           >
                             <Pencil className="h-4 w-4 mr-2" /> Edit
@@ -321,7 +337,7 @@ const TaskCalendar = () => {
                             onClick={e => {
                               e.stopPropagation();
                               if (confirm('Are you sure you want to delete this task?')) {
-                                deleteTaskMutation.mutate(task.id);
+                                deleteTaskMutation.mutate(task._id);
                               }
                             }}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -333,7 +349,7 @@ const TaskCalendar = () => {
                               onClick={e => {
                                 e.stopPropagation();
                                 updateTaskStatusMutation.mutate({
-                                  id: task.id,
+                                  id: task._id,
                                   status: 'Completed',
                                 });
                               }}
@@ -346,7 +362,7 @@ const TaskCalendar = () => {
                               onClick={e => {
                                 e.stopPropagation();
                                 updateTaskStatusMutation.mutate({
-                                  id: task.id,
+                                  id: task._id,
                                   status: 'In Progress',
                                 });
                               }}
@@ -379,19 +395,29 @@ const TaskCalendar = () => {
               ))}
 
               {/* Add task button for empty days */}
-              {(!tasksByDate[day.fullDate] || tasksByDate[day.fullDate].length === 0) && (
-                <div className="h-full flex flex-col items-center justify-center py-6">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleCreateTask(day.date);
+              {/* Quick task form */}
+              {quickAddTaskDate && isSameDay(quickAddTaskDate, day.date) && (
+                <div className="absolute top-10 right-2 left-2 z-20">
+                  <QuickTaskForm
+                    date={day.date}
+                    onSubmit={taskData => {
+                      createTaskMutation.mutate({
+                        name: taskData.name,
+                        description: '',
+                        startDate: taskData.startDate,
+                        dueDate: taskData.dueDate,
+                        status: 'To Do',
+                        priority: 'Medium',
+                        estimatedTime: 0,
+                        loggedTime: 0,
+                        assignedTo: [],
+                        subtasks: [],
+                        tags: [],
+                      });
+                      setQuickAddTaskDate(null);
                     }}
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Add Task
-                  </Button>
+                    onCancel={() => setQuickAddTaskDate(null)}
+                  />
                 </div>
               )}
             </div>
@@ -399,34 +425,14 @@ const TaskCalendar = () => {
         ))}
       </div>
 
-      {/* Task Detail Modal */}
-      <TaskDetailModal
-        isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
-        isCreating={isCreatingTask}
-      />
-
       {/* Task Sidebar */}
       {isSidebarOpen && useCalendarStore.getState().selectedTask && (
         <TaskDetailSidebar
-          task={
-            {
-              ...useCalendarStore.getState().selectedTask,
-              // Add missing properties required by Task type
-              createdBy: '',
-              estimatedTime: 0,
-              loggedTime: 0,
-              dependencies: [],
-              subtasks: [],
-              comments: [],
-              tags: [],
-              createdAt: new Date(),
-            } as any
-          }
+          task={selectedTask as any}
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
-          onTaskUpdate={() => {
-            handleTaskUpdate();
+          onTaskUpdate={({ taskId, updates }: any) => {
+            handleTaskUpdate.mutate({ id: taskId, updates: updates });
           }}
         />
       )}
