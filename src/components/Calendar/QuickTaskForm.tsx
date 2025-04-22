@@ -16,7 +16,6 @@ const QuickTaskForm: React.FC<QuickTaskFormProps> = ({ date, onSubmit, onCancel 
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Focus the input when the component mounts
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -62,7 +61,7 @@ const QuickTaskForm: React.FC<QuickTaskFormProps> = ({ date, onSubmit, onCancel 
             value={taskName}
             onChange={e => setTaskName(e.target.value)}
             placeholder="Enter task name..."
-            className="h-9 text-sm pr-8 border-blue-100 focus:border-blue-300 focus:ring-blue-200"
+            className="h-9 text-sm  border-blue-100 focus:border-blue-300 focus:ring-blue-200"
             autoFocus
           />
         </div>

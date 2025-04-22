@@ -184,3 +184,72 @@ body {
   @apply bg-clip-text text-transparent;
   background-image: linear-gradient(to right, #a855f7, #ec4899);
 }
+/* Animation classes for Shadcn UI */
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.animate-in {
+  animation: enter 0.2s ease-out;
+}
+
+.animate-out {
+  animation: exit 0.2s ease-in;
+}
+
+.fade-in {
+  opacity: 0;
+  animation: enter 0.2s ease-out forwards;
+}
+
+.slide-in-from-top {
+  transform: translateY(-100%);
+}
+
+.slide-in-from-bottom {
+  transform: translateY(100%);
+}
+
+.slide-in-from-left {
+  transform: translateX(-100%);
+}
+
+.slide-in-from-right {
+  transform: translateX(100%);
+}
+
+.slide-out-to-top {
+  transform: translateY(-100%);
+}
+
+.slide-out-to-bottom {
+  transform: translateY(100%);
+}
+
+.slide-out-to-left {
+  transform: translateX(-100%);
+}
+
+.slide-out-to-right {
+  transform: translateX(100%);
+}

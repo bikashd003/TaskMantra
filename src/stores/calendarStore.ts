@@ -32,13 +32,11 @@ interface CalendarState {
   setDateRange: (range: DateRange | undefined) => void;
   selectedDate: Date | null;
   tasks: CalendarTask[];
-  isLoading: boolean;
   error: string | null;
   selectedTask: CalendarTask | null;
   filters: CalendarFilters;
   setSelectedDate: (date: Date | null) => void;
   setTasks: (tasks: CalendarTask[]) => void;
-  setIsLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   setSelectedTask: (task: CalendarTask | null) => void;
   setFilter: (key: keyof CalendarFilters, value: string) => void;
@@ -94,7 +92,6 @@ export const useCalendarStore = create<CalendarState>(set => ({
   setDateRange: range => set({ dateRange: range }),
   selectedDate: null,
   tasks: [],
-  isLoading: false,
   error: null,
   selectedTask: null,
   filters: {
@@ -105,7 +102,6 @@ export const useCalendarStore = create<CalendarState>(set => ({
   },
   setSelectedDate: date => set({ selectedDate: date }),
   setTasks: tasks => set({ tasks }),
-  setIsLoading: isLoading => set({ isLoading }),
   setError: error => set({ error }),
   setSelectedTask: task => set({ selectedTask: task }),
   setFilter: (key, value) =>

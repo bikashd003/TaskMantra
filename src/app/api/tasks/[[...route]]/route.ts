@@ -28,7 +28,7 @@ app.use('*', async (c, next) => {
         id: session.user.id || '',
         name: session.user.name || '',
         email: session.user.email || '',
-        image: session.user.image || ''
+        image: session.user.image || '',
       };
       c.set('user', userData);
     }
@@ -37,7 +37,7 @@ app.use('*', async (c, next) => {
   }
   await next();
 });
-app.get('/', async (c) => {
+app.get('/', async c => {
   const user = c.get('user');
 
   if (!user) {
@@ -45,7 +45,6 @@ app.get('/', async (c) => {
   }
 
   try {
-    // Get query parameters
     const searchQuery = c.req.query('search') || '';
     const status = c.req.query('status') || 'all';
     const priority = c.req.query('priority') || 'all';
@@ -55,58 +54,80 @@ app.get('/', async (c) => {
     const toDate = c.req.query('toDate');
     const assignedTo = c.req.query('assignedTo');
 
-    // Build the query
-    const query: any = { createdBy: user.id };
+    const query: any = {};
 
-    // Add search filter if provided
     if (searchQuery) {
-      query.$or = [
-        { name: { $regex: searchQuery, $options: 'i' } },
-        { description: { $regex: searchQuery, $options: 'i' } }
-      ];
+      const searchTerms = searchQuery
+        .trim()
+        .split(/\s+/)
+        .filter(term => term.length > 0);
+
+      const searchConditions = searchTerms.map(term => ({
+        $or: [
+          { name: { $regex: term, $options: 'i' } },
+          { description: { $regex: term, $options: 'i' } },
+        ],
+      }));
+
+      if (searchConditions.length > 0) {
+        if (query.$or) {
+          query.$and = query.$and || [];
+          query.$and.push({ $or: query.$or });
+          query.$and.push({ $and: searchConditions });
+          delete query.$or;
+        } else {
+          query.$and = searchConditions;
+        }
+      }
     }
 
-    // Add status filter if not 'all'
     if (status !== 'all') {
-      // Handle hyphenated status values from frontend
       const formattedStatus = status.includes('-')
-        ? status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        ? status
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
         : status;
       query.status = formattedStatus;
     }
 
-    // Add priority filter if not 'all'
     if (priority !== 'all') {
       query.priority = priority.charAt(0).toUpperCase() + priority.slice(1);
     }
 
-    // Add date range filter if provided
     if (fromDate && toDate) {
-      query.$or = [
-        // Tasks that start within the range
-        { startDate: { $gte: new Date(fromDate), $lte: new Date(toDate) } },
-        // Tasks that end within the range
-        { dueDate: { $gte: new Date(fromDate), $lte: new Date(toDate) } },
-        // Tasks that span across the range (start before, end after)
-        {
-          $and: [
-            { startDate: { $lte: new Date(fromDate) } },
-            { dueDate: { $gte: new Date(toDate) } }
-          ]
-        }
-      ];
+      const dateRangeCondition = {
+        $or: [
+          { startDate: { $gte: new Date(fromDate), $lte: new Date(toDate) } },
+          { dueDate: { $gte: new Date(fromDate), $lte: new Date(toDate) } },
+          {
+            $and: [
+              { startDate: { $lte: new Date(fromDate) } },
+              { dueDate: { $gte: new Date(toDate) } },
+            ],
+          },
+        ],
+      };
+
+      if (query.$and) {
+        query.$and.push(dateRangeCondition);
+      } else if (query.$or) {
+        query.$and = [{ $or: query.$or }, dateRangeCondition];
+        delete query.$or;
+      }
+      // Otherwise, just set the $or condition for date range
+      else {
+        query.$or = dateRangeCondition.$or;
+      }
     }
 
-    // Add assignedTo filter if provided
     if (assignedTo) {
       query.assignedTo = { $in: [assignedTo] };
     }
 
-    // Create sort object
     const sort: any = {};
     sort[sortField] = sortDirection === 'asc' ? 1 : -1;
 
-    // Execute query with filters and sorting
     const tasks = await Task.find(query).sort(sort);
 
     return c.json({ tasks });
@@ -115,7 +136,7 @@ app.get('/', async (c) => {
   }
 });
 
-app.get('/get-task/:taskId', async (c) => {
+app.get('/get-task/:taskId', async c => {
   const taskId = c.req.param('taskId');
   const user = c.get('user');
 
@@ -131,7 +152,7 @@ app.get('/get-task/:taskId', async (c) => {
   }
 });
 
-app.post('/', async (c) => {
+app.post('/', async c => {
   const user = c.get('user');
 
   if (!user) {
@@ -148,7 +169,7 @@ app.post('/', async (c) => {
   }
 });
 
-app.patch('/:taskId', async (c) => {
+app.patch('/:taskId', async c => {
   const taskId = c.req.param('taskId');
   const user = c.get('user');
 
@@ -164,7 +185,6 @@ app.patch('/:taskId', async (c) => {
     return c.json({ error: error.message }, 500);
   }
 });
-
 
 export const GET = handle(app);
 export const POST = handle(app);

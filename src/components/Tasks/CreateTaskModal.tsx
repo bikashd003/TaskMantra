@@ -30,6 +30,7 @@ import * as Yup from 'yup';
 import { TaskStatus, TaskPriority, statusOptions, priorityOptions, Subtask, Task } from './types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React from 'react';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface TaskData {
   name: string;
@@ -169,7 +170,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="xl">
-      <div className="max-h-[85vh] overflow-hidden flex flex-col">
+      <ScrollArea className="max-h-[85vh] overflow-hidden flex flex-col pr-2">
         {/* Header */}
         <div className="flex items-center justify-between gap-3 border-b pb-4">
           <div className="flex items-center gap-3">
@@ -332,84 +333,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                       className="h-10 pl-9"
                       disabled={isLoading}
                     />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category" className="text-sm font-medium">
-                      Category
-                    </Label>
-                    <Select
-                      value={formik.values.category || 'none'}
-                      onValueChange={value => formik.setFieldValue('category', value)}
-                      disabled={isLoading}
-                    >
-                      <SelectTrigger id="category" className="h-10">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        <SelectItem value="development">Development</SelectItem>
-                        <SelectItem value="design">Design</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                        <SelectItem value="research">Research</SelectItem>
-                        <SelectItem value="planning">Planning</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="color" className="text-sm font-medium">
-                      Color
-                    </Label>
-                    <Select
-                      value={formik.values.color || 'default'}
-                      onValueChange={value => formik.setFieldValue('color', value)}
-                      disabled={isLoading}
-                    >
-                      <SelectTrigger id="color" className="h-10">
-                        <SelectValue placeholder="Select color" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full bg-gray-300"></div>
-                            <span>Default</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="#3b82f6">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full bg-blue-500"></div>
-                            <span>Blue</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="#10b981">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full bg-green-500"></div>
-                            <span>Green</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="#ef4444">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full bg-red-500"></div>
-                            <span>Red</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="#f59e0b">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full bg-amber-500"></div>
-                            <span>Yellow</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="#8b5cf6">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full bg-purple-500"></div>
-                            <span>Purple</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
               </TabsContent>
@@ -631,7 +554,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             {isLoading ? 'Creating...' : 'Create Task'}
           </Button>
         </div>
-      </div>
+      </ScrollArea>
     </Modal>
   );
 };
