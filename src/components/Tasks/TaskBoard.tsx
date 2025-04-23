@@ -213,13 +213,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
     updateSettingsMutation.mutate({ defaultView: mode });
   };
 
-  // Combine loading states
-  const isSettingsLoading = !kanbanSettings && !updateSettingsMutation.isPending;
-  const isTasksLoading = isLoading || isFetching;
-
-  // Combined loading state for the entire component
-  const isComponentLoading = isTasksLoading || isSettingsLoading;
-
   // Handle add task from calendar
   const handleAddTaskFromCalendar = (date: Date) => {
     if (onAddTask) {
