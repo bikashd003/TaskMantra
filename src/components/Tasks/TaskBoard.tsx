@@ -447,24 +447,28 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
             />
           </ScrollArea>
         )}
-        {showLoading ? (
-          <KanbanBoardSkeleton />
-        ) : (
-          <KanbanBoard
-            tasks={groupedTasks}
-            allTasks={filteredTasks}
-            onStatusChange={onStatusChange}
-            onDelete={onDelete}
-            onAddTask={onAddTask}
-            renderPriorityBadge={renderPriorityBadge}
-            isLoading={false}
-            onCreateTask={onCreateTask}
-            viewMode="kanban"
-            columnWidth={columnWidth}
-            compactView={compactView}
-            showCompletedTasks={showCompletedTasks}
-            onAddColumn={handleAddColumn}
-          />
+        {viewMode === 'kanban' && (
+          <>
+            {showLoading ? (
+              <KanbanBoardSkeleton />
+            ) : (
+              <KanbanBoard
+                tasks={groupedTasks}
+                allTasks={filteredTasks}
+                onStatusChange={onStatusChange}
+                onDelete={onDelete}
+                onAddTask={onAddTask}
+                renderPriorityBadge={renderPriorityBadge}
+                isLoading={false}
+                onCreateTask={onCreateTask}
+                viewMode="kanban"
+                columnWidth={columnWidth}
+                compactView={compactView}
+                showCompletedTasks={showCompletedTasks}
+                onAddColumn={handleAddColumn}
+              />
+            )}
+          </>
         )}
 
         {viewMode === 'calendar' && (
