@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { useCalendarStore } from '@/stores/calendarStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, Check, X, MoreHorizontal } from 'lucide-react';
+import { Plus, Trash2, Check, X, MoreHorizontal } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
@@ -329,15 +329,6 @@ const TaskCalendar = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setSelectedTask(task);
-                                  setIsSidebarOpen(true);
-                                }}
-                              >
-                                <Pencil className="h-4 w-4 mr-2" /> Edit
-                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={e => {
                                   e.stopPropagation();
