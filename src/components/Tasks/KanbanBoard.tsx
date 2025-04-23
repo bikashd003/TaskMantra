@@ -6,20 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import TaskDetailSidebar from './TaskDetailSidebar';
 import { createPortal } from 'react-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Slider } from '@/components/ui/slider';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Plus, Settings } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
@@ -37,7 +23,7 @@ import {
   KanbanColumn as KanbanColumnType,
 } from '@/services/KanbanSettings.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ScrollArea, ScrollBar } from '../ui/scroll-area';
+// ScrollArea and ScrollBar removed as they're now used in KanbanColumn
 
 interface KanbanBoardProps {
   tasks: {
@@ -55,6 +41,11 @@ interface KanbanBoardProps {
   isLoading?: boolean;
   onCreateTask?: () => void;
   viewMode: 'kanban' | 'calendar' | 'list';
+  // Settings props
+  columnWidth: number;
+  compactView: boolean;
+  showCompletedTasks: boolean;
+  onAddColumn: () => void;
 }
 
 type ColumnDefinition = KanbanColumnType;
@@ -67,24 +58,31 @@ const statusMap: Record<string, TaskStatus> = {
 };
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({
-  tasks,
-  allTasks,
+  tasks: initialTasks,
+  allTasks: initialAllTasks,
   onStatusChange,
   onDelete,
   onAddTask,
   renderPriorityBadge,
   isLoading,
-  viewMode,
+  columnWidth,
+  compactView,
+  showCompletedTasks,
 }) => {
+  // Create local state for tasks to enable optimistic updates
+  const [tasks, setTasks] = React.useState(initialTasks);
+  const [allTasks, setAllTasks] = React.useState(initialAllTasks);
+
+  // Update local state when props change
+  React.useEffect(() => {
+    setTasks(initialTasks);
+    setAllTasks(initialAllTasks);
+  }, [initialTasks, initialAllTasks]);
   const { toast } = useToast();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isAddColumnDialogOpen, setIsAddColumnDialogOpen] = useState(false);
-  const [newColumnTitle, setNewColumnTitle] = useState('');
-
-  // Define default columns
   const defaultColumns: ColumnDefinition[] = [
     { id: 'todo', title: 'To Do', order: 0 },
     { id: 'inProgress', title: 'In Progress', order: 1 },
@@ -92,44 +90,22 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     { id: 'completed', title: 'Completed', order: 3 },
   ];
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [columnWidth, setColumnWidth] = useState(280);
-  const [compactView, setCompactView] = useState(false);
-  const [showCompletedTasks, setShowCompletedTasks] = useState(true);
-
-  // Query client for cache invalidation
   const queryClient = useQueryClient();
 
-  // Fetch kanban settings from API
   const { data: kanbanSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['kanban-settings'],
     queryFn: () => KanbanSettingsService.getSettings(),
   });
 
-  // Update local state when settings are loaded
   React.useEffect(() => {
-    if (kanbanSettings) {
-      if (kanbanSettings.columns) {
-        // Sort columns by order
-        const sortedColumns = [...kanbanSettings.columns].sort((a, b) => a.order - b.order);
-        setColumns(sortedColumns);
-      }
-      if (kanbanSettings.columnWidth) {
-        setColumnWidth(kanbanSettings.columnWidth);
-      }
-      if (kanbanSettings.compactView !== undefined) {
-        setCompactView(kanbanSettings.compactView);
-      }
-      if (kanbanSettings.showCompletedTasks !== undefined) {
-        setShowCompletedTasks(kanbanSettings.showCompletedTasks);
-      }
+    if (kanbanSettings && kanbanSettings.columns) {
+      const sortedColumns = [...kanbanSettings.columns].sort((a, b) => a.order - b.order);
+      setColumns(sortedColumns);
     }
   }, [kanbanSettings]);
 
-  // State for custom columns
   const [columns, setColumns] = useState<ColumnDefinition[]>(defaultColumns);
 
-  // Mutation for updating columns
   const updateColumnsMutation = useMutation({
     mutationFn: (columns: ColumnDefinition[]) => KanbanSettingsService.updateColumns(columns),
     onSuccess: () => {
@@ -148,24 +124,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     },
   });
 
-  // Mutation for updating settings
-  const updateSettingsMutation = useMutation({
-    mutationFn: (settings: any) => KanbanSettingsService.updateSettings(settings),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kanban-settings'] });
-      toast({
-        title: 'Settings updated',
-        description: 'Your preferences have been saved',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Failed to update settings',
-        description: 'Please try again later',
-        variant: 'destructive',
-      });
-    },
-  });
+  // Settings mutations moved to parent component
 
   // Track if columns were changed by the user or by the API response
   const isUserAction = useRef<boolean>(false);
@@ -205,31 +164,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     isUserAction.current = false;
   }, [columns, isLoadingSettings, debouncedUpdateColumns]);
 
-  // Handle column width change
-  const handleColumnWidthChange = (value: number[]) => {
-    const newWidth = value[0];
-    setColumnWidth(newWidth);
-    updateSettingsMutation.mutate({ columnWidth: newWidth });
-  };
+  // These settings are now managed by the parent component
 
-  // Handle compact view toggle
-  const handleCompactViewToggle = (checked: boolean) => {
-    setCompactView(checked);
-    updateSettingsMutation.mutate({ compactView: checked });
-  };
-
-  // Handle show completed tasks toggle
-  const handleShowCompletedTasksToggle = (checked: boolean) => {
-    setShowCompletedTasks(checked);
-    updateSettingsMutation.mutate({ showCompletedTasks: checked });
-  };
-
-  // Configure sensors for drag detection with a small delay to avoid accidental drags
+  // Configure sensors for drag detection with minimal delay for instant response
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        delay: 100,
-        tolerance: 5,
+        delay: 50, // Small delay to avoid accidental drags
+        tolerance: 8,
       },
     })
   );
@@ -253,44 +195,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     });
   };
 
-  // Add a new column
-  const handleAddColumn = () => {
-    if (!newColumnTitle.trim()) return;
-
-    const newColumnId = newColumnTitle.toLowerCase().replace(/\s+/g, '');
-
-    // Check if column with this ID already exists
-    if (columns.some(col => col.id === newColumnId)) {
-      toast({
-        title: 'Column already exists',
-        description: 'Please use a different name',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const newColumn: ColumnDefinition = {
-      id: newColumnId,
-      title: newColumnTitle.trim(),
-      order: columns.length, // Add at the end
-    };
-
-    // Set the user action flag
-    isUserAction.current = true;
-
-    const updatedColumns = [...columns, newColumn];
-    setColumns(updatedColumns);
-    setNewColumnTitle('');
-    setIsAddColumnDialogOpen(false);
-
-    // Add the new status to the statusMap
-    statusMap[newColumnId] = newColumnTitle.trim() as TaskStatus;
-
-    toast({
-      title: 'Column added',
-      description: `${newColumnTitle.trim()} column has been added`,
-    });
-  };
+  // Add column functionality moved to parent component
 
   // Delete a column
   const handleDeleteColumn = (columnId: string) => {
@@ -393,12 +298,59 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
       return;
     }
 
-    // Handle task moving between columns
+    // Handle task moving between columns with optimistic update
     if (active.id !== over.id && over.id) {
       const columnId = String(over.id);
       if (columnId in statusMap) {
+        const taskId = String(active.id);
         const newStatus = statusMap[columnId];
-        onStatusChange(String(active.id), newStatus);
+
+        // Find the task in allTasks
+        const taskIndex = allTasks.findIndex(t => t.id === taskId);
+        if (taskIndex !== -1) {
+          // Create a copy of allTasks for optimistic update
+          const updatedTasks = [...allTasks];
+
+          // Update the task status locally first for instant UI update
+          updatedTasks[taskIndex] = {
+            ...updatedTasks[taskIndex],
+            status: newStatus,
+          };
+
+          // Update the tasks state directly for immediate UI update
+          // This creates a new reference to the tasks object with the updated task
+          const updatedTaskGroups = { ...tasks };
+
+          // Remove the task from its original column
+          Object.keys(updatedTaskGroups).forEach(key => {
+            updatedTaskGroups[key] = updatedTaskGroups[key]?.filter(t => t.id !== taskId) || [];
+          });
+
+          // Add the task to the new column
+          const columnKey = Object.keys(statusMap).find(key => statusMap[key] === newStatus);
+          if (columnKey) {
+            if (!updatedTaskGroups[columnKey]) {
+              updatedTaskGroups[columnKey] = [];
+            }
+            updatedTaskGroups[columnKey] = [
+              ...updatedTaskGroups[columnKey],
+              updatedTasks[taskIndex],
+            ];
+          }
+
+          // Update the local state for immediate UI update
+          setTasks(updatedTaskGroups);
+          setAllTasks(updatedTasks);
+
+          // Call the onStatusChange to update backend
+          onStatusChange(taskId, newStatus);
+
+          // Show success toast
+          toast({
+            title: 'Task updated',
+            description: `Task moved to ${newStatus}`,
+          });
+        }
       }
     }
   };
@@ -416,8 +368,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     );
   }
 
-  // Configure drop animation
+  // Configure drop animation for instant feedback
   const dropAnimation = {
+    duration: 150, // Shorter duration for quicker animation
+    easing: 'cubic-bezier(0.25, 1, 0.5, 1)', // Fast acceleration curve
     sideEffects: defaultDropAnimationSideEffects({
       styles: {
         active: {
@@ -435,108 +389,33 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex justify-end items-center mb-4">
-          <div className="flex space-x-2">
-            {viewMode === 'kanban' && (
-              <Button variant="outline" size="sm" onClick={() => setIsAddColumnDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-1" /> Add Column
-              </Button>
-            )}
-
-            <Popover open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-1" /> Settings
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="space-y-4">
-                  <h4 className="font-medium">Board Settings</h4>
-
-                  {viewMode === 'kanban' && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="column-width" className="text-sm">
-                          Column Width
-                        </Label>
-                        <span className="text-xs text-muted-foreground">{columnWidth}px</span>
-                      </div>
-                      <Slider
-                        id="column-width"
-                        min={220}
-                        max={400}
-                        step={10}
-                        value={[columnWidth]}
-                        onValueChange={handleColumnWidthChange}
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between space-y-0">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="compact-view" className="text-sm">
-                        Compact View
-                      </Label>
-                      <p className="text-xs text-muted-foreground">Show less details on cards</p>
-                    </div>
-                    <Switch
-                      id="compact-view"
-                      checked={compactView}
-                      onCheckedChange={handleCompactViewToggle}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between space-y-0">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="show-completed" className="text-sm">
-                        Show Completed Tasks
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        Display tasks marked as completed
-                      </p>
-                    </div>
-                    <Switch
-                      id="show-completed"
-                      checked={showCompletedTasks}
-                      onCheckedChange={handleShowCompletedTasksToggle}
-                    />
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
-        {/* Main scrollable kanban board container */}
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full w-full">
-            <SortableContext
-              items={columns.map(col => `column-${col.id}`)}
-              strategy={horizontalListSortingStrategy}
-            >
-              <div className="flex space-x-4 min-w-max pb-4">
-                {columns.map(column => (
-                  <KanbanColumn
-                    key={column.id}
-                    id={column.id}
-                    title={column.title}
-                    tasks={
-                      !showCompletedTasks && column.id === 'completed' ? [] : tasks[column.id] || []
-                    }
-                    onStatusChange={onStatusChange}
-                    onDelete={onDelete}
-                    renderPriorityBadge={renderPriorityBadge}
-                    onTaskClick={handleOpenTaskDetails}
-                    onAddTask={onAddTask}
-                    onDeleteColumn={() => handleDeleteColumn(column.id)}
-                    columnWidth={columnWidth}
-                    compactView={compactView}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+        {/* Main kanban board container with horizontal scroll only */}
+        <div className="flex-1 overflow-x-auto overflow-y-hidden">
+          <SortableContext
+            items={columns.map(col => `column-${col.id}`)}
+            strategy={horizontalListSortingStrategy}
+          >
+            <div className="flex space-x-4 min-w-max pb-4">
+              {columns.map(column => (
+                <KanbanColumn
+                  key={column.id}
+                  id={column.id}
+                  title={column.title}
+                  tasks={
+                    !showCompletedTasks && column.id === 'completed' ? [] : tasks[column.id] || []
+                  }
+                  onStatusChange={onStatusChange}
+                  onDelete={onDelete}
+                  renderPriorityBadge={renderPriorityBadge}
+                  onTaskClick={handleOpenTaskDetails}
+                  onAddTask={onAddTask}
+                  onDeleteColumn={() => handleDeleteColumn(column.id)}
+                  columnWidth={columnWidth}
+                  compactView={compactView}
+                />
+              ))}
+            </div>
+          </SortableContext>
         </div>
 
         {typeof window !== 'undefined' &&
@@ -578,36 +457,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         onTaskUpdate={handleTaskUpdate}
       />
 
-      {/* Add Column Dialog */}
-      <Dialog open={isAddColumnDialogOpen} onOpenChange={setIsAddColumnDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Column</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Column name"
-              value={newColumnTitle}
-              onChange={e => setNewColumnTitle(e.target.value)}
-              className="mb-2"
-              autoFocus
-              onKeyDown={e => {
-                if (e.key === 'Enter' && newColumnTitle.trim()) {
-                  handleAddColumn();
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddColumnDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddColumn} disabled={!newColumnTitle.trim()}>
-              Add Column
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Add Column Dialog moved to parent component */}
     </div>
   );
 };

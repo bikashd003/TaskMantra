@@ -8,6 +8,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronUp, Plus, X, Trash2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const defaultColumns = [
   { id: 'todo', title: 'To Do' },
@@ -42,11 +43,9 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   const [newTaskName, setNewTaskName] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Function to handle adding a new task
   const handleAddTask = () => {
     if (!newTaskName.trim() || !onAddTask) return;
 
-    // Create a new task with the current column's status
     const newTask: Partial<Task> = {
       name: newTaskName.trim(),
       status: title as any, // Convert the column title to a TaskStatus
@@ -63,7 +62,6 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     setIsAddingTask(false);
   };
 
-  // Set up sortable for the column itself
   const {
     attributes,
     listeners,
@@ -76,7 +74,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     data: { type: 'column', id },
   });
 
-  // Set up droppable area for tasks within the column
+  // Make the entire column droppable
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: id,
   });
@@ -105,16 +103,17 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   return (
     <div
       ref={setSortableRef}
-      className={`space-y-4 ${isColumnDragging ? 'opacity-50' : ''}`}
+      className={`flex flex-col ${isColumnDragging ? 'opacity-50' : ''}`}
       style={{
         ...columnTransform,
         width: `${columnWidth}px`,
         minWidth: '220px',
         flex: '0 0 auto',
+        height: 'calc(100vh - 14rem)',
       }}
       {...attributes}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between sticky top-0 bg-white z-10 py-2 mb-2">
         <h3 className="font-medium flex items-center cursor-move" {...listeners}>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -207,8 +206,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       {!isCollapsed && (
         <div
           ref={setDroppableRef}
-          className={`min-h-[200px] max-h-[calc(100vh-20rem)] overflow-y-auto rounded-lg transition-colors ${isOver ? 'bg-primary/5 border-2 border-dashed border-primary/30' : 'border border-dashed border-gray-200'}`}
-          style={{ height: 'calc(100vh - 20rem)' }}
+          className={`flex-1 rounded-lg overflow-hidden transition-colors ${isOver ? 'bg-primary/5 border-2 border-dashed border-primary/30' : 'border border-gray-200'}`}
         >
           {tasks.length === 0 && !isAddingTask ? (
             <div className="h-full p-4 flex flex-col items-center justify-center text-center text-muted-foreground text-sm">
@@ -223,24 +221,26 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               </Button>
             </div>
           ) : (
-            <SortableContext
-              items={tasks.map(task => task.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-3 p-2">
-                {tasks.map(task => (
-                  <KanbanCard
-                    key={task.id}
-                    task={task}
-                    onStatusChange={onStatusChange}
-                    onDelete={onDelete}
-                    renderPriorityBadge={renderPriorityBadge}
-                    onClick={() => onTaskClick?.(task.id)}
-                    compactView={compactView}
-                  />
-                ))}
-              </div>
-            </SortableContext>
+            <ScrollArea className="h-full" type="always">
+              <SortableContext
+                items={tasks.map(task => task.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3 p-2">
+                  {tasks.map(task => (
+                    <KanbanCard
+                      key={task.id}
+                      task={task}
+                      onStatusChange={onStatusChange}
+                      onDelete={onDelete}
+                      renderPriorityBadge={renderPriorityBadge}
+                      onClick={() => onTaskClick?.(task.id)}
+                      compactView={compactView}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </ScrollArea>
           )}
         </div>
       )}
