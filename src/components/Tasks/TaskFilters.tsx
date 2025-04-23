@@ -1,7 +1,7 @@
-import React from "react";
-import { Filter, Search, SortAsc } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { Filter, Search, SortAsc } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,8 +9,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { TaskFilterState, TaskSortOption, sortOptions, statusOptions, priorityOptions } from "./types";
+} from '@/components/ui/dropdown-menu';
+import {
+  TaskFilterState,
+  TaskSortOption,
+  sortOptions,
+  statusOptions,
+  priorityOptions,
+} from './types';
 
 interface TaskFiltersProps {
   filters: TaskFilterState;
@@ -33,7 +39,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
           placeholder="Search tasks..."
           className="pl-10"
           value={filters.searchQuery}
-          onChange={(e) => onFilterChange({ searchQuery: e.target.value })}
+          onChange={e => onFilterChange({ searchQuery: e.target.value })}
         />
       </div>
 
@@ -46,14 +52,17 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onFilterChange({ status: "all" })}>
+          <DropdownMenuItem
+            onClick={() => onFilterChange({ status: 'all' })}
+            className={filters.status === 'all' ? 'bg-muted' : ''}
+          >
             All
           </DropdownMenuItem>
-          {statusOptions.map((status) => (
-            <DropdownMenuItem 
-              key={status.value} 
+          {statusOptions.map(status => (
+            <DropdownMenuItem
+              key={status.value}
               onClick={() => onFilterChange({ status: status.value })}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 ${filters.status === status.value ? 'bg-muted' : ''}`}
             >
               <div className={`w-2 h-2 rounded-full ${status.color}`} />
               {status.label}
@@ -63,14 +72,19 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
           <DropdownMenuSeparator />
           <DropdownMenuLabel>Filter by Priority</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onFilterChange({ priority: "all" })}>
+          <DropdownMenuItem
+            onClick={() => onFilterChange({ priority: 'all' })}
+            className={filters.priority === 'all' ? 'bg-muted' : ''}
+          >
             All
           </DropdownMenuItem>
-          {priorityOptions.map((priority) => (
-            <DropdownMenuItem 
-              key={priority.value} 
+          {priorityOptions.map(priority => (
+            <DropdownMenuItem
+              key={priority.value}
               onClick={() => onFilterChange({ priority: priority.value })}
+              className={`flex items-center gap-2 ${filters.priority === priority.value ? 'bg-muted' : ''}`}
             >
+              <div className={`w-2 h-2 rounded-full ${priority.color.replace('text-', 'bg-')}`} />
               {priority.label}
             </DropdownMenuItem>
           ))}
@@ -84,12 +98,15 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          {sortOptions.map((option) => (
-            <DropdownMenuItem 
+          {sortOptions.map(option => (
+            <DropdownMenuItem
               key={option.label}
               onClick={() => onSortChange(option)}
-              className={currentSort.label === option.label ? "bg-muted" : ""}
+              className={`flex items-center gap-2 ${currentSort.label === option.label ? 'bg-muted' : ''}`}
             >
+              {currentSort.label === option.label && (
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+              )}
               {option.label}
             </DropdownMenuItem>
           ))}

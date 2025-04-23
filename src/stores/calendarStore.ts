@@ -1,11 +1,10 @@
-/* eslint-disable no-unused-vars */
-import { create } from "zustand";
-import { addDays, format } from "date-fns";
-import { DateRange } from "react-day-picker";
-import { Task } from "@/types/task";
+import { create } from 'zustand';
+import { addDays, format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+import { Task, Subtask, Comment } from '@/types/task';
 
 interface CalendarTask {
-  id: string;
+  _id: string;
   title: string;
   name: string;
   description: string;
@@ -17,6 +16,8 @@ interface CalendarTask {
   priority: string;
   assignedTo: any[];
   color?: string;
+  subtasks: Subtask[];
+  comments: Comment[];
 }
 
 interface CalendarFilters {
@@ -31,13 +32,11 @@ interface CalendarState {
   setDateRange: (range: DateRange | undefined) => void;
   selectedDate: Date | null;
   tasks: CalendarTask[];
-  isLoading: boolean;
   error: string | null;
   selectedTask: CalendarTask | null;
   filters: CalendarFilters;
   setSelectedDate: (date: Date | null) => void;
   setTasks: (tasks: CalendarTask[]) => void;
-  setIsLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   setSelectedTask: (task: CalendarTask | null) => void;
   setFilter: (key: keyof CalendarFilters, value: string) => void;
@@ -48,17 +47,25 @@ interface CalendarState {
 // Helper function to convert API task to calendar task format
 const convertApiTaskToCalendarTask = (apiTask: Task): CalendarTask => {
   return {
-    id: apiTask.id,
+    _id: apiTask._id,
     title: apiTask.name,
     name: apiTask.name,
     description: apiTask.description,
-    startDate: apiTask.startDate ? format(new Date(apiTask.startDate), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
-    endDate: apiTask.dueDate ? format(new Date(apiTask.dueDate), 'yyyy-MM-dd') : format(addDays(new Date(), 1), 'yyyy-MM-dd'),
-    dueDate: apiTask.dueDate ? format(new Date(apiTask.dueDate), 'yyyy-MM-dd') : format(addDays(new Date(), 1), 'yyyy-MM-dd'),
+    startDate: apiTask.startDate
+      ? format(new Date(apiTask.startDate), 'yyyy-MM-dd')
+      : format(new Date(), 'yyyy-MM-dd'),
+    endDate: apiTask.dueDate
+      ? format(new Date(apiTask.dueDate), 'yyyy-MM-dd')
+      : format(addDays(new Date(), 1), 'yyyy-MM-dd'),
+    dueDate: apiTask.dueDate
+      ? format(new Date(apiTask.dueDate), 'yyyy-MM-dd')
+      : format(addDays(new Date(), 1), 'yyyy-MM-dd'),
     completed: apiTask.completed,
     status: apiTask.status,
     priority: apiTask.priority,
     assignedTo: apiTask.assignedTo || [],
+    subtasks: apiTask.subtasks || [],
+    comments: apiTask.comments || [],
     color: getPriorityColor(apiTask.priority),
   };
 };
@@ -77,41 +84,41 @@ const getPriorityColor = (priority: string): string => {
   }
 };
 
-export const useCalendarStore = create<CalendarState>((set) => ({
+export const useCalendarStore = create<CalendarState>(set => ({
   dateRange: {
-    from: new Date(),
-    to: addDays(new Date(), 6),
+    from: new Date(new Date().setHours(0, 0, 0, 0)),
+    to: new Date(addDays(new Date(), 6).setHours(0, 0, 0, 0)),
   },
-  setDateRange: (range) => set({ dateRange: range }),
+  setDateRange: range => set({ dateRange: range }),
   selectedDate: null,
   tasks: [],
-  isLoading: false,
   error: null,
   selectedTask: null,
   filters: {
     status: 'all',
     priority: 'all',
     assignedTo: '',
-    searchQuery: ''
+    searchQuery: '',
   },
-  setSelectedDate: (date) => set({ selectedDate: date }),
-  setTasks: (tasks) => set({ tasks }),
-  setIsLoading: (isLoading) => set({ isLoading }),
-  setError: (error) => set({ error }),
-  setSelectedTask: (task) => set({ selectedTask: task }),
-  setFilter: (key, value) => set((state) => ({
-    filters: {
-      ...state.filters,
-      [key]: value
-    }
-  })),
-  resetFilters: () => set({
-    filters: {
-      status: 'all',
-      priority: 'all',
-      assignedTo: '',
-      searchQuery: ''
-    }
-  }),
+  setSelectedDate: date => set({ selectedDate: date }),
+  setTasks: tasks => set({ tasks }),
+  setError: error => set({ error }),
+  setSelectedTask: task => set({ selectedTask: task }),
+  setFilter: (key, value) =>
+    set(state => ({
+      filters: {
+        ...state.filters,
+        [key]: value,
+      },
+    })),
+  resetFilters: () =>
+    set({
+      filters: {
+        status: 'all',
+        priority: 'all',
+        assignedTo: '',
+        searchQuery: '',
+      },
+    }),
   convertApiTaskToCalendarTask,
 }));

@@ -21,7 +21,6 @@ export class KanbanSettingsService {
       const response = await axios.get('/api/kanban-settings');
       return response.data.settings;
     } catch (error) {
-      console.error('Failed to fetch kanban settings:', error);
       throw new Error('Failed to fetch kanban settings');
     }
   }
@@ -31,7 +30,6 @@ export class KanbanSettingsService {
       const response = await axios.patch('/api/kanban-settings', settings);
       return response.data.settings;
     } catch (error) {
-      console.error('Failed to update kanban settings:', error);
       throw new Error('Failed to update kanban settings');
     }
   }
@@ -41,7 +39,6 @@ export class KanbanSettingsService {
       const response = await axios.patch('/api/kanban-settings/columns', { columns });
       return response.data.settings;
     } catch (error) {
-      console.error('Failed to update kanban columns:', error);
       throw new Error('Failed to update kanban columns');
     }
   }

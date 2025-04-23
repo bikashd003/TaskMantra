@@ -428,7 +428,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   return (
-    <div className="overflow-x-auto max-w-[1630px] py-2">
+    <div className="h-full w-full flex flex-col">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -507,34 +507,37 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </div>
 
-        <ScrollArea className="max-w-full">
-          <SortableContext
-            items={columns.map(col => `column-${col.id}`)}
-            strategy={horizontalListSortingStrategy}
-          >
-            <div className="flex space-x-4">
-              {columns.map(column => (
-                <KanbanColumn
-                  key={column.id}
-                  id={column.id}
-                  title={column.title}
-                  tasks={
-                    !showCompletedTasks && column.id === 'completed' ? [] : tasks[column.id] || []
-                  }
-                  onStatusChange={onStatusChange}
-                  onDelete={onDelete}
-                  renderPriorityBadge={renderPriorityBadge}
-                  onTaskClick={handleOpenTaskDetails}
-                  onAddTask={onAddTask}
-                  onDeleteColumn={() => handleDeleteColumn(column.id)}
-                  columnWidth={columnWidth}
-                  compactView={compactView}
-                />
-              ))}
-            </div>
-          </SortableContext>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        {/* Main scrollable kanban board container */}
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full w-full">
+            <SortableContext
+              items={columns.map(col => `column-${col.id}`)}
+              strategy={horizontalListSortingStrategy}
+            >
+              <div className="flex space-x-4 min-w-max pb-4">
+                {columns.map(column => (
+                  <KanbanColumn
+                    key={column.id}
+                    id={column.id}
+                    title={column.title}
+                    tasks={
+                      !showCompletedTasks && column.id === 'completed' ? [] : tasks[column.id] || []
+                    }
+                    onStatusChange={onStatusChange}
+                    onDelete={onDelete}
+                    renderPriorityBadge={renderPriorityBadge}
+                    onTaskClick={handleOpenTaskDetails}
+                    onAddTask={onAddTask}
+                    onDeleteColumn={() => handleDeleteColumn(column.id)}
+                    columnWidth={columnWidth}
+                    compactView={compactView}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
 
         {typeof window !== 'undefined' &&
           createPortal(

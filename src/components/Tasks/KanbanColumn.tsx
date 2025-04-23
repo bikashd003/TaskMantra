@@ -1,19 +1,19 @@
-import React, { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { KanbanColumnProps, Task } from "./types";
-import KanbanCard from "./KanbanCard";
-import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { ChevronDown, ChevronUp, Plus, X, Trash2 } from "lucide-react";
+import React, { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { KanbanColumnProps, Task } from './types';
+import KanbanCard from './KanbanCard';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { ChevronDown, ChevronUp, Plus, X, Trash2 } from 'lucide-react';
 
 const defaultColumns = [
-  { id: "todo", title: "To Do" },
-  { id: "inProgress", title: "In Progress" },
-  { id: "completed", title: "Done" },
-  { id: "review", title: "Review" },
+  { id: 'todo', title: 'To Do' },
+  { id: 'inProgress', title: 'In Progress' },
+  { id: 'completed', title: 'Done' },
+  { id: 'review', title: 'Review' },
 ];
 
 interface ExtendedKanbanColumnProps extends KanbanColumnProps {
@@ -39,7 +39,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   compactView = false,
 }) => {
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const [newTaskName, setNewTaskName] = useState("");
+  const [newTaskName, setNewTaskName] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Function to handle adding a new task
@@ -50,7 +50,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     const newTask: Partial<Task> = {
       name: newTaskName.trim(),
       status: title as any, // Convert the column title to a TaskStatus
-      priority: "Medium", // Default priority
+      priority: 'Medium', // Default priority
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default due date (1 week from now)
       subtasks: [],
       assignedTo: [],
@@ -59,7 +59,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     };
 
     onAddTask(newTask);
-    setNewTaskName("");
+    setNewTaskName('');
     setIsAddingTask(false);
   };
 
@@ -70,10 +70,10 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     setNodeRef: setSortableRef,
     transform,
     transition,
-    isDragging: isColumnDragging
+    isDragging: isColumnDragging,
   } = useSortable({
     id: `column-${id}`,
-    data: { type: 'column', id }
+    data: { type: 'column', id },
   });
 
   // Set up droppable area for tasks within the column
@@ -84,34 +84,33 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   // Get status color
   const getStatusColor = () => {
     switch (title) {
-      case "To Do":
-        return "bg-slate-400";
-      case "In Progress":
-        return "bg-blue-500";
-      case "Review":
-        return "bg-amber-500";
-      case "Completed":
-        return "bg-green-500";
+      case 'To Do':
+        return 'bg-slate-400';
+      case 'In Progress':
+        return 'bg-blue-500';
+      case 'Review':
+        return 'bg-amber-500';
+      case 'Completed':
+        return 'bg-green-500';
       default:
-        return "bg-gray-400";
+        return 'bg-gray-400';
     }
   };
 
   const columnTransform = {
     transform: CSS.Transform.toString(transform),
-    transition
+    transition,
   };
 
   return (
     <div
       ref={setSortableRef}
-      className={`space-y-4 ${isColumnDragging ? 'opacity-50' : ''} overflow-x-auto`}
+      className={`space-y-4 ${isColumnDragging ? 'opacity-50' : ''}`}
       style={{
         ...columnTransform,
         width: `${columnWidth}px`,
         minWidth: '220px',
-        maxWidth: '90vw',
-        flex: '0 0 auto'
+        flex: '0 0 auto',
       }}
       {...attributes}
     >
@@ -127,9 +126,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               <ChevronUp className="h-4 w-4 text-gray-500" />
             )}
           </button>
-          <span
-            className={`h-2 w-2 rounded-full mr-2 ${getStatusColor()}`}
-          ></span>
+          <span className={`h-2 w-2 rounded-full mr-2 ${getStatusColor()}`}></span>
           {title}
           <Badge variant="secondary" className="ml-2">
             {tasks.length}
@@ -170,7 +167,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               className="h-6 w-6 p-0"
               onClick={() => {
                 setIsAddingTask(false);
-                setNewTaskName("");
+                setNewTaskName('');
               }}
             >
               <X className="h-4 w-4" />
@@ -179,10 +176,10 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
           <Input
             placeholder="Task name"
             value={newTaskName}
-            onChange={(e) => setNewTaskName(e.target.value)}
+            onChange={e => setNewTaskName(e.target.value)}
             className="mb-2"
             autoFocus
-            onKeyDown={(e) => {
+            onKeyDown={e => {
               if (e.key === 'Enter' && newTaskName.trim()) {
                 handleAddTask();
               }
@@ -194,16 +191,12 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               size="sm"
               onClick={() => {
                 setIsAddingTask(false);
-                setNewTaskName("");
+                setNewTaskName('');
               }}
             >
               Cancel
             </Button>
-            <Button
-              size="sm"
-              onClick={handleAddTask}
-              disabled={!newTaskName.trim()}
-            >
+            <Button size="sm" onClick={handleAddTask} disabled={!newTaskName.trim()}>
               Add Task
             </Button>
           </div>
@@ -215,6 +208,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         <div
           ref={setDroppableRef}
           className={`min-h-[200px] max-h-[calc(100vh-20rem)] overflow-y-auto rounded-lg transition-colors ${isOver ? 'bg-primary/5 border-2 border-dashed border-primary/30' : 'border border-dashed border-gray-200'}`}
+          style={{ height: 'calc(100vh - 20rem)' }}
         >
           {tasks.length === 0 && !isAddingTask ? (
             <div className="h-full p-4 flex flex-col items-center justify-center text-center text-muted-foreground text-sm">
@@ -229,9 +223,12 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               </Button>
             </div>
           ) : (
-            <SortableContext items={tasks.map(task => task.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext
+              items={tasks.map(task => task.id)}
+              strategy={verticalListSortingStrategy}
+            >
               <div className="space-y-3 p-2">
-                {tasks.map((task) => (
+                {tasks.map(task => (
                   <KanbanCard
                     key={task.id}
                     task={task}

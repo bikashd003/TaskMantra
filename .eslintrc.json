@@ -15,7 +15,10 @@
       {
         "varsIgnorePattern": "^_|Props$|Interface$",
         "argsIgnorePattern": "^_",
-        "destructuredArrayIgnorePattern": "^_"
+        "destructuredArrayIgnorePattern": "^_",
+        "args": "none",
+        "caughtErrors": "none",
+        "ignoreRestSiblings": true
       }
     ]
   },

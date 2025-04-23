@@ -1,9 +1,9 @@
-import React, { useState, useEffect, ReactNode } from "react";
-import { X, Heart, Edit, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
-import { ScrollArea } from "../ui/scroll-area";
+import React, { useState, useEffect, ReactNode } from 'react';
+import { X, Heart, Edit, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -19,7 +19,7 @@ interface SidebarProps {
 export const RightSidebar = ({
   isOpen,
   onClose,
-  title = "Details",
+  title = 'Details',
   children,
   onEdit,
   onDelete,
@@ -55,7 +55,7 @@ export const RightSidebar = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -64,21 +64,21 @@ export const RightSidebar = ({
           onClick={handleOverlayClick}
         >
           <motion.div
-            initial={{ x: "100%" }}
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ 
-              type: "spring",
+            exit={{ x: '100%' }}
+            transition={{
+              type: 'spring',
               damping: 25,
-              stiffness: 200
+              stiffness: 200,
             }}
             className={cn(
-              "fixed right-4 top-4 bottom-4 w-[450px] max-w-[calc(100vw-32px)] bg-white/95 backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.1)] border-l border-gray-200/70 rounded-lg",
+              'fixed right-4 top-4 bottom-4 w-[450px] max-w-[calc(100vw-32px)] bg-white shadow-[0_0_15px_rgba(0,0,0,0.1)] border-l border-gray-200/70 rounded-lg',
               className
             )}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -92,11 +92,11 @@ export const RightSidebar = ({
                     size="icon"
                     onClick={handleFavorite}
                     className={cn(
-                      "hover:bg-gray-100/80 transition-colors",
-                      isFavorited && "text-red-500"
+                      'hover:bg-gray-100/80 transition-colors',
+                      isFavorited && 'text-red-500'
                     )}
                   >
-                    <Heart className={cn("h-5 w-5", isFavorited && "fill-current")} />
+                    <Heart className={cn('h-5 w-5', isFavorited && 'fill-current')} />
                   </Button>
                 )}
                 {onEdit && (
@@ -129,11 +129,7 @@ export const RightSidebar = ({
                 </Button>
               </div>
             </motion.div>
-            <ScrollArea
-              className="p-6 overflow-auto h-[calc(100%-73px)]"
-            >
-              {children}
-            </ScrollArea>
+            <ScrollArea className="p-6 overflow-auto h-[calc(100%-73px)]">{children}</ScrollArea>
           </motion.div>
         </motion.div>
       )}
