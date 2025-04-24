@@ -9,6 +9,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronUp, Plus, X, Trash2, GripVertical } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { motion } from 'framer-motion';
 
 const defaultColumns = [
   { id: 'todo', title: 'To Do' },
@@ -62,7 +63,6 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     setIsAddingTask(false);
   };
 
-  // Setup sortable for column dragging
   const {
     attributes,
     listeners,
@@ -79,23 +79,8 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: id,
     data: { type: 'column', id },
+    disabled: isColumnDragging, // Disable dropping when the column is being dragged
   });
-
-  // Get status color
-  const getStatusColor = () => {
-    switch (title) {
-      case 'To Do':
-        return 'bg-slate-400';
-      case 'In Progress':
-        return 'bg-blue-500';
-      case 'Review':
-        return 'bg-amber-500';
-      case 'Completed':
-        return 'bg-green-500';
-      default:
-        return 'bg-gray-400';
-    }
-  };
 
   const columnTransform = {
     transform: CSS.Transform.toString(transform),
@@ -103,24 +88,38 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   };
 
   return (
-    <div
+    <motion.div
       ref={setSortableRef}
-      className={`flex flex-col ${isColumnDragging ? 'opacity-50' : ''}`}
+      className={`flex flex-col select-none bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ${isColumnDragging ? 'opacity-90 scale-105 z-50 rotate-1' : ''}`}
       style={{
         ...columnTransform,
         width: `${columnWidth}px`,
         minWidth: '220px',
         flex: '0 0 auto',
         height: 'calc(100vh - 14rem)',
+        borderTop: `4px solid ${
+          title === 'To Do'
+            ? '#94a3b8'
+            : title === 'In Progress'
+              ? '#3b82f6'
+              : title === 'Review'
+                ? '#f59e0b'
+                : title === 'Completed'
+                  ? '#22c55e'
+                  : '#94a3b8'
+        }`,
       }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       {...attributes}
     >
       {/* Column header */}
-      <div className="flex items-center justify-between sticky top-0 bg-white z-10 py-2 mb-2">
+      <div className="flex items-center justify-between sticky top-0 backdrop-blur-sm bg-white/95 z-10 py-3 px-4 mb-3 rounded-t-lg border-b">
         <div className="font-medium flex items-center">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="mr-1 hover:bg-gray-100 rounded p-1"
+            className="mr-2 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
           >
             {isCollapsed ? (
               <ChevronDown className="h-4 w-4 text-gray-500" />
@@ -128,65 +127,77 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               <ChevronUp className="h-4 w-4 text-gray-500" />
             )}
           </button>
-          <span className={`h-2 w-2 rounded-full mr-2 ${getStatusColor()}`}></span>
-          {title}
-          <Badge variant="secondary" className="ml-2">
+          <span className="font-semibold text-gray-800">{title}</span>
+          <Badge variant="secondary" className="ml-2 bg-gray-100 text-gray-700 font-medium">
             {tasks.length}
           </Badge>
         </div>
         <div className="flex items-center space-x-1">
           {/* Column drag handle */}
-          <div
-            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+          <motion.div
+            className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             {...listeners}
           >
             <GripVertical className="h-4 w-4 text-gray-500" />
-          </div>
+          </motion.div>
           {onDeleteColumn && !defaultColumns.some(col => col.id === id) && (
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 w-8 p-0 text-gray-500 hover:text-red-500 transition-colors`}
+                onClick={onDeleteColumn}
+                title="Delete column"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </motion.div>
+          )}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant="ghost"
               size="sm"
-              className={`h-8 w-8 p-0 text-gray-500 hover:text-red-500 `}
-              onClick={onDeleteColumn}
-              title="Delete column"
+              className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors"
+              onClick={() => setIsAddingTask(true)}
+              title="Add task"
             >
-              <Trash2 className="h-4 w-4" />
+              <Plus className="h-4 w-4" />
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => setIsAddingTask(true)}
-            title="Add task"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+          </motion.div>
         </div>
       </div>
 
       {/* Quick add task form */}
       {isAddingTask && (
-        <div className="p-2 mb-2 border border-dashed border-gray-200 rounded-lg bg-gray-50">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="px-3 py-2 mx-3 mb-2 border border-dashed border-gray-300 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm"
+        >
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-sm font-medium">Add New Task</h4>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={() => {
-                setIsAddingTask(false);
-                setNewTaskName('');
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 hover:bg-gray-100 rounded-full"
+                onClick={() => {
+                  setIsAddingTask(false);
+                  setNewTaskName('');
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </motion.div>
           </div>
           <Input
             placeholder="Task name"
             value={newTaskName}
             onChange={e => setNewTaskName(e.target.value)}
-            className="mb-2"
+            className="mb-2 border-gray-300 focus:ring-2 focus:ring-primary/30"
             autoFocus
             onKeyDown={e => {
               if (e.key === 'Enter' && newTaskName.trim()) {
@@ -195,42 +206,58 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             }}
           />
           <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setIsAddingTask(false);
-                setNewTaskName('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleAddTask} disabled={!newTaskName.trim()}>
-              Add Task
-            </Button>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsAddingTask(false);
+                  setNewTaskName('');
+                }}
+                className="border-gray-300 hover:bg-gray-100"
+              >
+                Cancel
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                size="sm"
+                onClick={handleAddTask}
+                disabled={!newTaskName.trim()}
+                className="shadow-sm"
+              >
+                Add Task
+              </Button>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Main column content area - this is the droppable area */}
       {!isCollapsed && (
         <div
           ref={setDroppableRef}
-          className={`flex-1 rounded-lg transition-colors border overflow-y-auto ${isOver ? 'border-primary border-dashed bg-primary/5' : 'border-gray-200'}`}
+          className={`flex-1 rounded-lg transition-all duration-300 mx-3 mb-4 overflow-hidden select-none ${
+            isOver
+              ? 'border-2 border-primary border-dashed bg-primary/5 shadow-inner scale-[1.01]'
+              : 'bg-white/90'
+          }`}
           data-column-id={id}
         >
           {/* Empty column state */}
           {tasks.length === 0 && !isAddingTask ? (
-            <div className="h-full p-4 flex flex-col items-center justify-center text-center text-muted-foreground text-sm">
+            <div className="h-full p-4 flex flex-col items-center justify-center text-center text-muted-foreground text-sm animate-in fade-in">
               <p className="mb-2">Drop tasks here</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => setIsAddingTask(true)}
-              >
-                <Plus className="h-3 w-3 mr-1" /> Add Task
-              </Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs border-dashed border-gray-300 hover:bg-gray-50"
+                  onClick={() => setIsAddingTask(true)}
+                >
+                  <Plus className="h-3 w-3 mr-1" /> Add Task
+                </Button>
+              </motion.div>
             </div>
           ) : (
             <ScrollArea className="h-full" type="always">
@@ -239,46 +266,27 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
                 strategy={verticalListSortingStrategy}
               >
                 <div className="p-2">
-                  {/* Tasks */}
-                  {tasks.map((task, index) => (
+                  {tasks.map(task => (
                     <React.Fragment key={task.id}>
-                      {/* Drop indicator above first task */}
-                      {index === 0 && (
-                        <div
-                          className={`h-2 -mx-2 mb-2 rounded-t-md ${isOver ? 'bg-primary/10' : ''}`}
-                          data-droppable="true"
+                      <div className="mb-3">
+                        <KanbanCard
+                          task={task}
+                          onStatusChange={onStatusChange}
+                          onDelete={onDelete}
+                          renderPriorityBadge={renderPriorityBadge}
+                          onClick={() => onTaskClick?.(task.id)}
+                          compactView={compactView}
                         />
-                      )}
-
-                      <KanbanCard
-                        task={task}
-                        onStatusChange={onStatusChange}
-                        onDelete={onDelete}
-                        renderPriorityBadge={renderPriorityBadge}
-                        onClick={() => onTaskClick?.(task.id)}
-                        compactView={compactView}
-                      />
-
-                      {/* Drop indicator between tasks */}
-                      <div
-                        className={`h-2 -mx-2 ${isOver ? 'bg-primary/10' : ''}`}
-                        data-droppable="true"
-                      />
+                      </div>
                     </React.Fragment>
                   ))}
-
-                  {/* Empty space at the bottom to allow dropping when column has tasks */}
-                  <div
-                    className={`h-24 -mx-2 rounded-b-md ${isOver ? 'bg-primary/10' : ''}`}
-                    data-droppable="true"
-                  />
                 </div>
               </SortableContext>
             </ScrollArea>
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

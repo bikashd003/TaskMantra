@@ -299,7 +299,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   const showLoading = isLoading;
 
   return (
-    <div className="flex flex-col space-y-4 h-full w-full">
+    <div className="flex flex-col h-full w-full">
       {/* Header with New Task Button */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Task Board</h2>

@@ -49,8 +49,19 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
     transition,
   };
 
+  // Define non-draggable selectors
+  const preventDragHandling = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`cursor-grab active:cursor-grabbing ${isDragging ? 'z-50' : ''}`}
+    >
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -59,29 +70,37 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
         className={isDragging ? 'opacity-50' : ''}
       >
         <Card
-          className={`shadow-sm hover:shadow-md transition-all ${isDragging ? 'border-primary border-2' : ''} ${task.status === 'Completed' ? 'bg-gray-50' : ''} cursor-pointer`}
-          onClick={onClick}
+          className={`shadow-sm hover:shadow-md transition-all ${isDragging ? 'border-primary border-2' : ''} ${task.status === 'Completed' ? 'bg-gray-50' : ''}`}
+          onClick={e => {
+            if (!isDragging && onClick) {
+              e.stopPropagation();
+              onClick();
+            }
+          }}
         >
           <CardHeader className="p-3 pb-0">
             <div className="flex justify-between items-start">
-              <TooltipProvider delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <CardTitle
-                      className={`text-sm font-medium ${task.status === 'Completed' ? 'text-gray-500' : ''} truncate max-w-[180px]`}
-                    >
-                      {task.status === 'Completed' && (
-                        <CheckCircle2 className="h-4 w-4 text-green-500 inline mr-1" />
-                      )}
-                      {task.name}
-                    </CardTitle>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p>{task.name}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+              <div className="flex items-center gap-2">
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <CardTitle
+                        className={`text-sm font-medium ${task.status === 'Completed' ? 'text-gray-500' : ''} truncate max-w-[160px]`}
+                        onClick={preventDragHandling}
+                      >
+                        {task.status === 'Completed' && (
+                          <CheckCircle2 className="h-4 w-4 text-green-500 inline mr-1" />
+                        )}
+                        {task.name}
+                      </CardTitle>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p>{task.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div onClick={preventDragHandling}>
                 <TaskActions task={task} onStatusChange={onStatusChange} onDelete={onDelete} />
               </div>
             </div>
@@ -91,7 +110,7 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
             <CardContent className="p-3 pt-2">
               {/* Due date and priority */}
               <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center">
+                <div className="flex items-center" onClick={preventDragHandling}>
                   <Calendar
                     className={`h-3 w-3 mr-1 ${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`}
                   />
@@ -102,12 +121,12 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
                     {formatDate(task.dueDate)}
                   </span>
                 </div>
-                {renderPriorityBadge(task.priority)}
+                <div onClick={preventDragHandling}>{renderPriorityBadge(task.priority)}</div>
               </div>
 
               {/* Progress bar for subtasks */}
               {totalSubtasks > 0 && (
-                <div className="mb-2">
+                <div className="mb-2" onClick={preventDragHandling}>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-muted-foreground">Progress</span>
                     <span className="font-medium">
@@ -120,7 +139,7 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
 
               {/* Assigned users and tags */}
               <div className="flex items-center justify-between">
-                <div className="flex -space-x-2">
+                <div className="flex -space-x-2" onClick={preventDragHandling}>
                   {task.assignedTo && task.assignedTo.length > 0 ? (
                     task.assignedTo.slice(0, 3).map((user, index) => (
                       <Avatar key={index} className="h-6 w-6 border-2 border-background">
@@ -144,10 +163,12 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
                   )}
                 </div>
                 {(task?.tags ?? []).length > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {(task?.tags ?? [])[0]}
-                    {(task?.tags ?? []).length > 1 && `+${(task?.tags ?? []).length - 1}`}
-                  </Badge>
+                  <div onClick={preventDragHandling}>
+                    <Badge variant="secondary" className="text-xs">
+                      {(task?.tags ?? [])[0]}
+                      {(task?.tags ?? []).length > 1 && `+${(task?.tags ?? []).length - 1}`}
+                    </Badge>
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -155,14 +176,17 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
             <CardContent className="p-3 pt-2">
               <div className="flex justify-between items-center">
                 {task.dueDate && (
-                  <div className="flex items-center text-xs text-muted-foreground">
+                  <div
+                    className="flex items-center text-xs text-muted-foreground"
+                    onClick={preventDragHandling}
+                  >
                     <Calendar className={`h-3 w-3 mr-1 ${isOverdue ? 'text-red-500' : ''}`} />
                     <span className={isOverdue ? 'text-red-500 font-medium' : ''}>
                       {formatDate(task.dueDate)}
                     </span>
                   </div>
                 )}
-                {renderPriorityBadge(task.priority)}
+                <div onClick={preventDragHandling}>{renderPriorityBadge(task.priority)}</div>
               </div>
             </CardContent>
           )}

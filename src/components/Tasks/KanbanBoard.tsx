@@ -9,13 +9,15 @@ import { createPortal } from 'react-dom';
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   closestCorners,
   DragStartEvent,
   DragEndEvent,
   defaultDropAnimationSideEffects,
+  MeasuringStrategy,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import {
@@ -99,7 +101,27 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   React.useEffect(() => {
     if (kanbanSettings && kanbanSettings.columns) {
-      const sortedColumns = [...kanbanSettings.columns].sort((a, b) => a.order - b.order);
+      // Sort columns by their order property
+      let sortedColumns = [...kanbanSettings.columns].sort((a, b) => a.order - b.order);
+
+      // Ensure Completed column is always last
+      const completedColumnIndex = sortedColumns.findIndex(col => col.id === 'completed');
+      if (completedColumnIndex !== -1 && completedColumnIndex !== sortedColumns.length - 1) {
+        // Remove the completed column
+        const completedColumn = sortedColumns.splice(completedColumnIndex, 1)[0];
+        // Add it back at the end
+        sortedColumns.push(completedColumn);
+
+        // Update order properties
+        sortedColumns = sortedColumns.map((col, index) => ({
+          ...col,
+          order: index,
+        }));
+
+        // Flag that we need to save this change
+        isUserAction.current = true;
+      }
+
       setColumns(sortedColumns);
     }
   }, [kanbanSettings]);
@@ -166,12 +188,19 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   // These settings are now managed by the parent component
 
-  // Configure sensors for drag detection with minimal delay for instant response
+  // Configure sensors for drag detection
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
+      // Require the mouse to move by 5 pixels before activating
       activationConstraint: {
-        delay: 50, // Small delay to avoid accidental drags
-        tolerance: 5, // Reduced tolerance for more precise dragging
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      // Press delay of 150ms, with tolerance of 8px of movement
+      activationConstraint: {
+        delay: 150,
+        tolerance: 8,
       },
     })
   );
@@ -245,6 +274,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     const { active } = event;
     const activeId = String(active.id);
 
+    // Add class to body to prevent text selection during drag
+    document.body.classList.add('dnd-dragging');
+
     // Check if it's a task being dragged
     const task = allTasks.find(t => t.id === activeId);
     if (task) {
@@ -262,6 +294,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
+    // Remove the class that prevents text selection
+    document.body.classList.remove('dnd-dragging');
+
     setActiveTask(null);
     setActiveColumn(null);
 
@@ -275,6 +310,26 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
       const activeColumnId = activeId.replace('column-', '');
       const overColumnId = overId.replace('column-', '');
 
+      // Don't allow moving the Completed column
+      if (activeColumnId === 'completed') {
+        toast({
+          title: 'Cannot move Completed column',
+          description: 'The Completed column must remain at the end',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Don't allow moving other columns after the Completed column
+      if (overColumnId === 'completed') {
+        toast({
+          title: 'Cannot move column',
+          description: 'The Completed column must remain at the end',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (activeColumnId !== overColumnId) {
         const oldIndex = columns.findIndex(col => col.id === activeColumnId);
         const newIndex = columns.findIndex(col => col.id === overColumnId);
@@ -285,6 +340,15 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
           // Move the column in the array
           const newColumns = arrayMove(columns, oldIndex, newIndex);
+
+          // Ensure Completed column is always last
+          const completedColumnIndex = newColumns.findIndex(col => col.id === 'completed');
+          if (completedColumnIndex !== -1 && completedColumnIndex !== newColumns.length - 1) {
+            // Remove the completed column
+            const completedColumn = newColumns.splice(completedColumnIndex, 1)[0];
+            // Add it back at the end
+            newColumns.push(completedColumn);
+          }
 
           // Update the order property for each column
           const updatedColumns = newColumns.map((col, index) => ({
@@ -336,41 +400,50 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         // Find the task in allTasks
         const taskIndex = allTasks.findIndex(t => t.id === taskId);
         if (taskIndex !== -1) {
-          // Create a copy of allTasks for optimistic update
-          const updatedTasks = [...allTasks];
+          const currentTask = allTasks[taskIndex];
 
-          // Update the task status locally first for instant UI update
-          updatedTasks[taskIndex] = {
-            ...updatedTasks[taskIndex],
-            status: newStatus,
-          };
+          // Check if the task is actually changing status
+          if (currentTask.status !== newStatus) {
+            // Create a copy of allTasks for optimistic update
+            const updatedTasks = [...allTasks];
 
-          // Update the tasks state directly for immediate UI update
-          const updatedTaskGroups = { ...tasks };
+            // Update the task status locally first for instant UI update
+            updatedTasks[taskIndex] = {
+              ...updatedTasks[taskIndex],
+              status: newStatus,
+            };
 
-          // Remove the task from its original column
-          Object.keys(updatedTaskGroups).forEach(key => {
-            updatedTaskGroups[key] = updatedTaskGroups[key]?.filter(t => t.id !== taskId) || [];
-          });
+            // Update the tasks state directly for immediate UI update
+            const updatedTaskGroups = { ...tasks };
 
-          // Add the task to the new column
-          const columnKey = Object.keys(statusMap).find(key => statusMap[key] === newStatus);
-          if (columnKey) {
-            if (!updatedTaskGroups[columnKey]) {
-              updatedTaskGroups[columnKey] = [];
+            // Remove the task from its original column
+            Object.keys(updatedTaskGroups).forEach(key => {
+              updatedTaskGroups[key] = updatedTaskGroups[key]?.filter(t => t.id !== taskId) || [];
+            });
+
+            // Add the task to the new column
+            const columnKey = Object.keys(statusMap).find(key => statusMap[key] === newStatus);
+            if (columnKey) {
+              if (!updatedTaskGroups[columnKey]) {
+                updatedTaskGroups[columnKey] = [];
+              }
+              updatedTaskGroups[columnKey] = [
+                ...updatedTaskGroups[columnKey],
+                updatedTasks[taskIndex],
+              ];
             }
-            updatedTaskGroups[columnKey] = [
-              ...updatedTaskGroups[columnKey],
-              updatedTasks[taskIndex],
-            ];
+
+            // Update the local state for immediate UI update
+            setTasks(updatedTaskGroups);
+            setAllTasks(updatedTasks);
+
+            // Call the onStatusChange to update backend
+            onStatusChange(taskId, newStatus);
+            toast({
+              title: 'Task moved',
+              description: `Task moved to ${newStatus}`,
+            });
           }
-
-          // Update the local state for immediate UI update
-          setTasks(updatedTaskGroups);
-          setAllTasks(updatedTasks);
-
-          // Call the onStatusChange to update backend
-          onStatusChange(taskId, newStatus);
         }
       }
     }
@@ -389,14 +462,17 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     );
   }
 
-  // Configure drop animation for instant feedback
+  // Configure drop animation for smooth feedback
   const dropAnimation = {
-    duration: 150, // Shorter duration for quicker animation
-    easing: 'cubic-bezier(0.25, 1, 0.5, 1)', // Fast acceleration curve
+    duration: 200, // Slightly longer for smoother animation
+    easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)', // Bounce effect at the end
     sideEffects: defaultDropAnimationSideEffects({
       styles: {
         active: {
-          opacity: '0.5',
+          opacity: '0.8',
+          transform: 'scale(1.02) rotate(1deg)',
+          boxShadow: '0 5px 15px rgba(0, 0, 0, 0.15)',
+          zIndex: '50',
         },
       },
     }),
@@ -409,14 +485,19 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        measuring={{
+          droppable: {
+            strategy: MeasuringStrategy.Always,
+          },
+        }}
       >
         {/* Main kanban board container with horizontal scroll only */}
-        <div className="flex-1 overflow-x-auto overflow-y-hidden">
+        <div className="flex-1 overflow-x-auto scrollbar-custom">
           <SortableContext
             items={columns.map(col => `column-${col.id}`)}
             strategy={horizontalListSortingStrategy}
           >
-            <div className="flex space-x-4 min-w-max pb-4">
+            <div className="flex space-x-6 min-w-max py-2 px-1">
               {columns.map(column => (
                 <KanbanColumn
                   key={column.id}
@@ -443,10 +524,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           createPortal(
             <DragOverlay dropAnimation={dropAnimation}>
               {activeTask ? (
-                <div className="rotate-3 scale-105 w-full max-w-[300px]">
+                <div className="rotate-3 scale-105 w-full max-w-[300px] select-none">
                   {/* Render the dragged task */}
-                  <div className="bg-white p-4 rounded-lg shadow-lg border border-primary/20">
-                    <h3 className="font-medium text-sm">{activeTask.name}</h3>
+                  <div className="bg-white p-4 rounded-lg shadow-xl border-2 border-primary/30 backdrop-blur-sm">
+                    <h3 className="font-medium text-sm truncate">{activeTask.name}</h3>
                     <div className="flex justify-between items-center mt-2">
                       <div className="text-xs text-gray-500">
                         Due: {new Date(activeTask.dueDate).toLocaleDateString()}
@@ -456,12 +537,39 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   </div>
                 </div>
               ) : activeColumn ? (
-                <div className="opacity-80">
+                <div className="opacity-90 select-none">
                   {/* Render the dragged column */}
-                  <div className="bg-white p-4 rounded-lg shadow-lg border border-primary/20 w-80">
-                    <h3 className="font-medium">
-                      {columns.find(col => col.id === activeColumn)?.title || 'Column'}
-                    </h3>
+                  <div
+                    className={`bg-gradient-to-b p-4 rounded-lg shadow-xl border-2 border-primary/30 w-80 ${
+                      activeColumn === 'todo'
+                        ? 'from-slate-50 to-slate-100'
+                        : activeColumn === 'inProgress'
+                          ? 'from-blue-50 to-blue-100'
+                          : activeColumn === 'review'
+                            ? 'from-amber-50 to-amber-100'
+                            : activeColumn === 'completed'
+                              ? 'from-green-50 to-green-100'
+                              : 'from-gray-50 to-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <span
+                        className={`h-3 w-3 rounded-full mr-2 ${
+                          activeColumn === 'todo'
+                            ? 'bg-slate-400'
+                            : activeColumn === 'inProgress'
+                              ? 'bg-blue-500'
+                              : activeColumn === 'review'
+                                ? 'bg-amber-500'
+                                : activeColumn === 'completed'
+                                  ? 'bg-green-500'
+                                  : 'bg-gray-400'
+                        }`}
+                      ></span>
+                      <h3 className="font-semibold">
+                        {columns.find(col => col.id === activeColumn)?.title || 'Column'}
+                      </h3>
+                    </div>
                   </div>
                 </div>
               ) : null}
