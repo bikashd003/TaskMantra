@@ -171,7 +171,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     useSensor(PointerSensor, {
       activationConstraint: {
         delay: 50, // Small delay to avoid accidental drags
-        tolerance: 8,
+        tolerance: 5, // Reduced tolerance for more precise dragging
       },
     })
   );
@@ -293,17 +293,45 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           }));
 
           setColumns(updatedColumns);
+
+          // Show success toast
+          toast({
+            title: 'Column moved',
+            description: 'Column order has been updated',
+          });
         }
       }
       return;
     }
 
-    // Handle task moving between columns with optimistic update
-    if (active.id !== over.id && over.id) {
-      const columnId = String(over.id);
-      if (columnId in statusMap) {
-        const taskId = String(active.id);
-        const newStatus = statusMap[columnId];
+    // Handle task moving between columns
+    if (!activeId.startsWith('column-')) {
+      // Get the column ID from the over element
+      let targetColumnId: string | undefined;
+
+      // Check if we're dropping on a droppable area within a column
+      if (over.data.current?.type === 'column') {
+        targetColumnId = over.data.current.id;
+      } else {
+        // If not dropping directly on a column, find the parent column
+        // Try to find the column by checking if the over ID is a task ID
+        for (const [columnId, columnTasks] of Object.entries(tasks)) {
+          if (columnTasks?.some(t => t.id === overId)) {
+            targetColumnId = columnId;
+            break;
+          }
+        }
+
+        // If still no target column, use the over ID directly if it's a valid column
+        if (!targetColumnId && overId in statusMap) {
+          targetColumnId = overId;
+        }
+      }
+
+      // If we have a valid target column
+      if (targetColumnId && targetColumnId in statusMap) {
+        const taskId = activeId;
+        const newStatus = statusMap[targetColumnId];
 
         // Find the task in allTasks
         const taskIndex = allTasks.findIndex(t => t.id === taskId);
@@ -318,7 +346,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           };
 
           // Update the tasks state directly for immediate UI update
-          // This creates a new reference to the tasks object with the updated task
           const updatedTaskGroups = { ...tasks };
 
           // Remove the task from its original column
@@ -344,12 +371,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
           // Call the onStatusChange to update backend
           onStatusChange(taskId, newStatus);
-
-          // Show success toast
-          toast({
-            title: 'Task updated',
-            description: `Task moved to ${newStatus}`,
-          });
         }
       }
     }

@@ -7,7 +7,7 @@ import KanbanCard from './KanbanCard';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, Plus, X, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, X, Trash2, GripVertical } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const defaultColumns = [
@@ -62,6 +62,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     setIsAddingTask(false);
   };
 
+  // Setup sortable for column dragging
   const {
     attributes,
     listeners,
@@ -74,9 +75,10 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     data: { type: 'column', id },
   });
 
-  // Make the entire column droppable
+  // Make the column droppable for tasks
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: id,
+    data: { type: 'column', id },
   });
 
   // Get status color
@@ -113,8 +115,9 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       }}
       {...attributes}
     >
+      {/* Column header */}
       <div className="flex items-center justify-between sticky top-0 bg-white z-10 py-2 mb-2">
-        <h3 className="font-medium flex items-center cursor-move" {...listeners}>
+        <div className="font-medium flex items-center">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="mr-1 hover:bg-gray-100 rounded p-1"
@@ -130,8 +133,15 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
           <Badge variant="secondary" className="ml-2">
             {tasks.length}
           </Badge>
-        </h3>
+        </div>
         <div className="flex items-center space-x-1">
+          {/* Column drag handle */}
+          <div
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4 text-gray-500" />
+          </div>
           {onDeleteColumn && !defaultColumns.some(col => col.id === id) && (
             <Button
               variant="ghost"
@@ -202,12 +212,14 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         </div>
       )}
 
-      {/* Droppable area */}
+      {/* Main column content area - this is the droppable area */}
       {!isCollapsed && (
         <div
           ref={setDroppableRef}
-          className={`flex-1 rounded-lg overflow-hidden transition-colors ${isOver ? 'bg-primary/5 border-2 border-dashed border-primary/30' : 'border border-gray-200'}`}
+          className={`flex-1 rounded-lg transition-colors border overflow-y-auto ${isOver ? 'border-primary border-dashed bg-primary/5' : 'border-gray-200'}`}
+          data-column-id={id}
         >
+          {/* Empty column state */}
           {tasks.length === 0 && !isAddingTask ? (
             <div className="h-full p-4 flex flex-col items-center justify-center text-center text-muted-foreground text-sm">
               <p className="mb-2">Drop tasks here</p>
@@ -226,18 +238,40 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
                 items={tasks.map(task => task.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-3 p-2">
-                  {tasks.map(task => (
-                    <KanbanCard
-                      key={task.id}
-                      task={task}
-                      onStatusChange={onStatusChange}
-                      onDelete={onDelete}
-                      renderPriorityBadge={renderPriorityBadge}
-                      onClick={() => onTaskClick?.(task.id)}
-                      compactView={compactView}
-                    />
+                <div className="p-2">
+                  {/* Tasks */}
+                  {tasks.map((task, index) => (
+                    <React.Fragment key={task.id}>
+                      {/* Drop indicator above first task */}
+                      {index === 0 && (
+                        <div
+                          className={`h-2 -mx-2 mb-2 rounded-t-md ${isOver ? 'bg-primary/10' : ''}`}
+                          data-droppable="true"
+                        />
+                      )}
+
+                      <KanbanCard
+                        task={task}
+                        onStatusChange={onStatusChange}
+                        onDelete={onDelete}
+                        renderPriorityBadge={renderPriorityBadge}
+                        onClick={() => onTaskClick?.(task.id)}
+                        compactView={compactView}
+                      />
+
+                      {/* Drop indicator between tasks */}
+                      <div
+                        className={`h-2 -mx-2 ${isOver ? 'bg-primary/10' : ''}`}
+                        data-droppable="true"
+                      />
+                    </React.Fragment>
                   ))}
+
+                  {/* Empty space at the bottom to allow dropping when column has tasks */}
+                  <div
+                    className={`h-24 -mx-2 rounded-b-md ${isOver ? 'bg-primary/10' : ''}`}
+                    data-droppable="true"
+                  />
                 </div>
               </SortableContext>
             </ScrollArea>

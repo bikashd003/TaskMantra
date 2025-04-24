@@ -26,6 +26,10 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
+    data: {
+      type: 'task',
+      task,
+    },
   });
 
   const totalSubtasks = task.subtasks.length;

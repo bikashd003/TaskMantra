@@ -82,7 +82,6 @@ export default function TasksPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Task updated successfully');
     },
     onError: (_error: Error) => {
       toast.error('Failed to update task');
