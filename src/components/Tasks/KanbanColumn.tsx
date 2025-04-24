@@ -25,6 +25,7 @@ interface ExtendedKanbanColumnProps extends KanbanColumnProps {
   onDeleteColumn?: () => void;
   columnWidth?: number;
   compactView?: boolean;
+  isOverlay?: boolean;
 }
 
 const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
@@ -39,6 +40,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   onDeleteColumn,
   columnWidth = 280,
   compactView = false,
+  isOverlay = false,
 }) => {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
@@ -63,6 +65,9 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     setIsAddingTask(false);
   };
 
+  // Create a stable column ID
+  const columnDragId = `column-${id}`;
+
   const {
     attributes,
     listeners,
@@ -71,26 +76,42 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     transition,
     isDragging: isColumnDragging,
   } = useSortable({
-    id: `column-${id}`,
-    data: { type: 'column', id },
+    id: columnDragId,
+    data: {
+      type: 'column',
+      id,
+      column: { id, title },
+    },
   });
 
   // Make the column droppable for tasks
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: id,
-    data: { type: 'column', id },
+    data: {
+      type: 'column',
+      id,
+      column: { id, title },
+    },
     disabled: isColumnDragging, // Disable dropping when the column is being dragged
   });
 
-  const columnTransform = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const columnTransform = transform
+    ? {
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }
+    : {};
 
   return (
     <motion.div
       ref={setSortableRef}
-      className={`flex flex-col select-none bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ${isColumnDragging ? 'opacity-90 scale-105 z-50 rotate-1' : ''}`}
+      className={`flex flex-col select-none bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ${
+        isOverlay
+          ? 'opacity-90 scale-105 z-50 rotate-1 shadow-xl ring-2 ring-primary'
+          : isColumnDragging
+            ? 'opacity-70 scale-105 z-50 rotate-1 shadow-xl'
+            : ''
+      }`}
       style={{
         ...columnTransform,
         width: `${columnWidth}px`,
@@ -108,6 +129,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
                   ? '#22c55e'
                   : '#94a3b8'
         }`,
+        transformOrigin: 'center',
       }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -262,7 +284,9 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
           ) : (
             <ScrollArea className="h-full" type="always">
               <SortableContext
-                items={tasks.map(task => task.id)}
+                items={tasks.map(
+                  task => `task-${task.id}-${task.status.replace(/\s+/g, '-').toLowerCase()}`
+                )}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="p-2">

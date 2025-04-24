@@ -1,7 +1,7 @@
-/* eslint-disable no-undef */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Task, TaskPriority, TaskStatus } from './types';
 import KanbanColumn from './KanbanColumn';
+import KanbanCard from './KanbanCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import TaskDetailSidebar from './TaskDetailSidebar';
@@ -16,8 +16,10 @@ import {
   closestCorners,
   DragStartEvent,
   DragEndEvent,
+  DragOverEvent,
   defaultDropAnimationSideEffects,
   MeasuringStrategy,
+  Announcements,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import {
@@ -25,7 +27,7 @@ import {
   KanbanColumn as KanbanColumnType,
 } from '@/services/KanbanSettings.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-// ScrollArea and ScrollBar removed as they're now used in KanbanColumn
+import { hasDraggableData, getColumnIdFromStatus, getStatusFromColumnId } from './utils';
 
 interface KanbanBoardProps {
   tasks: {
@@ -85,6 +87,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Reference to track the column of a task being dragged
+  const pickedUpTaskColumn = useRef<string | null>(null);
   const defaultColumns: ColumnDefinition[] = [
     { id: 'todo', title: 'To Do', order: 0 },
     { id: 'inProgress', title: 'In Progress', order: 1 },
@@ -127,7 +131,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   }, [kanbanSettings]);
 
   const [columns, setColumns] = useState<ColumnDefinition[]>(defaultColumns);
-
+  // Create stable column IDs for the SortableContext
+  const columnsId = useMemo(() => columns.map(col => `column-${col.id}`), [columns]);
   const updateColumnsMutation = useMutation({
     mutationFn: (columns: ColumnDefinition[]) => KanbanSettingsService.updateColumns(columns),
     onSuccess: () => {
@@ -152,6 +157,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const isUserAction = useRef<boolean>(false);
 
   // Debounce timer reference
+  // eslint-disable-next-line no-undef
   const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Debounced column update function
@@ -191,20 +197,66 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   // Configure sensors for drag detection
   const sensors = useSensors(
     useSensor(MouseSensor, {
-      // Require the mouse to move by 5 pixels before activating
       activationConstraint: {
-        distance: 5,
+        distance: 3,
       },
     }),
     useSensor(TouchSensor, {
-      // Press delay of 150ms, with tolerance of 8px of movement
       activationConstraint: {
-        delay: 150,
-        tolerance: 8,
+        delay: 100,
+        tolerance: 5,
       },
     })
   );
 
+  // Define announcements for accessibility
+  const announcements: Announcements = {
+    onDragStart({ active }) {
+      if (!hasDraggableData(active)) return;
+
+      if (active.data.current?.type === 'column') {
+        return `Picked up column ${active.data.current.column.title}`;
+      } else if (active.data.current?.type === 'task') {
+        return `Picked up task ${active.data.current.task.name}`;
+      }
+    },
+    onDragOver({ active, over }) {
+      if (!hasDraggableData(active) || !over || !hasDraggableData(over)) return;
+
+      if (active.data.current?.type === 'column' && over.data.current?.type === 'column') {
+        return `Column ${active.data.current.column.title} is over ${over.data.current.column.title}`;
+      } else if (active.data.current?.type === 'task') {
+        if (over.data.current?.type === 'column') {
+          return `Task ${active.data.current.task.name} is over column ${over.data.current.column.title}`;
+        } else if (over.data.current?.type === 'task') {
+          return `Task ${active.data.current.task.name} is over task ${over.data.current.task.name}`;
+        }
+      }
+    },
+    onDragEnd({ active, over }) {
+      if (!over || !hasDraggableData(active)) return;
+
+      if (
+        active.data.current?.type === 'column' &&
+        hasDraggableData(over) &&
+        over.data.current?.type === 'column'
+      ) {
+        return `Column ${active.data.current.column.title} was dropped into position`;
+      } else if (active.data.current?.type === 'task') {
+        if (hasDraggableData(over)) {
+          if (over.data.current?.type === 'column') {
+            return `Task ${active.data.current.task.name} was dropped into column ${over.data.current.column.title}`;
+          } else if (over.data.current?.type === 'task') {
+            return `Task ${active.data.current.task.name} was dropped on task ${over.data.current.task.name}`;
+          }
+        }
+      }
+    },
+    onDragCancel({ active }) {
+      if (!hasDraggableData(active)) return;
+      return `Dragging ${active.data.current?.type} cancelled.`;
+    },
+  };
   // Handle opening task details
   const handleOpenTaskDetails = (taskId: string) => {
     const task = allTasks.find(t => t.id === taskId);
@@ -272,43 +324,125 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    const activeId = String(active.id);
 
     // Add class to body to prevent text selection during drag
     document.body.classList.add('dnd-dragging');
 
+    if (!hasDraggableData(active)) return;
+
+    const data = active.data.current;
+
     // Check if it's a task being dragged
-    const task = allTasks.find(t => t.id === activeId);
-    if (task) {
-      setActiveTask(task);
+    if (data?.type === 'task') {
+      setActiveTask(data.task);
+      // Store the column ID for the task being dragged
+      pickedUpTaskColumn.current = getColumnIdFromStatus(data.task.status);
       return;
     }
 
     // Check if it's a column being dragged
-    if (activeId.startsWith('column-')) {
-      setActiveColumn(activeId.replace('column-', ''));
+    if (data?.type === 'column') {
+      setActiveColumn(data.id);
+    }
+  };
+
+  // Handle drag over
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    // Skip if we're dragging over the same element
+    if (active.id === over.id) return;
+
+    if (!hasDraggableData(active) || !hasDraggableData(over)) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
+
+    const isActiveATask = activeData?.type === 'task';
+    const isOverATask = overData?.type === 'task';
+
+    if (!isActiveATask) return;
+
+    // Extract the original task ID from the drag ID
+    const originalTaskId = activeData.originalId || activeData.task.id;
+
+    // Task over another task
+    if (isActiveATask && isOverATask) {
+      // Find the task objects
+      const activeTask = allTasks.find(t => t.id === originalTaskId);
+      const overTask = allTasks.find(t => t.id === overData.originalId || overData.task.id);
+
+      if (!activeTask || !overTask) return;
+
+      // Get column IDs
+      const activeColumnId = getColumnIdFromStatus(activeTask.status);
+      const overColumnId = getColumnIdFromStatus(overTask.status);
+
+      // If tasks are in different columns, update the active task's column
+      if (activeColumnId !== overColumnId) {
+        // Create a temporary visual representation of the task in the new column
+        // but don't actually update the state until drag end
+        // This is just for visual feedback during dragging
+
+        // We'll use the activeTask state to show the task in the overlay
+        // but we won't update the actual tasks state until drag end
+        setActiveTask({
+          ...activeTask,
+          status: getStatusFromColumnId(overColumnId),
+        });
+      }
+    }
+
+    // Task over a column
+    const isOverAColumn = overData?.type === 'column';
+    if (isActiveATask && isOverAColumn) {
+      // Find the active task
+      const activeTask = allTasks.find(t => t.id === originalTaskId);
+      if (!activeTask) return;
+
+      // Get column IDs
+      const activeColumnId = getColumnIdFromStatus(activeTask.status);
+      const overColumnId = overData.id;
+
+      // If task is already in this column, do nothing
+      if (activeColumnId === overColumnId) return;
+
+      // Update the active task for visual feedback
+      setActiveTask({
+        ...activeTask,
+        status: getStatusFromColumnId(overColumnId),
+      });
     }
   };
 
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     // Remove the class that prevents text selection
     document.body.classList.remove('dnd-dragging');
 
+    // Reset the picked up task column reference
+    pickedUpTaskColumn.current = null;
+
+    // Reset active states
     setActiveTask(null);
     setActiveColumn(null);
 
     if (!over) return;
 
-    const activeId = String(active.id);
-    const overId = String(over.id);
+    // Skip if we're dropping on the same element
+    if (active.id === over.id) return;
+
+    if (!hasDraggableData(active) || !hasDraggableData(over)) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
 
     // Handle column reordering
-    if (activeId.startsWith('column-') && overId.startsWith('column-')) {
-      const activeColumnId = activeId.replace('column-', '');
-      const overColumnId = overId.replace('column-', '');
+    if (activeData.type === 'column' && overData.type === 'column') {
+      const activeColumnId = activeData.id;
+      const overColumnId = overData.id;
 
       // Don't allow moving the Completed column
       if (activeColumnId === 'completed') {
@@ -369,32 +503,25 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
 
     // Handle task moving between columns
-    if (!activeId.startsWith('column-')) {
-      // Get the column ID from the over element
+    if (activeData.type === 'task') {
+      // Extract the original task ID
+      const originalTaskId = activeData.originalId || activeData.task.id;
+
+      // Get the target column ID
       let targetColumnId: string | undefined;
 
-      // Check if we're dropping on a droppable area within a column
-      if (over.data.current?.type === 'column') {
-        targetColumnId = over.data.current.id;
-      } else {
-        // If not dropping directly on a column, find the parent column
-        // Try to find the column by checking if the over ID is a task ID
-        for (const [columnId, columnTasks] of Object.entries(tasks)) {
-          if (columnTasks?.some(t => t.id === overId)) {
-            targetColumnId = columnId;
-            break;
-          }
-        }
-
-        // If still no target column, use the over ID directly if it's a valid column
-        if (!targetColumnId && overId in statusMap) {
-          targetColumnId = overId;
-        }
+      // Check if we're dropping on a column
+      if (overData.type === 'column') {
+        targetColumnId = overData.id;
+      }
+      // Check if we're dropping on another task
+      else if (overData.type === 'task') {
+        targetColumnId = getColumnIdFromStatus(overData.task.status);
       }
 
       // If we have a valid target column
       if (targetColumnId && targetColumnId in statusMap) {
-        const taskId = activeId;
+        const taskId = originalTaskId;
         const newStatus = statusMap[targetColumnId];
 
         // Find the task in allTasks
@@ -464,7 +591,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   // Configure drop animation for smooth feedback
   const dropAnimation = {
-    duration: 200, // Slightly longer for smoother animation
+    duration: 300, // Longer for smoother animation
     easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)', // Bounce effect at the end
     sideEffects: defaultDropAnimationSideEffects({
       styles: {
@@ -481,22 +608,23 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   return (
     <div className="h-full w-full flex flex-col">
       <DndContext
+        accessibility={{ announcements }}
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
         measuring={{
           droppable: {
             strategy: MeasuringStrategy.Always,
           },
         }}
+        modifiers={[]}
+        autoScroll={true}
       >
         {/* Main kanban board container with horizontal scroll only */}
         <div className="flex-1 overflow-x-auto scrollbar-custom">
-          <SortableContext
-            items={columns.map(col => `column-${col.id}`)}
-            strategy={horizontalListSortingStrategy}
-          >
+          <SortableContext items={columnsId} strategy={horizontalListSortingStrategy}>
             <div className="flex space-x-6 min-w-max py-2 px-1">
               {columns.map(column => (
                 <KanbanColumn
@@ -524,54 +652,24 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           createPortal(
             <DragOverlay dropAnimation={dropAnimation}>
               {activeTask ? (
-                <div className="rotate-3 scale-105 w-full max-w-[300px] select-none">
-                  {/* Render the dragged task */}
-                  <div className="bg-white p-4 rounded-lg shadow-xl border-2 border-primary/30 backdrop-blur-sm">
-                    <h3 className="font-medium text-sm truncate">{activeTask.name}</h3>
-                    <div className="flex justify-between items-center mt-2">
-                      <div className="text-xs text-gray-500">
-                        Due: {new Date(activeTask.dueDate).toLocaleDateString()}
-                      </div>
-                      {renderPriorityBadge(activeTask.priority)}
-                    </div>
-                  </div>
-                </div>
+                <KanbanCard
+                  task={activeTask}
+                  onStatusChange={onStatusChange}
+                  onDelete={onDelete}
+                  renderPriorityBadge={renderPriorityBadge}
+                  isOverlay
+                />
               ) : activeColumn ? (
-                <div className="opacity-90 select-none">
-                  {/* Render the dragged column */}
-                  <div
-                    className={`bg-gradient-to-b p-4 rounded-lg shadow-xl border-2 border-primary/30 w-80 ${
-                      activeColumn === 'todo'
-                        ? 'from-slate-50 to-slate-100'
-                        : activeColumn === 'inProgress'
-                          ? 'from-blue-50 to-blue-100'
-                          : activeColumn === 'review'
-                            ? 'from-amber-50 to-amber-100'
-                            : activeColumn === 'completed'
-                              ? 'from-green-50 to-green-100'
-                              : 'from-gray-50 to-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <span
-                        className={`h-3 w-3 rounded-full mr-2 ${
-                          activeColumn === 'todo'
-                            ? 'bg-slate-400'
-                            : activeColumn === 'inProgress'
-                              ? 'bg-blue-500'
-                              : activeColumn === 'review'
-                                ? 'bg-amber-500'
-                                : activeColumn === 'completed'
-                                  ? 'bg-green-500'
-                                  : 'bg-gray-400'
-                        }`}
-                      ></span>
-                      <h3 className="font-semibold">
-                        {columns.find(col => col.id === activeColumn)?.title || 'Column'}
-                      </h3>
-                    </div>
-                  </div>
-                </div>
+                <KanbanColumn
+                  id={activeColumn}
+                  title={columns.find(col => col.id === activeColumn)?.title || 'Column'}
+                  tasks={tasks[activeColumn] || []}
+                  onStatusChange={onStatusChange}
+                  onDelete={onDelete}
+                  renderPriorityBadge={renderPriorityBadge}
+                  columnWidth={columnWidth}
+                  isOverlay
+                />
               ) : null}
             </DragOverlay>,
             document.body

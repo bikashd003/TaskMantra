@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 interface ExtendedTaskCardProps extends TaskCardProps {
   onClick?: () => void;
   compactView?: boolean;
+  isOverlay?: boolean;
 }
 
 const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
@@ -23,12 +24,17 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
   renderPriorityBadge,
   onClick,
   compactView = false,
+  isOverlay = false,
 }) => {
+  // Create a stable ID for the task that includes its status to prevent duplicate keys
+  const taskDragId = `task-${task.id}-${task.status.replace(/\s+/g, '-').toLowerCase()}`;
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: task.id,
+    id: taskDragId,
     data: {
       type: 'task',
       task,
+      originalId: task.id,
     },
   });
 
@@ -70,7 +76,13 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
         className={isDragging ? 'opacity-50' : ''}
       >
         <Card
-          className={`shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing ${isDragging ? 'border-primary border-2' : ''} ${task.status === 'Completed' ? 'bg-gray-50' : ''}`}
+          className={`shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing ${
+            isOverlay
+              ? 'border-primary border-2 ring-2 ring-primary shadow-xl'
+              : isDragging
+                ? 'border-primary border-2 opacity-70'
+                : ''
+          } ${task.status === 'Completed' ? 'bg-gray-50' : ''}`}
           onClick={e => {
             if (!isDragging && onClick) {
               e.stopPropagation();
