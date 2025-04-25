@@ -209,6 +209,30 @@ body {
   }
 }
 
+/* Prevent text selection during drag operations */
+.dnd-dragging,
+.dnd-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  pointer-events: auto !important;
+  }
+  
+  /* Ensure proper cursor for draggable elements */
+  .cursor-grab {
+    cursor: grab !important;
+  }
+  
+  .cursor-grab:active {
+    cursor: grabbing !important;
+  }
+  
+  .cursor-default {
+    cursor: default !important;
+}
+
 .animate-in {
   animation: enter 0.2s ease-out;
 }

@@ -1,35 +1,25 @@
-/* eslint-disable no-undef */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Task, TaskPriority, TaskStatus } from './types';
 import KanbanColumn from './KanbanColumn';
+import KanbanCard from './KanbanCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import TaskDetailSidebar from './TaskDetailSidebar';
 import { createPortal } from 'react-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Slider } from '@/components/ui/slider';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Plus, Settings } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   closestCorners,
   DragStartEvent,
   DragEndEvent,
+  DragOverEvent,
   defaultDropAnimationSideEffects,
+  MeasuringStrategy,
+  Announcements,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import {
@@ -37,7 +27,7 @@ import {
   KanbanColumn as KanbanColumnType,
 } from '@/services/KanbanSettings.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ScrollArea, ScrollBar } from '../ui/scroll-area';
+import { hasDraggableData, getColumnIdFromStatus, getStatusFromColumnId } from './utils';
 
 interface KanbanBoardProps {
   tasks: {
@@ -55,6 +45,11 @@ interface KanbanBoardProps {
   isLoading?: boolean;
   onCreateTask?: () => void;
   viewMode: 'kanban' | 'calendar' | 'list';
+  // Settings props
+  columnWidth: number;
+  compactView: boolean;
+  showCompletedTasks: boolean;
+  onAddColumn: () => void;
 }
 
 type ColumnDefinition = KanbanColumnType;
@@ -67,24 +62,33 @@ const statusMap: Record<string, TaskStatus> = {
 };
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({
-  tasks,
-  allTasks,
+  tasks: initialTasks,
+  allTasks: initialAllTasks,
   onStatusChange,
   onDelete,
   onAddTask,
   renderPriorityBadge,
   isLoading,
-  viewMode,
+  columnWidth,
+  compactView,
+  showCompletedTasks,
 }) => {
+  // Create local state for tasks to enable optimistic updates
+  const [tasks, setTasks] = React.useState(initialTasks);
+  const [allTasks, setAllTasks] = React.useState(initialAllTasks);
+
+  // Update local state when props change
+  React.useEffect(() => {
+    setTasks(initialTasks);
+    setAllTasks(initialAllTasks);
+  }, [initialTasks, initialAllTasks]);
   const { toast } = useToast();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isAddColumnDialogOpen, setIsAddColumnDialogOpen] = useState(false);
-  const [newColumnTitle, setNewColumnTitle] = useState('');
-
-  // Define default columns
+  // Reference to track the column of a task being dragged
+  const pickedUpTaskColumn = useRef<string | null>(null);
   const defaultColumns: ColumnDefinition[] = [
     { id: 'todo', title: 'To Do', order: 0 },
     { id: 'inProgress', title: 'In Progress', order: 1 },
@@ -92,44 +96,43 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     { id: 'completed', title: 'Completed', order: 3 },
   ];
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [columnWidth, setColumnWidth] = useState(280);
-  const [compactView, setCompactView] = useState(false);
-  const [showCompletedTasks, setShowCompletedTasks] = useState(true);
-
-  // Query client for cache invalidation
   const queryClient = useQueryClient();
 
-  // Fetch kanban settings from API
   const { data: kanbanSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['kanban-settings'],
     queryFn: () => KanbanSettingsService.getSettings(),
   });
 
-  // Update local state when settings are loaded
   React.useEffect(() => {
-    if (kanbanSettings) {
-      if (kanbanSettings.columns) {
-        // Sort columns by order
-        const sortedColumns = [...kanbanSettings.columns].sort((a, b) => a.order - b.order);
-        setColumns(sortedColumns);
+    if (kanbanSettings && kanbanSettings.columns) {
+      // Sort columns by their order property
+      let sortedColumns = [...kanbanSettings.columns].sort((a, b) => a.order - b.order);
+
+      // Ensure Completed column is always last
+      const completedColumnIndex = sortedColumns.findIndex(col => col.id === 'completed');
+      if (completedColumnIndex !== -1 && completedColumnIndex !== sortedColumns.length - 1) {
+        // Remove the completed column
+        const completedColumn = sortedColumns.splice(completedColumnIndex, 1)[0];
+        // Add it back at the end
+        sortedColumns.push(completedColumn);
+
+        // Update order properties
+        sortedColumns = sortedColumns.map((col, index) => ({
+          ...col,
+          order: index,
+        }));
+
+        // Flag that we need to save this change
+        isUserAction.current = true;
       }
-      if (kanbanSettings.columnWidth) {
-        setColumnWidth(kanbanSettings.columnWidth);
-      }
-      if (kanbanSettings.compactView !== undefined) {
-        setCompactView(kanbanSettings.compactView);
-      }
-      if (kanbanSettings.showCompletedTasks !== undefined) {
-        setShowCompletedTasks(kanbanSettings.showCompletedTasks);
-      }
+
+      setColumns(sortedColumns);
     }
   }, [kanbanSettings]);
 
-  // State for custom columns
   const [columns, setColumns] = useState<ColumnDefinition[]>(defaultColumns);
-
-  // Mutation for updating columns
+  // Create stable column IDs for the SortableContext
+  const columnsId = useMemo(() => columns.map(col => `column-${col.id}`), [columns]);
   const updateColumnsMutation = useMutation({
     mutationFn: (columns: ColumnDefinition[]) => KanbanSettingsService.updateColumns(columns),
     onSuccess: () => {
@@ -148,29 +151,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     },
   });
 
-  // Mutation for updating settings
-  const updateSettingsMutation = useMutation({
-    mutationFn: (settings: any) => KanbanSettingsService.updateSettings(settings),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kanban-settings'] });
-      toast({
-        title: 'Settings updated',
-        description: 'Your preferences have been saved',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Failed to update settings',
-        description: 'Please try again later',
-        variant: 'destructive',
-      });
-    },
-  });
+  // Settings mutations moved to parent component
 
   // Track if columns were changed by the user or by the API response
   const isUserAction = useRef<boolean>(false);
 
   // Debounce timer reference
+  // eslint-disable-next-line no-undef
   const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Debounced column update function
@@ -205,28 +192,16 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     isUserAction.current = false;
   }, [columns, isLoadingSettings, debouncedUpdateColumns]);
 
-  // Handle column width change
-  const handleColumnWidthChange = (value: number[]) => {
-    const newWidth = value[0];
-    setColumnWidth(newWidth);
-    updateSettingsMutation.mutate({ columnWidth: newWidth });
-  };
+  // These settings are now managed by the parent component
 
-  // Handle compact view toggle
-  const handleCompactViewToggle = (checked: boolean) => {
-    setCompactView(checked);
-    updateSettingsMutation.mutate({ compactView: checked });
-  };
-
-  // Handle show completed tasks toggle
-  const handleShowCompletedTasksToggle = (checked: boolean) => {
-    setShowCompletedTasks(checked);
-    updateSettingsMutation.mutate({ showCompletedTasks: checked });
-  };
-
-  // Configure sensors for drag detection with a small delay to avoid accidental drags
+  // Configure sensors for drag detection
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 3,
+      },
+    }),
+    useSensor(TouchSensor, {
       activationConstraint: {
         delay: 100,
         tolerance: 5,
@@ -234,6 +209,54 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     })
   );
 
+  // Define announcements for accessibility
+  const announcements: Announcements = {
+    onDragStart({ active }) {
+      if (!hasDraggableData(active)) return;
+
+      if (active.data.current?.type === 'column') {
+        return `Picked up column ${active.data.current.column.title}`;
+      } else if (active.data.current?.type === 'task') {
+        return `Picked up task ${active.data.current.task.name}`;
+      }
+    },
+    onDragOver({ active, over }) {
+      if (!hasDraggableData(active) || !over || !hasDraggableData(over)) return;
+
+      if (active.data.current?.type === 'column' && over.data.current?.type === 'column') {
+        return `Column ${active.data.current.column.title} is over ${over.data.current.column.title}`;
+      } else if (active.data.current?.type === 'task') {
+        if (over.data.current?.type === 'column') {
+          return `Task ${active.data.current.task.name} is over column ${over.data.current.column.title}`;
+        } else if (over.data.current?.type === 'task') {
+          return `Task ${active.data.current.task.name} is over task ${over.data.current.task.name}`;
+        }
+      }
+    },
+    onDragEnd({ active, over }) {
+      if (!over || !hasDraggableData(active)) return;
+
+      if (
+        active.data.current?.type === 'column' &&
+        hasDraggableData(over) &&
+        over.data.current?.type === 'column'
+      ) {
+        return `Column ${active.data.current.column.title} was dropped into position`;
+      } else if (active.data.current?.type === 'task') {
+        if (hasDraggableData(over)) {
+          if (over.data.current?.type === 'column') {
+            return `Task ${active.data.current.task.name} was dropped into column ${over.data.current.column.title}`;
+          } else if (over.data.current?.type === 'task') {
+            return `Task ${active.data.current.task.name} was dropped on task ${over.data.current.task.name}`;
+          }
+        }
+      }
+    },
+    onDragCancel({ active }) {
+      if (!hasDraggableData(active)) return;
+      return `Dragging ${active.data.current?.type} cancelled.`;
+    },
+  };
   // Handle opening task details
   const handleOpenTaskDetails = (taskId: string) => {
     const task = allTasks.find(t => t.id === taskId);
@@ -253,44 +276,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     });
   };
 
-  // Add a new column
-  const handleAddColumn = () => {
-    if (!newColumnTitle.trim()) return;
-
-    const newColumnId = newColumnTitle.toLowerCase().replace(/\s+/g, '');
-
-    // Check if column with this ID already exists
-    if (columns.some(col => col.id === newColumnId)) {
-      toast({
-        title: 'Column already exists',
-        description: 'Please use a different name',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const newColumn: ColumnDefinition = {
-      id: newColumnId,
-      title: newColumnTitle.trim(),
-      order: columns.length, // Add at the end
-    };
-
-    // Set the user action flag
-    isUserAction.current = true;
-
-    const updatedColumns = [...columns, newColumn];
-    setColumns(updatedColumns);
-    setNewColumnTitle('');
-    setIsAddColumnDialogOpen(false);
-
-    // Add the new status to the statusMap
-    statusMap[newColumnId] = newColumnTitle.trim() as TaskStatus;
-
-    toast({
-      title: 'Column added',
-      description: `${newColumnTitle.trim()} column has been added`,
-    });
-  };
+  // Add column functionality moved to parent component
 
   // Delete a column
   const handleDeleteColumn = (columnId: string) => {
@@ -338,37 +324,145 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    const activeId = String(active.id);
+
+    // Add class to body to prevent text selection during drag
+    document.body.classList.add('dnd-dragging');
+
+    if (!hasDraggableData(active)) return;
+
+    const data = active.data.current;
 
     // Check if it's a task being dragged
-    const task = allTasks.find(t => t.id === activeId);
-    if (task) {
-      setActiveTask(task);
+    if (data?.type === 'task') {
+      setActiveTask(data.task);
+      // Store the column ID for the task being dragged
+      pickedUpTaskColumn.current = getColumnIdFromStatus(data.task.status);
       return;
     }
 
     // Check if it's a column being dragged
-    if (activeId.startsWith('column-')) {
-      setActiveColumn(activeId.replace('column-', ''));
+    if (data?.type === 'column') {
+      setActiveColumn(data.id);
+    }
+  };
+
+  // Handle drag over
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    // Skip if we're dragging over the same element
+    if (active.id === over.id) return;
+
+    if (!hasDraggableData(active) || !hasDraggableData(over)) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
+
+    const isActiveATask = activeData?.type === 'task';
+    const isOverATask = overData?.type === 'task';
+
+    if (!isActiveATask) return;
+
+    // Extract the original task ID from the drag ID
+    const originalTaskId = activeData.originalId || activeData.task.id;
+
+    // Task over another task
+    if (isActiveATask && isOverATask) {
+      // Find the task objects
+      const activeTask = allTasks.find(t => t.id === originalTaskId);
+      const overTask = allTasks.find(t => t.id === overData.originalId || overData.task.id);
+
+      if (!activeTask || !overTask) return;
+
+      // Get column IDs
+      const activeColumnId = getColumnIdFromStatus(activeTask.status);
+      const overColumnId = getColumnIdFromStatus(overTask.status);
+
+      // If tasks are in different columns, update the active task's column
+      if (activeColumnId !== overColumnId) {
+        // Create a temporary visual representation of the task in the new column
+        // but don't actually update the state until drag end
+        // This is just for visual feedback during dragging
+
+        // We'll use the activeTask state to show the task in the overlay
+        // but we won't update the actual tasks state until drag end
+        setActiveTask({
+          ...activeTask,
+          status: getStatusFromColumnId(overColumnId),
+        });
+      }
+    }
+
+    // Task over a column
+    const isOverAColumn = overData?.type === 'column';
+    if (isActiveATask && isOverAColumn) {
+      // Find the active task
+      const activeTask = allTasks.find(t => t.id === originalTaskId);
+      if (!activeTask) return;
+
+      // Get column IDs
+      const activeColumnId = getColumnIdFromStatus(activeTask.status);
+      const overColumnId = overData.id;
+
+      // If task is already in this column, do nothing
+      if (activeColumnId === overColumnId) return;
+
+      // Update the active task for visual feedback
+      setActiveTask({
+        ...activeTask,
+        status: getStatusFromColumnId(overColumnId),
+      });
     }
   };
 
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    // Remove the class that prevents text selection
+    document.body.classList.remove('dnd-dragging');
 
+    // Reset the picked up task column reference
+    pickedUpTaskColumn.current = null;
+
+    // Reset active states
     setActiveTask(null);
     setActiveColumn(null);
 
     if (!over) return;
 
-    const activeId = String(active.id);
-    const overId = String(over.id);
+    // Skip if we're dropping on the same element
+    if (active.id === over.id) return;
+
+    if (!hasDraggableData(active) || !hasDraggableData(over)) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
 
     // Handle column reordering
-    if (activeId.startsWith('column-') && overId.startsWith('column-')) {
-      const activeColumnId = activeId.replace('column-', '');
-      const overColumnId = overId.replace('column-', '');
+    if (activeData.type === 'column' && overData.type === 'column') {
+      const activeColumnId = activeData.id;
+      const overColumnId = overData.id;
+
+      // Don't allow moving the Completed column
+      if (activeColumnId === 'completed') {
+        toast({
+          title: 'Cannot move Completed column',
+          description: 'The Completed column must remain at the end',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Don't allow moving other columns after the Completed column
+      if (overColumnId === 'completed') {
+        toast({
+          title: 'Cannot move column',
+          description: 'The Completed column must remain at the end',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       if (activeColumnId !== overColumnId) {
         const oldIndex = columns.findIndex(col => col.id === activeColumnId);
@@ -381,6 +475,15 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           // Move the column in the array
           const newColumns = arrayMove(columns, oldIndex, newIndex);
 
+          // Ensure Completed column is always last
+          const completedColumnIndex = newColumns.findIndex(col => col.id === 'completed');
+          if (completedColumnIndex !== -1 && completedColumnIndex !== newColumns.length - 1) {
+            // Remove the completed column
+            const completedColumn = newColumns.splice(completedColumnIndex, 1)[0];
+            // Add it back at the end
+            newColumns.push(completedColumn);
+          }
+
           // Update the order property for each column
           const updatedColumns = newColumns.map((col, index) => ({
             ...col,
@@ -388,17 +491,87 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           }));
 
           setColumns(updatedColumns);
+
+          // Show success toast
+          toast({
+            title: 'Column moved',
+            description: 'Column order has been updated',
+          });
         }
       }
       return;
     }
 
     // Handle task moving between columns
-    if (active.id !== over.id && over.id) {
-      const columnId = String(over.id);
-      if (columnId in statusMap) {
-        const newStatus = statusMap[columnId];
-        onStatusChange(String(active.id), newStatus);
+    if (activeData.type === 'task') {
+      // Extract the original task ID
+      const originalTaskId = activeData.originalId || activeData.task.id;
+
+      // Get the target column ID
+      let targetColumnId: string | undefined;
+
+      // Check if we're dropping on a column
+      if (overData.type === 'column') {
+        targetColumnId = overData.id;
+      }
+      // Check if we're dropping on another task
+      else if (overData.type === 'task') {
+        targetColumnId = getColumnIdFromStatus(overData.task.status);
+      }
+
+      // If we have a valid target column
+      if (targetColumnId && targetColumnId in statusMap) {
+        const taskId = originalTaskId;
+        const newStatus = statusMap[targetColumnId];
+
+        // Find the task in allTasks
+        const taskIndex = allTasks.findIndex(t => t.id === taskId);
+        if (taskIndex !== -1) {
+          const currentTask = allTasks[taskIndex];
+
+          // Check if the task is actually changing status
+          if (currentTask.status !== newStatus) {
+            // Create a copy of allTasks for optimistic update
+            const updatedTasks = [...allTasks];
+
+            // Update the task status locally first for instant UI update
+            updatedTasks[taskIndex] = {
+              ...updatedTasks[taskIndex],
+              status: newStatus,
+            };
+
+            // Update the tasks state directly for immediate UI update
+            const updatedTaskGroups = { ...tasks };
+
+            // Remove the task from its original column
+            Object.keys(updatedTaskGroups).forEach(key => {
+              updatedTaskGroups[key] = updatedTaskGroups[key]?.filter(t => t.id !== taskId) || [];
+            });
+
+            // Add the task to the new column
+            const columnKey = Object.keys(statusMap).find(key => statusMap[key] === newStatus);
+            if (columnKey) {
+              if (!updatedTaskGroups[columnKey]) {
+                updatedTaskGroups[columnKey] = [];
+              }
+              updatedTaskGroups[columnKey] = [
+                ...updatedTaskGroups[columnKey],
+                updatedTasks[taskIndex],
+              ];
+            }
+
+            // Update the local state for immediate UI update
+            setTasks(updatedTaskGroups);
+            setAllTasks(updatedTasks);
+
+            // Call the onStatusChange to update backend
+            onStatusChange(taskId, newStatus);
+            toast({
+              title: 'Task moved',
+              description: `Task moved to ${newStatus}`,
+            });
+          }
+        }
       }
     }
   };
@@ -416,12 +589,17 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     );
   }
 
-  // Configure drop animation
+  // Configure drop animation for smooth feedback
   const dropAnimation = {
+    duration: 300, // Longer for smoother animation
+    easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)', // Bounce effect at the end
     sideEffects: defaultDropAnimationSideEffects({
       styles: {
         active: {
-          opacity: '0.5',
+          opacity: '0.8',
+          transform: 'scale(1.02) rotate(1deg)',
+          boxShadow: '0 5px 15px rgba(0, 0, 0, 0.15)',
+          zIndex: '50',
         },
       },
     }),
@@ -430,140 +608,68 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   return (
     <div className="h-full w-full flex flex-col">
       <DndContext
+        accessibility={{ announcements }}
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
+        measuring={{
+          droppable: {
+            strategy: MeasuringStrategy.Always,
+          },
+        }}
+        modifiers={[]}
+        autoScroll={true}
       >
-        <div className="flex justify-end items-center mb-4">
-          <div className="flex space-x-2">
-            {viewMode === 'kanban' && (
-              <Button variant="outline" size="sm" onClick={() => setIsAddColumnDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-1" /> Add Column
-              </Button>
-            )}
-
-            <Popover open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-1" /> Settings
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="space-y-4">
-                  <h4 className="font-medium">Board Settings</h4>
-
-                  {viewMode === 'kanban' && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="column-width" className="text-sm">
-                          Column Width
-                        </Label>
-                        <span className="text-xs text-muted-foreground">{columnWidth}px</span>
-                      </div>
-                      <Slider
-                        id="column-width"
-                        min={220}
-                        max={400}
-                        step={10}
-                        value={[columnWidth]}
-                        onValueChange={handleColumnWidthChange}
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between space-y-0">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="compact-view" className="text-sm">
-                        Compact View
-                      </Label>
-                      <p className="text-xs text-muted-foreground">Show less details on cards</p>
-                    </div>
-                    <Switch
-                      id="compact-view"
-                      checked={compactView}
-                      onCheckedChange={handleCompactViewToggle}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between space-y-0">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="show-completed" className="text-sm">
-                        Show Completed Tasks
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        Display tasks marked as completed
-                      </p>
-                    </div>
-                    <Switch
-                      id="show-completed"
-                      checked={showCompletedTasks}
-                      onCheckedChange={handleShowCompletedTasksToggle}
-                    />
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
-        {/* Main scrollable kanban board container */}
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full w-full">
-            <SortableContext
-              items={columns.map(col => `column-${col.id}`)}
-              strategy={horizontalListSortingStrategy}
-            >
-              <div className="flex space-x-4 min-w-max pb-4">
-                {columns.map(column => (
-                  <KanbanColumn
-                    key={column.id}
-                    id={column.id}
-                    title={column.title}
-                    tasks={
-                      !showCompletedTasks && column.id === 'completed' ? [] : tasks[column.id] || []
-                    }
-                    onStatusChange={onStatusChange}
-                    onDelete={onDelete}
-                    renderPriorityBadge={renderPriorityBadge}
-                    onTaskClick={handleOpenTaskDetails}
-                    onAddTask={onAddTask}
-                    onDeleteColumn={() => handleDeleteColumn(column.id)}
-                    columnWidth={columnWidth}
-                    compactView={compactView}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+        {/* Main kanban board container with horizontal scroll only */}
+        <div className="flex-1 overflow-x-auto scrollbar-custom">
+          <SortableContext items={columnsId} strategy={horizontalListSortingStrategy}>
+            <div className="flex space-x-6 min-w-max py-2 px-1">
+              {columns.map(column => (
+                <KanbanColumn
+                  key={column.id}
+                  id={column.id}
+                  title={column.title}
+                  tasks={
+                    !showCompletedTasks && column.id === 'completed' ? [] : tasks[column.id] || []
+                  }
+                  onStatusChange={onStatusChange}
+                  onDelete={onDelete}
+                  renderPriorityBadge={renderPriorityBadge}
+                  onTaskClick={handleOpenTaskDetails}
+                  onAddTask={onAddTask}
+                  onDeleteColumn={() => handleDeleteColumn(column.id)}
+                  columnWidth={columnWidth}
+                  compactView={compactView}
+                />
+              ))}
+            </div>
+          </SortableContext>
         </div>
 
         {typeof window !== 'undefined' &&
           createPortal(
             <DragOverlay dropAnimation={dropAnimation}>
               {activeTask ? (
-                <div className="rotate-3 scale-105 w-full max-w-[300px]">
-                  {/* Render the dragged task */}
-                  <div className="bg-white p-4 rounded-lg shadow-lg border border-primary/20">
-                    <h3 className="font-medium text-sm">{activeTask.name}</h3>
-                    <div className="flex justify-between items-center mt-2">
-                      <div className="text-xs text-gray-500">
-                        Due: {new Date(activeTask.dueDate).toLocaleDateString()}
-                      </div>
-                      {renderPriorityBadge(activeTask.priority)}
-                    </div>
-                  </div>
-                </div>
+                <KanbanCard
+                  task={activeTask}
+                  onStatusChange={onStatusChange}
+                  onDelete={onDelete}
+                  renderPriorityBadge={renderPriorityBadge}
+                  isOverlay
+                />
               ) : activeColumn ? (
-                <div className="opacity-80">
-                  {/* Render the dragged column */}
-                  <div className="bg-white p-4 rounded-lg shadow-lg border border-primary/20 w-80">
-                    <h3 className="font-medium">
-                      {columns.find(col => col.id === activeColumn)?.title || 'Column'}
-                    </h3>
-                  </div>
-                </div>
+                <KanbanColumn
+                  id={activeColumn}
+                  title={columns.find(col => col.id === activeColumn)?.title || 'Column'}
+                  tasks={tasks[activeColumn] || []}
+                  onStatusChange={onStatusChange}
+                  onDelete={onDelete}
+                  renderPriorityBadge={renderPriorityBadge}
+                  columnWidth={columnWidth}
+                  isOverlay
+                />
               ) : null}
             </DragOverlay>,
             document.body
@@ -578,36 +684,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         onTaskUpdate={handleTaskUpdate}
       />
 
-      {/* Add Column Dialog */}
-      <Dialog open={isAddColumnDialogOpen} onOpenChange={setIsAddColumnDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Column</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Column name"
-              value={newColumnTitle}
-              onChange={e => setNewColumnTitle(e.target.value)}
-              className="mb-2"
-              autoFocus
-              onKeyDown={e => {
-                if (e.key === 'Enter' && newColumnTitle.trim()) {
-                  handleAddColumn();
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddColumnDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddColumn} disabled={!newColumnTitle.trim()}>
-              Add Column
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Add Column Dialog moved to parent component */}
     </div>
   );
 };
