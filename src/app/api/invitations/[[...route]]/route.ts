@@ -8,6 +8,7 @@ import { Invitation } from '@/models/Invitations';
 import { Organization } from '@/models/organization';
 import { User } from '@/models/User';
 import { Resend } from 'resend';
+import { NotificationService } from '@/services/Notification.service';
 
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -103,6 +104,9 @@ app.post('/accept', async (c: any) => {
     // Update invitation status
     invitation.status = 'accepted';
     await invitation.save();
+
+    // Create onboarding notification for the user
+    await NotificationService.createOnboardingNotification(user.id, organization.name);
 
     return c.json({
       message: 'Invitation accepted successfully',
@@ -326,6 +330,15 @@ app.post('/send', async (c: any) => {
                 </p>
               </div>
             `,
+          });
+
+          // create notification for the invitedBy user
+          await NotificationService.createNotification({
+            userId: user.id,
+            title: 'Invitation Sent',
+            description: `You have successfully invited ${email} to join ${organization.name} as a ${role}.`,
+            type: 'team',
+            link: `/dashboard/organizations/${organizationId}/members`,
           });
 
           return {

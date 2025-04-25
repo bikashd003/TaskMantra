@@ -50,51 +50,50 @@ export function useNotifications() {
   }, []);
 
   // Function to mark a notification as read
-  const markAsRead = useCallback(async (notificationId: string) => {
-    try {
-      await axios.patch(`/api/notifications/${notificationId}/read`);
-      
-      // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification._id === notificationId 
-            ? { ...notification, read: true } 
-            : notification
-        )
-      );
-      
-      // Decrement unread count if the notification was unread
-      const notification = notifications.find(n => n._id === notificationId);
-      if (notification && !notification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      try {
+        await axios.patch(`/api/notifications/${notificationId}/read`);
+
+        // Update local state
+        setNotifications(prev =>
+          prev.map(notification =>
+            notification._id === notificationId ? { ...notification, read: true } : notification
+          )
+        );
+
+        // Decrement unread count if the notification was unread
+        const notification = notifications.find(n => n._id === notificationId);
+        if (notification && !notification.read) {
+          setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+
+        // Invalidate queries
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+
+        return true;
+      } catch (err: any) {
+        setError(err.message || 'Failed to mark notification as read');
+        return false;
       }
-      
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      
-      return true;
-    } catch (err: any) {
-      setError(err.message || 'Failed to mark notification as read');
-      return false;
-    }
-  }, [notifications, queryClient]);
+    },
+    [notifications, queryClient]
+  );
 
   // Function to mark all notifications as read
   const markAllAsRead = useCallback(async () => {
     try {
       await axios.patch('/api/notifications/mark-all-read');
-      
+
       // Update local state
-      setNotifications(prev => 
-        prev.map(notification => ({ ...notification, read: true }))
-      );
-      
+      setNotifications(prev => prev.map(notification => ({ ...notification, read: true })));
+
       // Reset unread count
       setUnreadCount(0);
-      
+
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      
+
       return true;
     } catch (err: any) {
       setError(err.message || 'Failed to mark all notifications as read');
@@ -106,14 +105,14 @@ export function useNotifications() {
   const clearAllNotifications = useCallback(async () => {
     try {
       await axios.delete('/api/notifications/clear-all');
-      
+
       // Update local state
       setNotifications([]);
       setUnreadCount(0);
-      
+
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      
+
       return true;
     } catch (err: any) {
       setError(err.message || 'Failed to clear notifications');
@@ -126,93 +125,172 @@ export function useNotifications() {
     if (!session?.user) return;
 
     let eventSource: EventSource | null = null;
-    
+    let reconnectAttempt = 0;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastHeartbeat = Date.now();
+    let heartbeatCheckInterval: ReturnType<typeof setInterval> | null = null;
+
+    // Function to calculate backoff time based on reconnect attempts
+    const getReconnectDelay = () => {
+      // Exponential backoff with a maximum of 30 seconds
+      const baseDelay = 1000; // 1 second
+      const maxDelay = 30000; // 30 seconds
+      return Math.min(baseDelay * Math.pow(1.5, reconnectAttempt), maxDelay);
+    };
+
+    // Function to check if the connection is still alive based on heartbeats
+    const startHeartbeatCheck = () => {
+      // Clear any existing interval
+      if (heartbeatCheckInterval) {
+        clearInterval(heartbeatCheckInterval);
+      }
+
+      // Set last heartbeat to now
+      lastHeartbeat = Date.now();
+
+      // Check every 30 seconds if we've received a heartbeat in the last 45 seconds
+      heartbeatCheckInterval = setInterval(() => {
+        const now = Date.now();
+        const timeSinceLastHeartbeat = now - lastHeartbeat;
+
+        // If no heartbeat for 45 seconds, reconnect
+        if (timeSinceLastHeartbeat > 45000) {
+          // console.log('No heartbeat received for 45 seconds, reconnecting...');
+
+          // Close existing connection
+          if (eventSource) {
+            eventSource.close();
+          }
+
+          // Reset connection state
+          setIsConnected(false);
+          setError('Connection timeout. Reconnecting...');
+
+          // Reconnect
+          if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+          }
+          reconnectTimer = setTimeout(connectSSE, getReconnectDelay());
+        }
+      }, 30000);
+    };
+
     const connectSSE = () => {
+      // Clear any existing timers
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+
       // Close any existing connection
       if (eventSource) {
         eventSource.close();
       }
-      
+
       // Create a new EventSource connection
       eventSource = new EventSource('/api/notifications/sse');
-      
+
       // Connection opened
       eventSource.onopen = () => {
         setIsConnected(true);
         setError(null);
+        reconnectAttempt = 0; // Reset reconnect attempts on successful connection
+        startHeartbeatCheck(); // Start monitoring heartbeats
       };
-      
+
       // Handle incoming messages
-      eventSource.onmessage = (event) => {
+      eventSource.onmessage = event => {
         try {
           const data = JSON.parse(event.data);
-          
-          if (data.type === 'notification') {
+
+          // Update last heartbeat timestamp for any message
+          lastHeartbeat = Date.now();
+
+          if (data.type === 'heartbeat') {
+            // Just a heartbeat, no need to process further
+            return;
+          } else if (data.type === 'connection') {
+            // Connection established message
+            // console.log('SSE connection established');
+          } else if (data.type === 'notification') {
             // Single new notification
             const newNotification = data.notification;
-            
+
             setNotifications(prev => [newNotification, ...prev]);
-            
+
             if (!newNotification.read) {
               setUnreadCount(prev => prev + 1);
             }
-            
+
             // Show browser notification if enabled
             showBrowserNotification(newNotification);
-            
+
             // Invalidate queries
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
-          } 
-          else if (data.type === 'notifications') {
+          } else if (data.type === 'notifications') {
             // Batch of notifications
             const newNotifications = data.notifications;
-            
+
             setNotifications(prev => {
               // Merge notifications, avoiding duplicates
               const existingIds = new Set(prev.map(n => n._id));
               const uniqueNew = newNotifications.filter(n => !existingIds.has(n._id));
               return [...uniqueNew, ...prev];
             });
-            
+
             // Update unread count
             fetchUnreadCount();
-            
+
             // Invalidate queries
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
           }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           setError('Failed to parse SSE data');
         }
       };
-      
+
       // Handle errors
-      eventSource.onerror = (_err) => {
+      eventSource.onerror = _err => {
         setIsConnected(false);
         setError('Connection to notification server lost. Reconnecting...');
-        
+
         // Close the connection
         eventSource?.close();
-        
-        // Try to reconnect after a delay
-        setTimeout(connectSSE, 5000);
+
+        // Increment reconnect attempt counter
+        reconnectAttempt++;
+
+        // Try to reconnect with exponential backoff
+        const delay = getReconnectDelay();
+        // console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempt})...`);
+
+        reconnectTimer = setTimeout(connectSSE, delay);
       };
     };
-    
+
     // Initial connection
     connectSSE();
-    
+
     // Initial data fetch
     fetchNotifications().then(data => {
       setNotifications(data.notifications || []);
     });
-    
+
     fetchUnreadCount();
-    
+
     // Cleanup on unmount
     return () => {
       if (eventSource) {
         eventSource.close();
+      }
+
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+
+      if (heartbeatCheckInterval) {
+        clearInterval(heartbeatCheckInterval);
       }
     };
   }, [session, fetchNotifications, fetchUnreadCount, queryClient]);
@@ -220,13 +298,13 @@ export function useNotifications() {
   // Function to show browser notifications
   const showBrowserNotification = (notification: NotificationType) => {
     if (
-      typeof window !== 'undefined' && 
-      'Notification' in window && 
+      typeof window !== 'undefined' &&
+      'Notification' in window &&
       Notification.permission === 'granted'
     ) {
       new Notification(notification.title, {
         body: notification.description,
-        icon: '/public/logo.png' 
+        icon: '/public/logo.png',
       });
     }
   };
@@ -234,19 +312,16 @@ export function useNotifications() {
   // Request notification permission
   const requestNotificationPermission = useCallback(async () => {
     try {
-      if (
-        typeof window !== 'undefined' && 
-        'Notification' in window
-      ) {
+      if (typeof window !== 'undefined' && 'Notification' in window) {
         // Always request permission unless already granted
         if (Notification.permission !== 'granted') {
           const permission = await Notification.requestPermission();
           return permission === 'granted';
         }
-        return true; 
+        return true;
       }
-      return false; 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      return false;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return false;
     }
@@ -261,6 +336,6 @@ export function useNotifications() {
     markAsRead,
     markAllAsRead,
     clearAllNotifications,
-    requestNotificationPermission
+    requestNotificationPermission,
   };
 }
