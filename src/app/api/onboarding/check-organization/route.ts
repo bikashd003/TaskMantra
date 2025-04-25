@@ -3,8 +3,8 @@ import { handle } from 'hono/vercel';
 import { logger } from 'hono/logger';
 import { getServerSession } from 'next-auth';
 import { connectDB } from '@/Utility/db';
-import { authOptions } from '../../auth/[...nextauth]/options';
 import { Organization } from '@/models/organization';
+import { authOptions } from '../../auth/[...nextauth]/options';
 
 const app = new Hono().basePath('/api/onboarding');
 
@@ -29,22 +29,38 @@ app.use('*', async (c, next) => {
   await next();
 });
 
-// /api/onboarding/status
-app.get('/status', async (c: any) => {
+// /api/onboarding/check-organization
+app.get('/check-organization', async (c: any) => {
   try {
-    const user = c.get('user');
-    if (!user?.id) {
-      return c.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
     await connectDB();
-    const hasCompletedOnboarding = await Organization.findOne({ 'members.userId': user.id });
+    const user = c.get('user');
+    if (!user) return c.json({ message: 'Unauthorized' }, { status: 401 });
 
-    return c.json({ hasCompletedOnboarding }, { status: 200 });
+    // Check if user is a member of any organization
+    const organization = await Organization.findOne({
+      'members.userId': user.id,
+    });
+
+    return c.json(
+      {
+        isOrganizationMember: !!organization,
+        organization: organization
+          ? {
+              id: organization._id,
+              name: organization.name,
+              role:
+                organization.members.find((m: any) => m.userId.toString() === user.id)?.role ||
+                'Member',
+            }
+          : null,
+      },
+      { status: 200 }
+    );
   } catch (error: any) {
     return c.json({ message: error.message }, { status: 500 });
   }
 });
+
 export const GET = handle(app);
 export const POST = handle(app);
 export const PUT = handle(app);
