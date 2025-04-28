@@ -20,7 +20,7 @@ const sizeClasses = {
   md: 'w-full max-w-md',
   lg: 'w-full max-w-lg',
   xl: 'w-full max-w-xl',
-  full: 'w-[95vw] h-[95vh]'
+  full: 'w-[95vw] h-[95vh]',
 };
 
 const Modal: React.FC<ModalProps> = ({
@@ -32,7 +32,7 @@ const Modal: React.FC<ModalProps> = ({
   showCloseButton = true,
   closeOnOutsideClick = true,
   position = 'center',
-  preventScroll = true
+  preventScroll = true,
 }) => {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -66,7 +66,7 @@ const Modal: React.FC<ModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 h-full w-full"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 h-full w-full space-y-0"
             onClick={handleBackdropClick}
             aria-hidden="true"
           />
@@ -78,9 +78,9 @@ const Modal: React.FC<ModalProps> = ({
                 initial={{ opacity: 0, scale: 0.95, y: position === 'top' ? -20 : 0 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: position === 'top' ? -20 : 0 }}
-                transition={{ 
+                transition={{
                   duration: 0.2,
-                  ease: [0.4, 0, 0.2, 1]
+                  ease: [0.4, 0, 0.2, 1],
                 }}
                 className={cn(
                   sizeClasses[size],
@@ -107,9 +107,7 @@ const Modal: React.FC<ModalProps> = ({
                     <X className="h-5 w-5" />
                   </button>
                 )}
-                <div className="p-6">
-                  {children}
-                </div>
+                <div className="p-6">{children}</div>
               </motion.div>
             </div>
           </div>

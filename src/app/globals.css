@@ -184,6 +184,39 @@ body {
   @apply bg-clip-text text-transparent;
   background-image: linear-gradient(to right, #a855f7, #ec4899);
 }
+/* Custom scrollbar for timeline components */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+}
+
+/* Animation for timeline items */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
 /* Animation classes for Shadcn UI */
 @keyframes enter {
   from {
@@ -219,16 +252,16 @@ body {
   -ms-user-select: none !important;
   pointer-events: auto !important;
   }
-  
+
   /* Ensure proper cursor for draggable elements */
   .cursor-grab {
     cursor: grab !important;
   }
-  
+
   .cursor-grab:active {
     cursor: grabbing !important;
   }
-  
+
   .cursor-default {
     cursor: default !important;
 }
