@@ -82,7 +82,7 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
       <div className="relative group animate-fadeIn">
         <div
           className={cn(
-            'absolute -left-[-1.60rem] top-8 w-4 h-4 rounded-full',
+            'absolute left-[-27px] top-8 w-4 h-4 rounded-full',
             'border-[3px] bg-background z-10 transition-all duration-300',
             'group-hover:scale-125 group-hover:ring-2 group-hover:ring-offset-2',
             'ring-offset-background shadow-md',
