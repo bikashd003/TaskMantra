@@ -35,8 +35,30 @@ import { useProjectTimelineStore, FrontendTimelineItem } from '@/stores/projectT
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
 
+// This type combines the properties from both the backend and frontend timeline item interfaces
+// to ensure compatibility with the parent component
+export type CombinedTimelineItem = {
+  _id?: string;
+  id: string;
+  title: string;
+  description?: string;
+  startDate: string | Date;
+  endDate: string | Date;
+  status: 'pending' | 'in_progress' | 'done' | 'planned' | 'completed' | 'delayed';
+  projectId?: string;
+  progress?: number;
+  color?: string;
+  users: Array<{
+    id: string;
+    _id?: string;
+    name: string;
+    avatar?: string;
+    image?: string;
+  }>;
+};
+
 interface TimelineItemDetailsProps {
-  item: FrontendTimelineItem;
+  item: CombinedTimelineItem;
   projects: Array<{
     id: string;
     _id?: string;
@@ -50,6 +72,8 @@ interface TimelineItemDetailsProps {
     image?: string;
   }>;
   onClose: () => void;
+  onUpdate?: (id: string, data: any) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
 }
 
 export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
@@ -57,21 +81,44 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
   projects,
   users,
   onClose,
+  onUpdate,
+  onDelete,
 }) => {
+  // Use the Zustand store if no direct handlers are provided
   const {
-    updateTimelineItem,
-    deleteTimelineItem,
+    updateTimelineItem: storeUpdateTimelineItem,
+    deleteTimelineItem: storeDeleteTimelineItem,
     isLoading: storeLoading,
   } = useProjectTimelineStore();
+
+  // Convert backend status to frontend status if needed
+  const normalizeStatus = (
+    status: CombinedTimelineItem['status']
+  ): FrontendTimelineItem['status'] => {
+    if (status === 'pending' || status === 'in_progress' || status === 'done') {
+      return status;
+    }
+
+    // Map backend statuses to frontend statuses
+    const statusMap: Record<string, FrontendTimelineItem['status']> = {
+      planned: 'pending',
+      in_progress: 'in_progress',
+      completed: 'done',
+      delayed: 'pending',
+    };
+
+    return statusMap[status] || 'pending';
+  };
+
   const [formData, setFormData] = useState({
     title: item.title || '',
     description: item.description || '',
     startDate: item.startDate ? new Date(item.startDate) : new Date(),
     endDate: item.endDate ? new Date(item.endDate) : new Date(),
-    status: item.status || 'pending',
+    status: normalizeStatus(item.status),
     projectId: item.projectId || '',
     progress: item.progress || 0,
-    users: item.users?.map(user => user.id) || [],
+    users: item.users?.map(user => user.id || user._id || '') || [],
     color: item.color || '#3498db',
   });
 
@@ -83,13 +130,13 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Convert form data to the format expected by the store
-      const updatedItem: Partial<FrontendTimelineItem> = {
+      // Convert form data to the format expected by the API
+      const updatedItem = {
         title: formData.title,
         description: formData.description,
         startDate: formData.startDate.toISOString(),
         endDate: formData.endDate.toISOString(),
-        status: formData.status as FrontendTimelineItem['status'],
+        status: formData.status,
         projectId: formData.projectId,
         progress: formData.progress,
         color: formData.color,
@@ -103,8 +150,13 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
         }),
       };
 
-      // Update the item using the store
-      await updateTimelineItem(item.id, updatedItem);
+      // Use the provided onUpdate function or fall back to the store
+      if (onUpdate) {
+        await onUpdate(item.id || item._id || '', updatedItem);
+      } else {
+        await storeUpdateTimelineItem(item.id || item._id || '', updatedItem);
+      }
+
       toast({
         title: 'Success',
         description: 'Timeline item updated successfully',
@@ -124,7 +176,15 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
   const handleDelete = async () => {
     setIsLoading(true);
     try {
-      await deleteTimelineItem(item.id);
+      const itemId = item.id || item._id || '';
+
+      // Use the provided onDelete function or fall back to the store
+      if (onDelete) {
+        await onDelete(itemId);
+      } else {
+        await storeDeleteTimelineItem(itemId);
+      }
+
       toast({
         title: 'Success',
         description: 'Timeline item deleted successfully',
@@ -261,9 +321,11 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
               <Label>Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={value =>
-                  setFormData({ ...formData, status: value as FrontendTimelineItem['status'] })
-                }
+                onValueChange={value => {
+                  // Ensure we're using a valid frontend status
+                  const validStatus = value as FrontendTimelineItem['status'];
+                  setFormData({ ...formData, status: validStatus });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />

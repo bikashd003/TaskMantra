@@ -31,7 +31,7 @@ import { ProjectService } from '@/services/Project.service';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Define a common interface that works with both components
-interface TimelineItem {
+export interface TimelineItem {
   _id?: string;
   id: string;
   title: string;
@@ -43,7 +43,7 @@ interface TimelineItem {
   progress?: number;
   color?: string;
   users: Array<{
-    id?: string;
+    id: string;
     _id?: string;
     name: string;
     avatar?: string;
@@ -204,7 +204,6 @@ export default function TimelinePage() {
   });
 
   const handleUpdateTimelineItem = async (id: string, data: any) => {
-    console.log('data', data);
     updateTimelineMutation.mutate({ id, data });
   };
 
@@ -539,7 +538,7 @@ export default function TimelinePage() {
           >
             <TimelineItemDetails
               item={selectedItem}
-              projects={projects}
+              projects={projects?.projects || []}
               users={users}
               onClose={() => setSelectedItem(null)}
               onUpdate={handleUpdateTimelineItem}
