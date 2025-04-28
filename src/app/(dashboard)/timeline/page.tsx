@@ -204,6 +204,7 @@ export default function TimelinePage() {
   });
 
   const handleUpdateTimelineItem = async (id: string, data: any) => {
+    console.log('data', data);
     updateTimelineMutation.mutate({ id, data });
   };
 

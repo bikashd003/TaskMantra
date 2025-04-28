@@ -1,12 +1,16 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
-import { format, addDays, eachDayOfInterval, isSameDay, differenceInDays } from 'date-fns';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { format, addDays, eachDayOfInterval, isSameDay, differenceInDays, isToday } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { useMediaQuery } from '@/hooks/use-media-query';
+
+// Types
+type DragType = 'start' | 'end' | 'bar';
 
 interface TimelineItem {
   _id?: string;
@@ -28,12 +32,54 @@ interface GanttChartProps {
   onItemUpdate?: (id: string, data: Partial<TimelineItem>) => Promise<void>;
 }
 
+// Helper functions
+const getStatusColor = (status: TimelineItem['status']) => {
+  switch (status) {
+    case 'completed':
+      return 'bg-emerald-500 text-white';
+    case 'in_progress':
+      return 'bg-blue-500 text-white';
+    case 'delayed':
+      return 'bg-amber-500 text-white';
+    default:
+      return 'bg-slate-500 text-white';
+  }
+};
+
+// Day column component
+const DayColumn = ({ day, dayWidth }: { day: Date; dayWidth: number }) => {
+  const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+  const isTodayDate = isToday(day);
+  const isFirstOfMonth = day.getDate() === 1;
+
+  return (
+    <div
+      className={cn(
+        'text-center text-xs font-medium p-2 border-r relative',
+        isWeekend ? 'bg-muted/50' : '',
+        isFirstOfMonth ? 'border-l-2 border-l-slate-300' : '',
+        isTodayDate ? 'bg-blue-50' : ''
+      )}
+      style={{ width: `${dayWidth}px`, minWidth: `${dayWidth}px` }}
+    >
+      <div>{format(day, 'EEE')}</div>
+      <div>{format(day, 'MMM d')}</div>
+
+      {isFirstOfMonth && (
+        <div className="absolute -top-6 left-0 right-0 text-center text-xs font-medium text-slate-500 py-1">
+          {format(day, 'MMMM yyyy')}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItemUpdate }) => {
   const { toast } = useToast();
   const [days, setDays] = useState<Date[]>([]);
   const [draggedItem, setDraggedItem] = useState<{
     id: string;
-    type: 'start' | 'end' | 'bar';
+    type: DragType;
     initialX: number;
     initialDate: Date;
     width?: number;
@@ -44,57 +90,50 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
   const [dragPosition, setDragPosition] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Responsive day width based on screen size
+  const isSmallScreen = useMediaQuery('(max-width: 640px)');
+  const isMediumScreen = useMediaQuery('(max-width: 1024px)');
+  const dayWidth = useMemo(
+    () => (isSmallScreen ? 40 : isMediumScreen ? 50 : 60),
+    [isSmallScreen, isMediumScreen]
+  );
+
   // Calculate the date range for the Gantt chart
   useEffect(() => {
+    // Default date range if no items
     if (items.length === 0) {
-      // If no items, show current month
       const currentDate = new Date();
-      const startOfRange = addDays(currentDate, -15);
-      const endOfRange = addDays(currentDate, 45);
-      const daysArray = eachDayOfInterval({ start: startOfRange, end: endOfRange });
-      setDays(daysArray);
+      setDays(
+        eachDayOfInterval({
+          start: addDays(currentDate, -15),
+          end: addDays(currentDate, 45),
+        })
+      );
       return;
     }
 
-    // Find the earliest start date and latest end date
-    let minDate = new Date();
-    let maxDate = new Date();
+    // Find min and max dates from items
+    const dates = items.flatMap(item => [new Date(item.startDate), new Date(item.endDate)]);
+    const minDate = addDays(new Date(Math.min(...dates.map(d => d.getTime()))), -7);
+    const maxDate = addDays(new Date(Math.max(...dates.map(d => d.getTime()))), 7);
 
-    items.forEach(item => {
-      const startDate = new Date(item.startDate);
-      const endDate = new Date(item.endDate);
-
-      if (startDate < minDate) minDate = startDate;
-      if (endDate > maxDate) maxDate = endDate;
-    });
-
-    // Add padding to the date range
-    minDate = addDays(minDate, -7);
-    maxDate = addDays(maxDate, 7);
-
-    // Generate array of days in the date range
-    const daysArray = eachDayOfInterval({ start: minDate, end: maxDate });
-    setDays(daysArray);
+    setDays(eachDayOfInterval({ start: minDate, end: maxDate }));
   }, [items]);
 
-  // Add custom styles to document
-  useEffect(() => {
-    // No external CSS needed
-  }, []);
-
-  const getStatusColor = (status: TimelineItem['status']) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-emerald-500 text-white';
-      case 'in_progress':
-        return 'bg-blue-500 text-white';
-      case 'delayed':
-        return 'bg-amber-500 text-white';
-      default:
-        return 'bg-slate-500 text-white';
-    }
+  // Touch event handlers for mobile support
+  const handleTouchStart = (e: React.TouchEvent, id: string, type: DragType) => {
+    const touch = e.touches[0];
+    handleDragStart(
+      {
+        clientX: touch.clientX,
+        preventDefault: () => {},
+        currentTarget: e.currentTarget,
+      } as unknown as React.MouseEvent,
+      id,
+      type
+    );
   };
-  const handleDragStart = (e: React.MouseEvent, id: string, type: 'start' | 'end' | 'bar') => {
+  const handleDragStart = (e: React.MouseEvent, id: string, type: DragType) => {
     e.preventDefault();
     const item = items.find(item => item._id === id || item.id === id);
     if (!item) return;
@@ -128,65 +167,68 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
       document.body.classList.add('dragging-move');
     }
 
+    // Add touch event listeners for mobile support
     document.addEventListener('mousemove', handleDragMove);
     document.addEventListener('mouseup', handleDragEnd);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+
+  // Touch move handler for mobile support
+  const handleTouchMove = (e: TouchEvent) => {
+    e.preventDefault(); // Prevent scrolling while dragging
+    if (!draggedItem || e.touches.length === 0) return;
+
+    const touch = e.touches[0];
+    const mouseEvent = {
+      clientX: touch.clientX,
+    } as MouseEvent;
+
+    handleDragMove(mouseEvent);
+  };
+
+  // Touch end handler for mobile support
+  const handleTouchEnd = () => {
+    handleDragEnd();
   };
 
   const handleDragMove = (e: MouseEvent) => {
     if (!draggedItem) return;
-
-    // Update drag position indicator
     setDragPosition(e.clientX);
 
-    // Calculate the day difference based on drag distance
-    const dayWidth = 60; // Width of each day column
+    // Calculate day difference and find item
     const dayDiff = Math.round((e.clientX - draggedItem.initialX) / dayWidth);
-
-    // Get the item being dragged
     const item = items.find(item => item._id === draggedItem.id || item.id === draggedItem.id);
     if (!item) return;
 
     const newDate = addDays(draggedItem.initialDate, dayDiff);
+    const barElement = containerRef.current?.querySelector(
+      `[data-item-id="${draggedItem.id}"]`
+    ) as HTMLElement;
 
-    // This would be handled by the parent component to update the UI
-    // We're using direct DOM manipulation for visual feedback during drag
-    if (item && containerRef.current) {
-      const barElement = containerRef.current.querySelector(
-        `[data-item-id="${draggedItem.id}"]`
-      ) as HTMLElement;
-      if (barElement) {
-        if (draggedItem.type === 'start') {
-          // Update start position and width
-          const startIndex = days.findIndex(day => isSameDay(day, newDate));
-          if (startIndex >= 0) {
-            const endDate = new Date(item.endDate);
-            const endIndex = days.findIndex(day => isSameDay(day, endDate));
-            if (endIndex >= 0 && startIndex < endIndex) {
-              const newLeft = startIndex * 60;
-              const newWidth = (endIndex - startIndex + 1) * 60 - 4;
-              barElement.style.left = `${newLeft}px`;
-              barElement.style.width = `${newWidth}px`;
-            }
-          }
-        } else if (draggedItem.type === 'end') {
-          // Update width only
-          const endIndex = days.findIndex(day => isSameDay(day, newDate));
-          if (endIndex >= 0) {
-            const startDate = new Date(item.startDate);
-            const startIndex = days.findIndex(day => isSameDay(day, startDate));
-            if (startIndex >= 0 && endIndex >= startIndex) {
-              const newWidth = (endIndex - startIndex + 1) * 60 - 4;
-              barElement.style.width = `${newWidth}px`;
-            }
-          }
-        } else if (draggedItem.type === 'bar') {
-          // Move the entire bar
-          const startIndex = days.findIndex(day => isSameDay(day, newDate));
-          if (startIndex >= 0) {
-            const newLeft = startIndex * 60;
-            barElement.style.left = `${newLeft}px`;
-          }
-        }
+    if (!barElement) return;
+
+    // Update visual position based on drag type
+    const { type } = draggedItem;
+    const startDate = new Date(item.startDate);
+    const endDate = new Date(item.endDate);
+    const startIndex = days.findIndex(day =>
+      isSameDay(day, type === 'start' ? newDate : startDate)
+    );
+    const endIndex = days.findIndex(day => isSameDay(day, type === 'end' ? newDate : endDate));
+
+    if (type === 'start' && startIndex >= 0 && endIndex >= 0 && startIndex < endIndex) {
+      // Update start position and width
+      barElement.style.left = `${startIndex * dayWidth}px`;
+      barElement.style.width = `${(endIndex - startIndex + 1) * dayWidth - 4}px`;
+    } else if (type === 'end' && startIndex >= 0 && endIndex >= 0 && endIndex >= startIndex) {
+      // Update width only
+      barElement.style.width = `${(endIndex - startIndex + 1) * dayWidth - 4}px`;
+    } else if (type === 'bar') {
+      // Move the entire bar
+      const newStartIndex = days.findIndex(day => isSameDay(day, newDate));
+      if (newStartIndex >= 0) {
+        barElement.style.left = `${newStartIndex * dayWidth}px`;
       }
     }
   };
@@ -194,44 +236,38 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
   const handleDragEnd = async () => {
     if (!draggedItem) return;
 
+    // Clean up event listeners
     document.removeEventListener('mousemove', handleDragMove);
     document.removeEventListener('mouseup', handleDragEnd);
-
-    // Remove drag classes
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
     document.body.classList.remove('dragging', 'dragging-resize', 'dragging-move');
 
-    // Clear drag position indicator
-    setDragPosition(null);
-
-    // Get the updated item
+    // Get final position
     const item = items.find(item => item._id === draggedItem.id || item.id === draggedItem.id);
     if (!item) return;
 
     try {
-      // Calculate the day difference based on final drag distance
-      const dayWidth = 60;
-      const dayDiff = Math.round((draggedItem.initialX - draggedItem.initialX) / dayWidth);
+      const dayDiff = Math.round(((dragPosition || 0) - draggedItem.initialX) / dayWidth);
 
       // Only update if there was an actual change
       if (dayDiff !== 0 && onItemUpdate) {
-        if (draggedItem.type === 'start') {
-          const newStartDate = addDays(draggedItem.initialDate, dayDiff);
-          // Ensure start date is not after end date
+        const { type, initialDate, startDate, endDate } = draggedItem;
+
+        if (type === 'start') {
+          const newStartDate = addDays(initialDate, dayDiff);
           if (newStartDate < new Date(item.endDate)) {
             await onItemUpdate(draggedItem.id, { startDate: newStartDate });
           }
-        } else if (draggedItem.type === 'end') {
-          const newEndDate = addDays(draggedItem.initialDate, dayDiff);
-          // Ensure end date is not before start date
+        } else if (type === 'end') {
+          const newEndDate = addDays(initialDate, dayDiff);
           if (newEndDate > new Date(item.startDate)) {
             await onItemUpdate(draggedItem.id, { endDate: newEndDate });
           }
-        } else if (draggedItem.type === 'bar') {
-          const newStartDate = addDays(draggedItem.startDate!, dayDiff);
-          const newEndDate = addDays(draggedItem.endDate!, dayDiff);
+        } else if (type === 'bar' && startDate && endDate) {
           await onItemUpdate(draggedItem.id, {
-            startDate: newStartDate,
-            endDate: newEndDate,
+            startDate: addDays(startDate, dayDiff),
+            endDate: addDays(endDate, dayDiff),
           });
         }
       }
@@ -243,14 +279,16 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
       });
     }
 
+    setDragPosition(null);
     setDraggedItem(null);
   };
 
+  // Render loading skeleton
   if (isLoading) {
     return (
       <Card className="border shadow-lg">
         <CardContent className="p-0 overflow-hidden">
-          <ScrollArea className="h-[calc(100vh-250px)]">
+          <ScrollArea className="h-[calc(100vh-250px)] md:h-[calc(100vh-200px)]">
             <div className="min-w-max">
               {/* Header Skeleton */}
               <div className="flex border-b sticky top-0 bg-background z-10">
@@ -258,8 +296,12 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
                   <Skeleton className="h-5 w-20" />
                 </div>
                 <div className="flex">
-                  {Array.from({ length: 14 }).map((_, index) => (
-                    <div key={index} className="w-[60px] min-w-[60px] p-2 text-center border-r">
+                  {Array.from({ length: 10 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="p-2 text-center border-r"
+                      style={{ width: `${dayWidth}px`, minWidth: `${dayWidth}px` }}
+                    >
                       <Skeleton className="h-3 w-10 mx-auto mb-1" />
                       <Skeleton className="h-3 w-12 mx-auto" />
                     </div>
@@ -269,23 +311,27 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
 
               {/* Timeline Items Skeleton */}
               <div>
-                {Array.from({ length: 5 }).map((_, itemIndex) => (
+                {Array.from({ length: 4 }).map((_, itemIndex) => (
                   <div key={itemIndex} className="flex border-b">
                     <div className="w-64 min-w-64 p-4 border-r">
                       <Skeleton className="h-5 w-40 mb-2" />
                       <Skeleton className="h-3 w-24" />
                     </div>
                     <div className="flex relative">
-                      {Array.from({ length: 14 }).map((_, dayIndex) => (
-                        <div key={dayIndex} className="w-[60px] min-w-[60px] h-16 border-r" />
+                      {Array.from({ length: 10 }).map((_, dayIndex) => (
+                        <div
+                          key={dayIndex}
+                          className="h-16 border-r"
+                          style={{ width: `${dayWidth}px`, minWidth: `${dayWidth}px` }}
+                        />
                       ))}
 
                       {/* Skeleton bar */}
                       <Skeleton
                         className="absolute top-2 h-12 rounded-md"
                         style={{
-                          left: `${(itemIndex % 3) * 60 + 60}px`,
-                          width: `${(3 + (itemIndex % 4)) * 60 - 4}px`,
+                          left: `${(itemIndex % 3) * dayWidth + dayWidth}px`,
+                          width: `${(3 + (itemIndex % 4)) * dayWidth - 4}px`,
                         }}
                       />
                     </div>
@@ -299,10 +345,11 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
     );
   }
 
+  // Render the chart
   return (
     <Card className="border shadow-lg">
       <CardContent className="p-0 overflow-hidden">
-        <ScrollArea className="h-[calc(100vh-250px)]">
+        <ScrollArea className="h-[calc(100vh-250px)] md:h-[calc(100vh-200px)]">
           <div className="min-w-max" ref={containerRef}>
             {/* Header */}
             <div className="flex border-b sticky top-0 bg-background z-10">
@@ -310,32 +357,9 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
                 Task
               </div>
               <div className="flex">
-                {days.map((day, index) => {
-                  const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                  const isToday = isSameDay(day, new Date());
-                  const isFirstOfMonth = day.getDate() === 1;
-
-                  return (
-                    <div
-                      key={index}
-                      className={cn(
-                        'w-[60px] min-w-[60px] text-center text-xs font-medium p-2 border-r relative',
-                        isWeekend ? 'bg-muted/50' : '',
-                        isFirstOfMonth ? 'border-l-2 border-l-slate-300' : '',
-                        isToday ? 'bg-blue-50' : ''
-                      )}
-                    >
-                      <div>{format(day, 'EEE')}</div>
-                      <div>{format(day, 'MMM d')}</div>
-
-                      {isFirstOfMonth && (
-                        <div className="absolute -top-6 left-0 right-0 text-center text-xs font-medium text-slate-500 py-1">
-                          {format(day, 'MMMM yyyy')}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {days.map((day, index) => (
+                  <DayColumn key={index} day={day} dayWidth={dayWidth} />
+                ))}
               </div>
             </div>
 
@@ -377,28 +401,29 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
                       <div className="flex relative flex-1">
                         {days.map((day, index) => {
                           const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                          const isToday = isSameDay(day, new Date());
+                          const isTodayDate = isToday(day);
                           const isFirstOfMonth = day.getDate() === 1;
 
                           return (
                             <div
                               key={index}
                               className={cn(
-                                'w-[60px] min-w-[60px] h-16 border-r',
+                                'h-16 border-r',
                                 isWeekend ? 'bg-muted/50' : '',
                                 isFirstOfMonth ? 'border-l-2 border-l-slate-300' : '',
-                                isToday ? 'bg-blue-50' : ''
+                                isTodayDate ? 'bg-blue-50' : ''
                               )}
+                              style={{ width: `${dayWidth}px`, minWidth: `${dayWidth}px` }}
                             />
                           );
                         })}
 
                         {/* Today indicator */}
-                        {days.findIndex(day => isSameDay(day, new Date())) >= 0 && (
+                        {days.findIndex(day => isToday(day)) >= 0 && (
                           <div
                             className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-[2] opacity-70"
                             style={{
-                              left: `${days.findIndex(day => isSameDay(day, new Date())) * 60 + 30}px`,
+                              left: `${days.findIndex(day => isToday(day)) * dayWidth + dayWidth / 2}px`,
                               animation: 'pulse 2s infinite',
                             }}
                           />
@@ -422,7 +447,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
                                 <div
                                   data-item-id={item._id || item.id}
                                   className={cn(
-                                    'absolute top-2 h-12 rounded-md cursor-move transition-all duration-150',
+                                    'absolute top-2 h-12 rounded-md cursor-move transition-all duration-150 gantt-bar',
                                     getStatusColor(item.status),
                                     isHovered
                                       ? 'ring-2 ring-offset-1 ring-ring shadow-lg'
@@ -430,13 +455,16 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
                                     'animate-in fade-in-50 duration-300'
                                   )}
                                   style={{
-                                    left: `${startIndex * 60}px`,
-                                    width: `${duration * 60 - 4}px`,
+                                    left: `${startIndex * dayWidth}px`,
+                                    width: `${duration * dayWidth - 4}px`,
                                     backgroundColor: item.color || undefined,
                                     animationDelay: `${itemIndex * 50}ms`,
                                   }}
                                   onMouseDown={e =>
                                     handleDragStart(e, item._id || item.id || '', 'bar')
+                                  }
+                                  onTouchStart={e =>
+                                    handleTouchStart(e, item._id || item.id || '', 'bar')
                                   }
                                 >
                                   <div className="px-2 py-1 text-xs font-medium truncate">
@@ -459,12 +487,20 @@ export const GanttChart: React.FC<GanttChartProps> = ({ items, isLoading, onItem
                                       e.stopPropagation();
                                       handleDragStart(e, item._id || item.id || '', 'start');
                                     }}
+                                    onTouchStart={e => {
+                                      e.stopPropagation();
+                                      handleTouchStart(e, item._id || item.id || '', 'start');
+                                    }}
                                   />
                                   <div
                                     className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-black/10 transition-colors"
                                     onMouseDown={e => {
                                       e.stopPropagation();
                                       handleDragStart(e, item._id || item.id || '', 'end');
+                                    }}
+                                    onTouchStart={e => {
+                                      e.stopPropagation();
+                                      handleTouchStart(e, item._id || item.id || '', 'end');
                                     }}
                                   />
                                 </div>

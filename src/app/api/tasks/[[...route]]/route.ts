@@ -169,6 +169,71 @@ app.post('/', async c => {
   }
 });
 
+// Helper function to get date ranges
+const getDateRange = (period: string) => {
+  const today = new Date();
+  const startDate = new Date(today);
+  const endDate = new Date(today);
+
+  // Reset hours for consistent comparison
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(23, 59, 59, 999);
+
+  // Calculate date range based on period
+  if (period === 'today') {
+    // startDate is already today at 00:00:00
+    // endDate is already today at 23:59:59
+  } else if (period === 'week') {
+    // Set startDate to beginning of current week (Sunday)
+    const dayOfWeek = startDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const diff = startDate.getDate() - dayOfWeek; // Adjust to get to Sunday
+    startDate.setDate(diff);
+
+    // Set endDate to end of week (Saturday)
+    endDate.setDate(startDate.getDate() + 6);
+  } else if (period === 'month') {
+    // Set startDate to first day of current month
+    startDate.setDate(1);
+
+    // Set endDate to last day of current month
+    endDate.setMonth(endDate.getMonth() + 1);
+    endDate.setDate(0);
+  }
+
+  return { startDate, endDate };
+};
+
+// Get tasks by time period (today, week, month)
+app.get('/:period', async c => {
+  const user = c.get('user');
+  const period = c.req.param('period');
+
+  if (!user) {
+    return c.json({ error: 'User not authenticated' }, 401);
+  }
+
+  // Validate period parameter
+  if (!['today', 'week', 'month'].includes(period)) {
+    return c.json({ error: 'Invalid time period. Use today, week, or month.' }, 400);
+  }
+
+  try {
+    const { startDate, endDate } = getDateRange(period);
+
+    const tasks = await Task.find({
+      dueDate: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+      createdBy: user.id,
+    }).sort({ dueDate: 1 });
+
+    return c.json({ tasks });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 app.patch('/:taskId', async c => {
   const taskId = c.req.param('taskId');
   const user = c.get('user');
