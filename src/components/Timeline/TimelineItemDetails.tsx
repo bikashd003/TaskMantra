@@ -19,7 +19,6 @@ import { Slider } from '@/components/ui/slider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,14 +31,25 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { useProjectTimelineStore, FrontendTimelineItem } from '@/stores/projectTimelineStore';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from '@/hooks/use-toast';
 
 interface TimelineItemDetailsProps {
-  item: any;
-  projects: any[];
-  users: any[];
+  item: FrontendTimelineItem;
+  projects: Array<{
+    id: string;
+    _id?: string;
+    name: string;
+    color: string;
+  }>;
+  users: Array<{
+    id: string;
+    _id?: string;
+    name: string;
+    image?: string;
+  }>;
   onClose: () => void;
-  onUpdate: (id: string, data: any) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
 }
 
 export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
@@ -47,31 +57,65 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
   projects,
   users,
   onClose,
-  onUpdate,
-  onDelete,
 }) => {
+  const {
+    updateTimelineItem,
+    deleteTimelineItem,
+    isLoading: storeLoading,
+  } = useProjectTimelineStore();
   const [formData, setFormData] = useState({
     title: item.title || '',
     description: item.description || '',
     startDate: item.startDate ? new Date(item.startDate) : new Date(),
     endDate: item.endDate ? new Date(item.endDate) : new Date(),
-    status: item.status || 'planned',
-    projectId: item.projectId?._id || item.projectId || '',
+    status: item.status || 'pending',
+    projectId: item.projectId || '',
     progress: item.progress || 0,
-    users: item.users?.map((user: any) => user._id || user) || [],
+    users: item.users?.map(user => user.id) || [],
     color: item.color || '#3498db',
   });
+
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState('details');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await onUpdate(item._id, formData);
+      // Convert form data to the format expected by the store
+      const updatedItem: Partial<FrontendTimelineItem> = {
+        title: formData.title,
+        description: formData.description,
+        startDate: formData.startDate.toISOString(),
+        endDate: formData.endDate.toISOString(),
+        status: formData.status as FrontendTimelineItem['status'],
+        projectId: formData.projectId,
+        progress: formData.progress,
+        color: formData.color,
+        users: formData.users.map(userId => {
+          const user = users.find(u => (u._id || u.id) === userId);
+          return {
+            id: userId,
+            name: user?.name || 'Unknown',
+            avatar: user?.image,
+          };
+        }),
+      };
+
+      // Update the item using the store
+      await updateTimelineItem(item.id, updatedItem);
+      toast({
+        title: 'Success',
+        description: 'Timeline item updated successfully',
+      });
       onClose();
-    } catch (error) {
-      console.error('Failed to update timeline item:', error);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update timeline item',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -80,29 +124,23 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
   const handleDelete = async () => {
     setIsLoading(true);
     try {
-      await onDelete(item._id);
+      await deleteTimelineItem(item.id);
+      toast({
+        title: 'Success',
+        description: 'Timeline item deleted successfully',
+      });
       onClose();
-    } catch (error) {
-      console.error('Failed to delete timeline item:', error);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete timeline item',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
+      setShowDeleteConfirm(false);
     }
   };
-
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return { color: 'bg-green-500', text: 'text-green-500' };
-      case 'in_progress':
-        return { color: 'bg-blue-500', text: 'text-blue-500' };
-      case 'delayed':
-        return { color: 'bg-red-500', text: 'text-red-500' };
-      default:
-        return { color: 'bg-gray-500', text: 'text-gray-500' };
-    }
-  };
-
-  const statusConfig = getStatusConfig(formData.status);
 
   return (
     <div className="h-full flex flex-col">
@@ -111,8 +149,10 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
       <div className="flex border-b">
         <button
           className={cn(
-            'px-4 py-2 text-sm font-medium',
-            selectedTab === 'details' ? 'border-b-2 border-primary' : ''
+            'px-4 py-2 text-sm font-medium transition-all',
+            selectedTab === 'details'
+              ? 'border-b-2 border-primary text-primary'
+              : 'text-muted-foreground hover:text-foreground'
           )}
           onClick={() => setSelectedTab('details')}
         >
@@ -120,8 +160,10 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
         </button>
         <button
           className={cn(
-            'px-4 py-2 text-sm font-medium',
-            selectedTab === 'users' ? 'border-b-2 border-primary' : ''
+            'px-4 py-2 text-sm font-medium transition-all',
+            selectedTab === 'users'
+              ? 'border-b-2 border-primary text-primary'
+              : 'text-muted-foreground hover:text-foreground'
           )}
           onClick={() => setSelectedTab('users')}
         >
@@ -134,13 +176,25 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Enter milestone title"
-                required
-              />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={e => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="Enter milestone title"
+                        required
+                        className="w-full"
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="start" className="max-w-xs">
+                    <p>{formData.title}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
             <div className="space-y-2">
@@ -150,10 +204,11 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Enter milestone description"
+                className="min-h-[100px] resize-y"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Start Date</Label>
                 <Popover>
@@ -171,6 +226,7 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
                       mode="single"
                       selected={formData.startDate}
                       onSelect={date => setFormData({ ...formData, startDate: date || new Date() })}
+                      initialFocus
                     />
                   </PopoverContent>
                 </Popover>
@@ -193,6 +249,8 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
                       mode="single"
                       selected={formData.endDate}
                       onSelect={date => setFormData({ ...formData, endDate: date || new Date() })}
+                      initialFocus
+                      disabled={date => date < formData.startDate}
                     />
                   </PopoverContent>
                 </Popover>
@@ -203,16 +261,17 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
               <Label>Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={value => setFormData({ ...formData, status: value })}
+                onValueChange={value =>
+                  setFormData({ ...formData, status: value as FrontendTimelineItem['status'] })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="planned">Planned</SelectItem>
+                  <SelectItem value="pending">Planned</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="delayed">Delayed</SelectItem>
+                  <SelectItem value="done">Completed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -234,7 +293,7 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
                           className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: project.color }}
                         />
-                        {project.name}
+                        <span className="truncate max-w-[150px]">{project.name}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -256,14 +315,16 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
 
             <div className="space-y-2">
               <Label>Color</Label>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#34495e'].map(
                   color => (
                     <div
                       key={color}
                       className={cn(
                         'w-8 h-8 rounded-full cursor-pointer transition-all',
-                        formData.color === color ? 'ring-2 ring-offset-2 ring-ring' : ''
+                        formData.color === color
+                          ? 'ring-2 ring-offset-2 ring-ring'
+                          : 'hover:scale-110'
                       )}
                       style={{ backgroundColor: color }}
                       onClick={() => setFormData({ ...formData, color })}
@@ -315,7 +376,7 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
                               <AvatarImage src={user.image} alt={user.name} />
                               <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="text-sm">{user.name}</span>
+                            <span className="text-sm truncate max-w-[150px]">{user.name}</span>
                           </label>
                         </div>
                       ))}
@@ -335,7 +396,7 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
                         <AvatarImage src={user.image} alt={user.name} />
                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      {user.name}
+                      <span className="truncate max-w-[100px]">{user.name}</span>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -360,9 +421,30 @@ export const TimelineItemDetails: React.FC<TimelineItemDetailsProps> = ({
         )}
       </ScrollArea>
 
-      <div className="p-4 border-t flex justify-end">
-        <Button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save Changes'}
+      <div className="p-4 border-t flex justify-between">
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="sm" disabled={isLoading || storeLoading}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the timeline item.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <Button onClick={handleSubmit} disabled={isLoading || storeLoading}>
+          {isLoading || storeLoading ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
     </div>
