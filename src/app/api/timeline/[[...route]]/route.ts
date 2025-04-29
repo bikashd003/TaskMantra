@@ -160,6 +160,23 @@ app.post('/', async c => {
       .populate('users', 'name image')
       .populate('createdBy', 'name image');
 
+    // create notification for users
+    await Promise.all(
+      data.users.map(async (userId: string) => {
+        const user = await User.findById(userId);
+        if (user) {
+          await NotificationService.createNotification({
+            userId: user.id,
+            title: 'You have been assigned to a timeline item',
+            description: `You have been assigned to "${data.title}" by ${user.name}`,
+            type: 'task',
+            link: `/tasks?id=${timelineItem._id}`,
+            metadata: { taskId: timelineItem._id, assignedBy: user.name },
+          });
+        }
+      })
+    );
+
     return c.json({ timelineItem: populatedItem });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -199,6 +216,23 @@ app.patch('/:id', async c => {
       .populate('projectId', 'name color')
       .populate('users', 'name image')
       .populate('createdBy', 'name image');
+
+    // create notification for users
+    await Promise.all(
+      data.users.map(async (userId: string) => {
+        const user = await User.findById(userId);
+        if (user) {
+          await NotificationService.createNotification({
+            userId: user.id,
+            title: 'You have been assigned to a timeline item',
+            description: `You have been assigned to "${data.title}" by ${user.name}`,
+            type: 'task',
+            link: `/tasks?id=${timelineItem._id}`,
+            metadata: { taskId: timelineItem._id, assignedBy: user.name },
+          });
+        }
+      })
+    );
 
     return c.json({ timelineItem: updatedItem });
   } catch (error: any) {
