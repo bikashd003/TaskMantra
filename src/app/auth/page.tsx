@@ -1,11 +1,12 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SignIn from '@/components/auth/SignIn';
 import SignUp from '@/components/auth/SignUp';
 import { useSearchParams } from 'next/navigation';
 
-const PageContent = () => {
+// Inner component that uses useSearchParams
+function AuthContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
 
@@ -59,6 +60,28 @@ const PageContent = () => {
         <div className="h-[700px]"></div>
       </div>
     </div>
+  );
+}
+
+// Wrapper component with Suspense boundary
+const PageContent = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[#0F172A] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
+          <div className="w-full max-w-md relative">
+            <div className="absolute inset-0 bg-white/10 rounded-2xl backdrop-blur-xl border border-white/10 shadow-[0_0_1000px_rgba(120,119,198,0.3)] overflow-hidden">
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              </div>
+            </div>
+            <div className="h-[700px]"></div>
+          </div>
+        </div>
+      }
+    >
+      <AuthContent />
+    </Suspense>
   );
 };
 

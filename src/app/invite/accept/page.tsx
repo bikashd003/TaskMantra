@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,8 @@ interface InvitationDetails {
   invitedAt: string;
 }
 
-export default function AcceptInvitePage() {
+// Inner component that uses useSearchParams
+function InviteAcceptContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { status } = useSession();
@@ -237,5 +238,28 @@ export default function AcceptInvitePage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+// Wrapper component with Suspense boundary
+export default function AcceptInvitePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <CardTitle>Loading Invitation</CardTitle>
+              <CardDescription>Please wait while we load your invitation</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center py-8">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <InviteAcceptContent />
+    </Suspense>
   );
 }
