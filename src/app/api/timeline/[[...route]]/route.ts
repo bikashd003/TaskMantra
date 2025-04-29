@@ -7,6 +7,7 @@ import { Timeline } from '@/models/Timeline';
 import { Project } from '@/models/Project';
 import { connectDB } from '@/Utility/db';
 import { User } from '@/models/User';
+import { NotificationService } from '@/services/Notification.service';
 
 type Variables = {
   user?: {
@@ -21,7 +22,6 @@ const app = new Hono<{ Variables: Variables }>().basePath('/api/timeline');
 
 app.use('*', logger());
 
-// Middleware to inject user details
 app.use('*', async (c, next) => {
   try {
     const session = await getServerSession(authOptions);
@@ -41,7 +41,6 @@ app.use('*', async (c, next) => {
   await next();
 });
 
-// Get all timeline items
 app.get('/', async c => {
   const user = c.get('user');
 
@@ -52,23 +51,18 @@ app.get('/', async c => {
   try {
     await connectDB();
 
-    // Get query parameters
     const { projectId, status, startDate, endDate, search } = c.req.query();
 
-    // Build query
     const query: any = {};
 
-    // Filter by project if provided
     if (projectId) {
       query.projectId = projectId;
     }
 
-    // Filter by status if provided
     if (status && status !== 'all') {
       query.status = status;
     }
 
-    // Filter by date range if provided
     if (startDate && endDate) {
       query.$or = [
         {
@@ -86,7 +80,6 @@ app.get('/', async c => {
       ];
     }
 
-    // Search by title or description if provided
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -94,7 +87,6 @@ app.get('/', async c => {
       ];
     }
 
-    // Get timeline items
     const timelineItems = await Timeline.find(query)
       .populate('projectId', 'name color')
       .populate('users', 'name image')
@@ -107,7 +99,6 @@ app.get('/', async c => {
   }
 });
 
-// Get a single timeline item
 app.get('/:id', async c => {
   const user = c.get('user');
   const id = c.req.param('id');
@@ -135,7 +126,6 @@ app.get('/:id', async c => {
   }
 });
 
-// Create a new timeline item
 app.post('/', async c => {
   const user = c.get('user');
 
@@ -148,18 +138,15 @@ app.post('/', async c => {
 
     const data = await c.req.json();
 
-    // Validate required fields
     if (!data.title || !data.startDate || !data.endDate || !data.projectId) {
       return c.json({ error: 'Missing required fields' }, 400);
     }
 
-    // Check if project exists
     const project = await Project.findById(data.projectId);
     if (!project) {
       return c.json({ error: 'Project not found' }, 404);
     }
 
-    // Create timeline item
     const timelineItem = new Timeline({
       ...data,
       createdBy: user.id,
@@ -168,7 +155,6 @@ app.post('/', async c => {
 
     await timelineItem.save();
 
-    // Populate fields for response
     const populatedItem = await Timeline.findById(timelineItem._id)
       .populate('projectId', 'name color')
       .populate('users', 'name image')
@@ -180,7 +166,6 @@ app.post('/', async c => {
   }
 });
 
-// Update a timeline item
 app.patch('/:id', async c => {
   const user = c.get('user');
   const id = c.req.param('id');
@@ -193,15 +178,23 @@ app.patch('/:id', async c => {
     await connectDB();
 
     const data = await c.req.json();
-
-    // Find timeline item
     const timelineItem = await Timeline.findById(id);
 
     if (!timelineItem) {
       return c.json({ error: 'Timeline item not found' }, 404);
     }
 
-    // Update timeline item
+    if (typeof data.users === 'string') {
+      try {
+        data.users = JSON.parse(data.users);
+      } catch (parseError) {
+        return c.json({ error: 'Invalid users data format' }, 400);
+      }
+    }
+    if (Array.isArray(data.users)) {
+      data.users = data.users.map(user => user.id || user);
+    }
+
     const updatedItem = await Timeline.findByIdAndUpdate(id, { ...data }, { new: true })
       .populate('projectId', 'name color')
       .populate('users', 'name image')
@@ -213,7 +206,6 @@ app.patch('/:id', async c => {
   }
 });
 
-// Delete a timeline item
 app.delete('/:id', async c => {
   const user = c.get('user');
   const id = c.req.param('id');
@@ -224,15 +216,11 @@ app.delete('/:id', async c => {
 
   try {
     await connectDB();
-
-    // Find timeline item
     const timelineItem = await Timeline.findById(id);
 
     if (!timelineItem) {
       return c.json({ error: 'Timeline item not found' }, 404);
     }
-
-    // Delete timeline item
     await Timeline.findByIdAndDelete(id);
 
     return c.json({ success: true });
@@ -241,7 +229,6 @@ app.delete('/:id', async c => {
   }
 });
 
-// Get users for assignment
 app.get('/users/:projectId', async c => {
   const user = c.get('user');
   const projectId = c.req.param('projectId');
@@ -252,15 +239,11 @@ app.get('/users/:projectId', async c => {
 
   try {
     await connectDB();
-
-    // Find project
     const project = await Project.findById(projectId);
 
     if (!project) {
       return c.json({ error: 'Project not found' }, 404);
     }
-
-    // Get organization members
     const users = await User.find({ organizationId: project.organizationId }).select('name image');
 
     return c.json({ users });

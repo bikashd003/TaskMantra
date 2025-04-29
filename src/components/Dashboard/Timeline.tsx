@@ -4,7 +4,15 @@
 
 import React, { useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CheckCircle, Clock, Circle, ChevronDown, Filter, PlusCircle } from 'lucide-react';
+import {
+  CheckCircle,
+  Clock,
+  Circle,
+  ChevronDown,
+  Filter,
+  PlusCircle,
+  AlertTriangle,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,17 +63,17 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
         icon: <Clock className="w-4 h-4" />,
         label: 'In Progress',
       },
-      done: {
+      completed: {
         badge: 'bg-success/10 text-success border-success/20',
         ring: 'border-success ring-success/30',
         icon: <CheckCircle className="w-4 h-4" />,
         label: 'Completed',
       },
-      pending: {
+      planned: {
         badge: 'bg-muted/50 text-muted-foreground border-muted',
         ring: 'border-muted-foreground ring-muted-foreground/30',
         icon: <Circle className="w-4 h-4" />,
-        label: 'Pending',
+        label: 'Planned',
       },
     };
     return configs[status];
@@ -86,7 +94,7 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
             'border-[3px] bg-background z-10 transition-all duration-300',
             'group-hover:scale-125 group-hover:ring-2 group-hover:ring-offset-2',
             'ring-offset-background shadow-md',
-            statusConfig.ring
+            statusConfig?.ring
           )}
         />
 
@@ -123,11 +131,11 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
                         'px-3 py-1 rounded-full text-sm font-medium',
                         'flex items-center gap-1.5 whitespace-nowrap',
                         'border shadow-sm shrink-0',
-                        statusConfig.badge
+                        statusConfig?.badge
                       )}
                     >
-                      {statusConfig.icon}
-                      <span className="hidden sm:inline">{statusConfig.label}</span>
+                      {statusConfig?.icon}
+                      <span className="hidden sm:inline">{statusConfig?.label}</span>
                     </div>
                   </div>
                 </div>
@@ -159,11 +167,11 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem
-                      onClick={() => handleStatusChange(item.id, 'pending')}
+                      onClick={() => handleStatusChange(item.id, 'planned')}
                       className="flex items-center gap-2"
                     >
                       <Circle className="w-4 h-4" />
-                      Set as Pending
+                      Set as Planned
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleStatusChange(item.id, 'in_progress')}
@@ -173,11 +181,18 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
                       Set as In Progress
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleStatusChange(item.id, 'done')}
+                      onClick={() => handleStatusChange(item.id, 'completed')}
                       className="flex items-center gap-2"
                     >
                       <CheckCircle className="w-4 h-4" />
                       Set as Completed
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleStatusChange(item.id, 'delayed')}
+                      className="flex items-center gap-2"
+                    >
+                      <AlertTriangle className="w-4 h-4" />
+                      Set as Delayed
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -325,22 +340,25 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
                 <DropdownMenuItem onClick={() => handleFilterChange('all')}>
                   All Items
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleFilterChange('pending')}>
-                  Pending
+                <DropdownMenuItem onClick={() => handleFilterChange('planned')}>
+                  Planned
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleFilterChange('in_progress')}>
                   In Progress
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleFilterChange('done')}>
+                <DropdownMenuItem onClick={() => handleFilterChange('completed')}>
                   Completed
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleFilterChange('delayed')}>
+                  Delayed
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </CardHeader>
 
-        <CardContent className="h-[calc(100%-5rem)]">
-          <ScrollArea className="h-full pr-4 -mr-4">
+        <CardContent className="p-0 h-full overflow-auto">
+          <ScrollArea className="h-[calc(100vh-27vh)]">
             <div className="relative pl-8 space-y-6 pb-6">
               {/* Vertical Timeline Line */}
               <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-border/50" />

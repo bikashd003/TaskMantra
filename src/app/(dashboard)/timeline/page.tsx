@@ -65,6 +65,7 @@ export default function TimelinePage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
   const [viewMode, setViewMode] = useState<'timeline' | 'gantt'>('timeline');
+  const [isEdit, setIsEdit] = useState(false);
   const getFilters = useCallback(() => {
     const filters: any = {};
     if (selectedProject) filters.projectId = selectedProject;
@@ -184,6 +185,7 @@ export default function TimelinePage() {
           description: 'Timeline item updated successfully',
           variant: 'success',
         });
+        setIsEdit(false);
 
         if (
           selectedItem &&
@@ -500,7 +502,6 @@ export default function TimelinePage() {
                   isLoading={isLoading}
                   projects={projects?.projects || []}
                   onItemClick={handleItemClick}
-                  onItemEdit={handleItemClick}
                   onItemDelete={handleDeleteTimelineItem}
                   onStatusChange={handleStatusChange}
                 />
@@ -515,8 +516,6 @@ export default function TimelinePage() {
           </AnimatePresence>
         </CardContent>
       </Card>
-
-      {/* Create Timeline Item Modal */}
       <TimelineForm
         onSubmit={handleCreateTimelineItem}
         projects={formatedProjects}
@@ -525,16 +524,14 @@ export default function TimelinePage() {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
       />
-
-      {/* Timeline Item Details Sidebar */}
       <AnimatePresence>
         {selectedItem && (
           <RightSidebar
             isOpen={!!selectedItem}
             onClose={() => setSelectedItem(null)}
-            title="Timeline Item Details"
-            onEdit={() => {}}
+            title="Timeline Details"
             onDelete={() => handleDeleteTimelineItem(selectedItem._id || selectedItem.id)}
+            onEdit={() => setIsEdit(prev => !prev)}
           >
             <TimelineItemDetails
               item={selectedItem}
@@ -542,7 +539,7 @@ export default function TimelinePage() {
               users={users}
               onClose={() => setSelectedItem(null)}
               onUpdate={handleUpdateTimelineItem}
-              onDelete={handleDeleteTimelineItem}
+              isEdit={isEdit}
             />
           </RightSidebar>
         )}

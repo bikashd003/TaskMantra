@@ -8,6 +8,7 @@ import { authOptions } from '../../auth/[...nextauth]/options';
 import { Organization } from '@/models/organization';
 import { uploadToCloudinary } from '@/Utility/cloudinary';
 import { NotificationService } from '@/services/Notification.service';
+import { User } from '@/models/User';
 
 const app = new Hono().basePath('/api/onboarding');
 
@@ -106,6 +107,9 @@ app.post('/organization', async (c: any) => {
         },
       ],
     });
+
+    // Update the user's organizationId
+    await User.findByIdAndUpdate(user.id, { organizationId: organization._id });
 
     // Create onboarding notification for the user
     await NotificationService.createOnboardingNotification(user.id, name);

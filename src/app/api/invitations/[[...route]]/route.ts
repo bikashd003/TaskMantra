@@ -105,6 +105,9 @@ app.post('/accept', async (c: any) => {
     invitation.status = 'accepted';
     await invitation.save();
 
+    // Update user's organizationId
+    await User.findByIdAndUpdate(user.id, { organizationId: organization._id });
+
     // Create onboarding notification for the user
     await NotificationService.createOnboardingNotification(user.id, organization.name);
 

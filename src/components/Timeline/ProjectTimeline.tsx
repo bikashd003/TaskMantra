@@ -1,6 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +12,6 @@ import {
   Clock,
   AlertTriangle,
   Circle,
-  Edit,
   MoreHorizontal,
   Trash2,
   Calendar,
@@ -60,7 +58,6 @@ interface ProjectTimelineProps {
   isLoading: boolean;
   projects: Project[];
   onItemClick?: (item: TimelineItem) => void;
-  onItemEdit?: (item: TimelineItem) => void;
   onItemDelete?: (id: string) => Promise<void>;
   onStatusChange?: (id: string, status: TimelineItem['status']) => Promise<void>;
 }
@@ -70,39 +67,36 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
   isLoading,
   projects,
   onItemClick,
-  onItemEdit,
   onItemDelete,
   onStatusChange,
 }) => {
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-
   const getStatusConfig = (status: TimelineItem['status']) => {
     switch (status) {
       case 'completed':
         return {
           ring: 'border-emerald-500',
-          badge: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
+          badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
           icon: <CheckCircle className="w-4 h-4 mr-1" />,
           label: 'Completed',
         };
       case 'in_progress':
         return {
           ring: 'border-blue-500',
-          badge: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+          badge: 'bg-blue-50 text-blue-700 border-blue-200',
           icon: <Clock className="w-4 h-4 mr-1" />,
           label: 'In Progress',
         };
       case 'delayed':
         return {
           ring: 'border-amber-500',
-          badge: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+          badge: 'bg-amber-50 text-amber-700 border-amber-200',
           icon: <AlertTriangle className="w-4 h-4 mr-1" />,
           label: 'Delayed',
         };
       default:
         return {
           ring: 'border-slate-400',
-          badge: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100',
+          badge: 'bg-slate-50 text-slate-700 border-slate-200',
           icon: <Circle className="w-4 h-4 mr-1" />,
           label: 'Planned',
         };
@@ -164,32 +158,25 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
     const statusConfig = getStatusConfig(item.status);
     const project = projects.find(p => p.id === item.projectId || p._id === item.projectId);
     const itemId = item._id || item.id;
-    const isHovered = hoveredItem === itemId;
 
     // Format dates to be more readable
     const formattedStartDate = format(new Date(item.startDate), 'MMM d, yyyy');
     const formattedEndDate = format(new Date(item.endDate), 'MMM d, yyyy');
 
     return (
-      <div
-        className="relative group"
-        onMouseEnter={() => setHoveredItem(itemId)}
-        onMouseLeave={() => setHoveredItem(null)}
-      >
+      <div className="relative group">
         {/* Timeline node */}
         <div
           className={cn(
             'absolute -left-6 top-8 w-4 h-4 rounded-full',
-            'border-[3px] bg-background z-10 transition-all duration-300',
-            'group-hover:scale-150 group-hover:shadow-[0_0_0_4px_rgba(0,0,0,0.05)]',
+            'border-[3px] bg-background z-10',
             statusConfig.ring
           )}
         />
 
         <Card
           className={cn(
-            'ml-4 transition-all duration-200 overflow-hidden',
-            isHovered ? 'shadow-lg transform translate-x-1' : 'shadow-sm',
+            'ml-4 overflow-hidden shadow-sm',
             item.status === 'completed' && 'border-emerald-200',
             item.status === 'delayed' && 'border-amber-200'
           )}
@@ -217,7 +204,7 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
                       {statusConfig.label}
                     </Badge>
 
-                    {(onItemEdit || onItemDelete || onStatusChange) && (
+                    {(onItemDelete || onStatusChange) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -229,18 +216,6 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          {onItemEdit && (
-                            <DropdownMenuItem
-                              onClick={e => {
-                                e.stopPropagation();
-                                onItemEdit(item);
-                              }}
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Item
-                            </DropdownMenuItem>
-                          )}
-
                           {onStatusChange && (
                             <>
                               <DropdownMenuSeparator />
@@ -379,7 +354,7 @@ export const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
                     <TooltipProvider key={user.id}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Avatar className="w-9 h-9 border-2 border-white shadow-sm transition-transform hover:scale-110">
+                          <Avatar className="w-9 h-9 border-2 border-white shadow-sm">
                             <AvatarImage src={user.avatar || user.image} alt={user.name} />
                             <AvatarFallback className="bg-gradient-to-br from-slate-700 to-slate-900 text-white font-medium">
                               {user.name.charAt(0)}

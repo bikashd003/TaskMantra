@@ -9,7 +9,7 @@ export interface FrontendTimelineItem {
   description?: string;
   startDate: string;
   endDate: string;
-  status: 'pending' | 'in_progress' | 'done';
+  status: 'planned' | 'in_progress' | 'completed' | 'delayed';
   projectId?: string;
   progress?: number;
   color?: string;
@@ -49,12 +49,12 @@ const mapStatusToFrontend = (
   backendStatus: BackendTimelineItem['status']
 ): FrontendTimelineItem['status'] => {
   const statusMap: Record<BackendTimelineItem['status'], FrontendTimelineItem['status']> = {
-    planned: 'pending',
+    planned: 'planned',
     in_progress: 'in_progress',
-    completed: 'done',
-    delayed: 'pending',
+    completed: 'completed',
+    delayed: 'delayed',
   };
-  return statusMap[backendStatus] || 'pending';
+  return statusMap[backendStatus] || 'planned';
 };
 
 // Convert frontend status to backend status
@@ -62,9 +62,10 @@ const mapStatusToBackend = (
   frontendStatus: FrontendTimelineItem['status']
 ): BackendTimelineItem['status'] => {
   const statusMap: Record<FrontendTimelineItem['status'], BackendTimelineItem['status']> = {
-    pending: 'planned',
+    planned: 'planned',
     in_progress: 'in_progress',
-    done: 'completed',
+    completed: 'completed',
+    delayed: 'delayed',
   };
   return statusMap[frontendStatus];
 };

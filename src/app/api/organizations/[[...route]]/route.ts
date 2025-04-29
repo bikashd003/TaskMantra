@@ -46,7 +46,6 @@ app.get('/', async c => {
   }
 
   try {
-    // Use the $elemMatch operator to correctly match the userId in the members array
     const organization = await Organization.findOne({
       'members.userId': user.id,
     }).populate('members.userId');
