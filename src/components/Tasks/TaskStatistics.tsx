@@ -1,14 +1,30 @@
-"use client";
+'use client';
 
 import React, { useMemo } from 'react';
 import { Task } from './types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,DialogDescription } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import {  Activity, CheckCircle, Clock, Calendar, AlertCircle, BarChart3 } from 'lucide-react';
-import {  isAfter, isBefore, isToday, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { Activity, CheckCircle, Clock, Calendar, AlertCircle, BarChart3 } from 'lucide-react';
+import {
+  isAfter,
+  isBefore,
+  isToday,
+  addDays,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+} from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface TaskStatisticsProps {
@@ -46,22 +62,15 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
       const dueDate = new Date(task.dueDate);
       dueDate.setHours(0, 0, 0, 0);
       const threeDaysFromNow = addDays(today, 3);
-      return isAfter(dueDate, today) && isBefore(dueDate, threeDaysFromNow) && task.status !== 'Completed';
+      return (
+        isAfter(dueDate, today) &&
+        isBefore(dueDate, threeDaysFromNow) &&
+        task.status !== 'Completed'
+      );
     }).length;
 
     // Calculate completion rate
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-    // Calculate tasks by category
-    const categories: Record<string, number> = {};
-    tasks.forEach(task => {
-      if (task.category) {
-        categories[task.category] = (categories[task.category] || 0) + 1;
-      } else {
-        categories['Uncategorized'] = (categories['Uncategorized'] || 0) + 1;
-      }
-    });
-
     // Calculate tasks by project
     const projects: Record<string, number> = {};
     tasks.forEach(task => {
@@ -101,10 +110,9 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
       dueToday,
       dueSoon,
       completionRate,
-      categories,
       projects,
       tasksThisWeek,
-      tasksThisMonth
+      tasksThisMonth,
     };
   }, [tasks]);
 
@@ -113,20 +121,14 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
     { name: 'To Do', value: stats.todo, color: 'bg-gray-400' },
     { name: 'In Progress', value: stats.inProgress, color: 'bg-blue-500' },
     { name: 'Review', value: stats.review, color: 'bg-amber-500' },
-    { name: 'Completed', value: stats.completed, color: 'bg-green-500' }
+    { name: 'Completed', value: stats.completed, color: 'bg-green-500' },
   ];
 
   const priorityData = [
     { name: 'High', value: stats.highPriority, color: 'bg-red-500' },
     { name: 'Medium', value: stats.mediumPriority, color: 'bg-amber-500' },
-    { name: 'Low', value: stats.lowPriority, color: 'bg-green-500' }
+    { name: 'Low', value: stats.lowPriority, color: 'bg-green-500' },
   ];
-
-  const categoryData = Object.entries(stats.categories).map(([name, value]) => ({
-    name,
-    value,
-    color: `bg-${['blue', 'green', 'purple', 'pink', 'indigo', 'teal', 'orange', 'red'][Math.floor(Math.random() * 8)]}-500`
-  }));
 
   return (
     <Dialog>
@@ -138,9 +140,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>Task Statistics & Reports</DialogTitle>
-          <DialogDescription>
-            View statistics and reports for your tasks
-          </DialogDescription>
+          <DialogDescription>View statistics and reports for your tasks</DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="overview">
@@ -160,7 +160,9 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Tasks</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Total Tasks
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
                   <div className="text-2xl font-bold">{stats.total}</div>
@@ -169,7 +171,9 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
 
               <Card>
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Completion Rate</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Completion Rate
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
                   <div className="text-2xl font-bold">{stats.completionRate}%</div>
@@ -179,7 +183,9 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
 
               <Card>
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Overdue</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Overdue
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
                   <div className="text-2xl font-bold text-red-500">{stats.overdue}</div>
@@ -188,7 +194,9 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
 
               <Card>
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Due Today</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Due Today
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
                   <div className="text-2xl font-bold text-amber-500">{stats.dueToday}</div>
@@ -277,30 +285,6 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
                   </div>
                 </CardContent>
               </Card>
-
-              <Card>
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium">Categories</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="space-y-2">
-                    {categoryData.slice(0, 5).map(item => (
-                      <div key={item.name} className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className={`w-3 h-3 rounded-full ${item.color} mr-2`}></div>
-                          <span className="text-sm">{item.name}</span>
-                        </div>
-                        <span className="text-sm font-medium">{item.value}</span>
-                      </div>
-                    ))}
-                    {categoryData.length > 5 && (
-                      <div className="text-xs text-center text-muted-foreground">
-                        +{categoryData.length - 5} more categories
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
 
@@ -327,13 +311,15 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{item.value}</span>
                               <span className="text-xs text-muted-foreground">
-                                ({stats.total > 0 ? Math.round((item.value / stats.total) * 100) : 0}%)
+                                (
+                                {stats.total > 0 ? Math.round((item.value / stats.total) * 100) : 0}
+                                %)
                               </span>
                             </div>
                           </div>
                           <Progress
                             value={stats.total > 0 ? (item.value / stats.total) * 100 : 0}
-                            className={cn("h-2", item.color.replace('bg-', 'bg-opacity-80 bg-'))}
+                            className={cn('h-2', item.color.replace('bg-', 'bg-opacity-80 bg-'))}
                           />
                         </div>
                       ))}
@@ -359,9 +345,15 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
                     <div className="grid grid-cols-3 gap-4">
                       {priorityData.map(item => (
                         <div key={item.name} className="flex flex-col items-center">
-                          <div className={`w-full aspect-square rounded-full ${item.color} bg-opacity-20 flex items-center justify-center relative`}>
-                            <div className={`absolute inset-[10%] rounded-full ${item.color} bg-opacity-40 flex items-center justify-center`}>
-                              <div className={`absolute inset-[20%] rounded-full ${item.color} flex items-center justify-center text-white font-bold text-xl`}>
+                          <div
+                            className={`w-full aspect-square rounded-full ${item.color} bg-opacity-20 flex items-center justify-center relative`}
+                          >
+                            <div
+                              className={`absolute inset-[10%] rounded-full ${item.color} bg-opacity-40 flex items-center justify-center`}
+                            >
+                              <div
+                                className={`absolute inset-[20%] rounded-full ${item.color} flex items-center justify-center text-white font-bold text-xl`}
+                              >
                                 {item.value}
                               </div>
                             </div>

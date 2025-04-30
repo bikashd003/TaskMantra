@@ -288,7 +288,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         assignedTo: [],
         comments: [],
         dependencies: [],
-        tags: [],
         completed: false,
       };
       onAddTask(newTask);

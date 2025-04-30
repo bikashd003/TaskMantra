@@ -224,14 +224,6 @@ const PrintCalendarView: React.FC<PrintCalendarViewProps> = ({ tasks, currentDat
                               'p-1 truncate border-l-2 rounded-sm',
                               getTaskStatusColor(task.status)
                             )}
-                            style={
-                              task.color
-                                ? {
-                                    borderLeftColor: task.color,
-                                    backgroundColor: `${task.color}10`,
-                                  }
-                                : undefined
-                            }
                           >
                             {task.name}
                           </div>
@@ -278,7 +270,6 @@ const PrintCalendarView: React.FC<PrintCalendarViewProps> = ({ tasks, currentDat
                                   task.status === 'Review' && 'bg-amber-400',
                                   task.status === 'Completed' && 'bg-green-400'
                                 )}
-                                style={task.color ? { backgroundColor: task.color } : undefined}
                               ></div>
                               <div className="flex-grow">
                                 <div className="flex items-center justify-between">
@@ -291,11 +282,6 @@ const PrintCalendarView: React.FC<PrintCalendarViewProps> = ({ tasks, currentDat
                                       task.status === 'Review' && 'bg-amber-100 text-amber-700',
                                       task.status === 'Completed' && 'bg-green-100 text-green-700'
                                     )}
-                                    style={
-                                      task.color
-                                        ? { backgroundColor: `${task.color}20`, color: task.color }
-                                        : undefined
-                                    }
                                   >
                                     {task.status}
                                   </div>

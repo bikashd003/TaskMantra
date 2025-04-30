@@ -37,7 +37,6 @@ const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({ tasks, onTask
       name: task.name,
       status: task.status,
       priority: task.priority,
-      color: task.color,
     }));
 
     const links: Link[] = [];
