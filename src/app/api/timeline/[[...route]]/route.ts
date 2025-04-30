@@ -15,6 +15,7 @@ type Variables = {
     name?: string;
     email?: string;
     image?: string;
+    organizationId?: string;
   };
 };
 
@@ -32,6 +33,7 @@ app.use('*', async (c, next) => {
         name: session.user.name || '',
         email: session.user.email || '',
         image: session.user.image || '',
+        organizationId: session.user.organizationId || '',
       };
       c.set('user', userData);
     }
@@ -150,7 +152,7 @@ app.post('/', async c => {
     const timelineItem = new Timeline({
       ...data,
       createdBy: user.id,
-      organizationId: project.organizationId,
+      organizationId: user.organizationId,
     });
 
     await timelineItem.save();

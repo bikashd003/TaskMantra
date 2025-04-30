@@ -56,7 +56,7 @@ const createProjectController = async c => {
     if (!user) {
       return c.json({ error: 'User not authenticated' }, 401);
     }
-    const result = await createProject(body, user.id);
+    const result = await createProject(body, user.id, user.organizationId);
     if (result instanceof Error) {
       return c.json({ error: result.message }, 500);
     }

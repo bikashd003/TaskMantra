@@ -3,8 +3,10 @@ import { connectDB } from '@/Utility/db';
 import { Project } from '@/models/Project';
 import { ProjectMembers } from '@/models/ProjectMembers';
 import { Task } from '@/models/Task';
+import { User } from '@/models/User';
+import { NotificationService } from '@/services/Notification.service';
 
-const createProject = async (data: any, id: string) => {
+const createProject = async (data: any, id: string, organizationId: string) => {
   try {
     await connectDB();
     const { name, description, status, priority, tasks, files } = data;
@@ -23,6 +25,7 @@ const createProject = async (data: any, id: string) => {
         subtasks: task.subtasks,
         comments: task.comments,
         createdBy: id,
+        organizationId: organizationId,
       };
     });
     const createdTasks = await Task.insertMany(formatedTasks);
@@ -48,17 +51,37 @@ const createProject = async (data: any, id: string) => {
       ownerId: id,
       status,
       priority,
-      history: [], // Initialize with empty array
+      history: [],
       tasks: createdTasks.map((task: any) => task._id),
       files: formatedFiles,
+      organizationId: organizationId,
     });
     const res = await newProject.save();
+    // create notification for assignedTo
+    await Promise.all(
+      formatedTasks.map(async (task: any) => {
+        await Promise.all(
+          task.assignedTo.map(async (userId: string) => {
+            const user = await User.findById(userId);
+            if (user) {
+              await NotificationService.createNotification({
+                userId: user.id,
+                title: 'You have been assigned to a task',
+                description: `You have been assigned to "${task.name}" by ${user.name}`,
+                type: 'task',
+                link: `/tasks?id=${task._id}`,
+                metadata: { taskId: task._id, assignedBy: user.name },
+              });
+            }
+          })
+        );
+      })
+    );
     // update those tasks with project id
     await Task.updateMany(
       { _id: { $in: createdTasks.map((task: any) => task._id) } },
       { $set: { projectId: res._id } }
     );
-    // create project members
     const additionalMembers =
       tasks.length > 0
         ? formatedTasks.flatMap((task: any) => {
@@ -74,14 +97,12 @@ const createProject = async (data: any, id: string) => {
             }));
           })
         : [];
-
-    // Remove duplicates based on userId
     const uniqueMembers = [
       {
         userId: id,
         role: 'Project Admin',
         invitedAt: new Date(),
-        acceptedAt: new Date(), // Project creator automatically accepts
+        acceptedAt: new Date(),
       },
       ...additionalMembers.filter(
         (member, index, self) => index === self.findIndex(m => m.userId === member.userId)
@@ -143,10 +164,52 @@ const getTaskById = async (taskId: string, userId: string) => {
 const updateTask = async (taskId: string, data: any) => {
   try {
     await connectDB();
-    const task = await Task.findByIdAndUpdate(taskId, data);
-    if (!task) {
+    const originalTask = await Task.findById(taskId);
+    if (!originalTask) {
       throw new Error('Task not found');
     }
+    const task = await Task.findByIdAndUpdate(taskId, data, { new: true });
+
+    const originalAssignees = originalTask.assignedTo.map(id => id.toString());
+    const newAssignees = data.assignedTo || [];
+
+    const addedAssignees = newAssignees.filter(id => !originalAssignees.includes(id.toString()));
+    await Promise.all(
+      addedAssignees.map(async (userId: string) => {
+        const user = await User.findById(userId);
+        if (user) {
+          await NotificationService.createNotification({
+            userId: user.id,
+            title: 'You have been assigned to a task',
+            description: `You have been assigned to "${data.name || originalTask.name}" by ${user.name}`,
+            type: 'task',
+            link: `/tasks?id=${task._id}`,
+            metadata: { taskId: task._id, assignedBy: user.name },
+          });
+        }
+      })
+    );
+
+    await Promise.all(
+      originalAssignees.map(async (userId: string) => {
+        if (!newAssignees.includes(userId) && !addedAssignees.includes(userId)) {
+          return;
+        }
+
+        const user = await User.findById(userId);
+        if (user) {
+          await NotificationService.createNotification({
+            userId: user.id,
+            title: 'Task has been updated',
+            description: `The task "${data.name || originalTask.name}" has been updated`,
+            type: 'task',
+            link: `/tasks?id=${task._id}`,
+            metadata: { taskId: task._id, action: 'updated' },
+          });
+        }
+      })
+    );
+
     return task;
   } catch (error: any) {
     return error;

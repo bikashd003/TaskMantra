@@ -4,6 +4,9 @@ import { logger } from 'hono/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/options';
 import { Task } from '@/models/Task';
+import { NotificationService } from '@/services/Notification.service';
+import { User } from '@/models/User';
+import { Project } from '@/models/Project';
 
 type Variables = {
   user?: {
@@ -11,6 +14,7 @@ type Variables = {
     name?: string;
     email?: string;
     image?: string;
+    organizationId?: string;
   };
 };
 
@@ -29,6 +33,7 @@ app.use('*', async (c, next) => {
         name: session.user.name || '',
         email: session.user.email || '',
         image: session.user.image || '',
+        organizationId: session.user.organizationId || '',
       };
       c.set('user', userData);
     }
@@ -54,7 +59,7 @@ app.get('/', async c => {
     const toDate = c.req.query('toDate');
     const assignedTo = c.req.query('assignedTo');
 
-    const query: any = {};
+    const query: any = { organizationId: user.organizationId };
 
     if (searchQuery) {
       const searchTerms = searchQuery
@@ -161,8 +166,31 @@ app.post('/', async c => {
 
   try {
     const taskData = await c.req.json();
-    const task = new Task({ ...taskData, createdBy: user.id });
+    const task = new Task({ ...taskData, createdBy: user.id, organizationId: user.organizationId });
     await task.save();
+    //create notification for assignedTo
+    await Promise.all(
+      task.assignedTo.map(async (userId: string) => {
+        const user = await User.findById(userId);
+        if (user) {
+          await NotificationService.createNotification({
+            userId: user.id,
+            title: 'You have been assigned to a task',
+            description: `You have been assigned to "${task.name}" by ${user.name}`,
+            type: 'task',
+            link: `/tasks?id=${task._id}`,
+            metadata: { taskId: task._id, assignedBy: user.name },
+          });
+        }
+      })
+    );
+
+    // save task id to Project collection if projectId is provided
+    if (taskData.projectId) {
+      await Project.findByIdAndUpdate(taskData.projectId, {
+        $push: { tasks: task._id },
+      });
+    }
     return c.json({ task });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -225,7 +253,7 @@ app.get('/:period', async c => {
         $gte: startDate,
         $lte: endDate,
       },
-      createdBy: user.id,
+      organizationId: user.organizationId,
     })
       .populate('assignedTo')
       .sort({ dueDate: 1 });
@@ -247,6 +275,12 @@ app.patch('/:taskId', async c => {
   try {
     const taskData = await c.req.json();
     const task = await Task.findByIdAndUpdate(taskId, taskData, { new: true });
+    // push task id to Project collection if projectId is provided
+    if (taskData.projectId) {
+      await Project.findByIdAndUpdate(taskData.projectId, {
+        $addToSet: { tasks: task._id },
+      });
+    }
     return c.json({ task });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
