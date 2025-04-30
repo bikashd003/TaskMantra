@@ -21,13 +21,12 @@ export interface Subtask {
 
 export interface User {
   id: string;
+  _id?: string;
   name: string;
-  avatar?: string;
-  initials?: string;
+  image?: string;
 }
 
 import React from 'react';
-import { RecurringTaskInfo } from './types/RecurringTask';
 
 export interface CalendarMetadata {
   isStartDate: boolean;
@@ -54,13 +53,8 @@ export interface Task {
   comments: Comment[];
   assignedTo: User[];
   completed: boolean;
-  tags?: string[];
   createdAt?: Date;
   updatedAt?: Date;
-  color?: string; // For color coding tasks
-  category?: string; // For categorizing tasks
-  recurring?: RecurringTaskInfo; // For recurring tasks
-  _calendarMeta?: CalendarMetadata; // Metadata for calendar rendering
 }
 
 export interface TaskCardProps {

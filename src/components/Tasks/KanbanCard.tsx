@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, CheckCircle2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TaskCardProps } from './types';
@@ -154,13 +153,11 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
               {/* Assigned users and tags */}
               <div className="flex items-center justify-between">
                 <div className="flex -space-x-2 cursor-default" onClick={preventDragHandling}>
-                  {task.assignedTo && task.assignedTo.length > 0 ? (
-                    task.assignedTo.slice(0, 3).map((user, index) => (
+                  {task?.assignedTo && task?.assignedTo?.length > 0 ? (
+                    task.assignedTo?.slice(0, 3).map((user, index) => (
                       <Avatar key={index} className="h-6 w-6 border-2 border-background">
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback className="text-xs">
-                          {user.initials || user.name.charAt(0)}
-                        </AvatarFallback>
+                        <AvatarImage src={user?.image} alt={user?.name} />
+                        <AvatarFallback className="text-xs">{user?.name?.charAt(0)}</AvatarFallback>
                       </Avatar>
                     ))
                   ) : (
@@ -168,22 +165,14 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
                       <AvatarFallback className="text-xs">UA</AvatarFallback>
                     </Avatar>
                   )}
-                  {task.assignedTo && task.assignedTo.length > 3 && (
+                  {task?.assignedTo && task?.assignedTo?.length > 3 && (
                     <Avatar className="h-6 w-6 border-2 border-background">
                       <AvatarFallback className="text-xs">
-                        +{task.assignedTo.length - 3}
+                        +{task?.assignedTo?.length - 3}
                       </AvatarFallback>
                     </Avatar>
                   )}
                 </div>
-                {(task?.tags ?? []).length > 0 && (
-                  <div onClick={preventDragHandling} className="cursor-default">
-                    <Badge variant="secondary" className="text-xs">
-                      {(task?.tags ?? [])[0]}
-                      {(task?.tags ?? []).length > 1 && `+${(task?.tags ?? []).length - 1}`}
-                    </Badge>
-                  </div>
-                )}
               </div>
             </CardContent>
           ) : (

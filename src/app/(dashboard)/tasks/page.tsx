@@ -50,7 +50,6 @@ export default function TasksPage() {
         comments: apiTask.comments || [],
         assignedTo: apiTask.assignedTo || [],
         completed: apiTask.completed || false,
-        tags: apiTask.tags || [],
         createdAt: apiTask.createdAt ? new Date(apiTask.createdAt) : undefined,
         updatedAt: apiTask.updatedAt ? new Date(apiTask.updatedAt) : undefined,
       }));
@@ -143,13 +142,12 @@ export default function TasksPage() {
         estimatedTime: taskData.estimatedTime || 0,
         loggedTime: taskData.loggedTime || 0,
         createdBy: '',
-        projectId: null, //TODO: get project id from created project dropdown
+        projectId: null,
         dependencies: taskData.dependencies || [],
         assignedTo: taskData.assignedTo || [],
         subtasks: taskData.subtasks || [],
         comments: taskData.comments || [],
         completed: taskData.completed || false,
-        tags: taskData.tags || [],
       });
     },
     [createTaskMutation]
@@ -203,7 +201,6 @@ export default function TasksPage() {
             status: taskData.status as TaskStatus,
             priority: taskData.priority as TaskPriority,
             assignedTo: taskData.assignedTo || [],
-            tags: taskData.tags || [],
             projectId: taskData.projectId || '',
           })
         }

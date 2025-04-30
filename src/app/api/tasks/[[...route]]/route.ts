@@ -128,7 +128,7 @@ app.get('/', async c => {
     const sort: any = {};
     sort[sortField] = sortDirection === 'asc' ? 1 : -1;
 
-    const tasks = await Task.find(query).sort(sort);
+    const tasks = await Task.find(query).populate('assignedTo').sort(sort);
 
     return c.json({ tasks });
   } catch (error: any) {
@@ -145,7 +145,7 @@ app.get('/get-task/:taskId', async c => {
   }
 
   try {
-    const task = await Task.findById(taskId);
+    const task = await Task.findById(taskId).populate('assignedTo');
     return c.json({ task });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
@@ -226,7 +226,9 @@ app.get('/:period', async c => {
         $lte: endDate,
       },
       createdBy: user.id,
-    }).sort({ dueDate: 1 });
+    })
+      .populate('assignedTo')
+      .sort({ dueDate: 1 });
 
     return c.json({ tasks });
   } catch (error: any) {

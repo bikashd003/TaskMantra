@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { connectDB } from '@/Utility/db';
 import { User } from '@/models/User';
 import { AuthOptions } from 'next-auth';
+import { Organization } from '@/models/organization';
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -90,10 +91,10 @@ export const authOptions: AuthOptions = {
         };
         try {
           await connectDB();
-          const dbUser = await User.findById(token.id).populate('organization');
+          const organization = await Organization.findOne({ 'members.userId': token.id });
 
-          if (dbUser?.organization?._id) {
-            session.user.organizationId = dbUser.organization._id.toString();
+          if (organization) {
+            session.user.organizationId = organization._id.toString();
           } else {
             session.user.organizationId = null;
           }
