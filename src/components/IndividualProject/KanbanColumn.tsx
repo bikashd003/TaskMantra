@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
+import { KanbanColumn as KanbanColumnType } from '@/services/KanbanSettings.service';
 interface ColumnProps {
   column: ColumnType;
   cards: CardType[];
@@ -21,6 +21,14 @@ interface ColumnProps {
   isHighlighted?: boolean;
   onDeleteColumn?: (columnId: string) => void;
 }
+type ColumnDefinition = KanbanColumnType;
+
+const defaultColumns: ColumnDefinition[] = [
+  { id: 'todo', title: 'To Do', order: 0 },
+  { id: 'inProgress', title: 'In Progress', order: 1 },
+  { id: 'review', title: 'Review', order: 2 },
+  { id: 'completed', title: 'Completed', order: 3 },
+];
 
 export function Column({
   column,
@@ -55,29 +63,40 @@ export function Column({
   return (
     <div
       ref={setNodeRef}
-      style={style}
-      className={`flex flex-col bg-white rounded-lg w-80 h-full flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-300
+      className={`flex flex-col select-none bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300
         ${
           currentlyDragging
-            ? 'opacity-70 border-2 border-dashed border-primary shadow-2xl z-50'
+            ? 'opacity-70 scale-105 z-50 rotate-1 shadow-xl'
             : isHighlighted
               ? 'ring-2 ring-primary/50 shadow-lg'
               : ''
         }
-        ${
-          column.isLocked
-            ? 'border-l-4 border-l-gray-400'
-            : 'hover:border-l-4 hover:border-l-primary/30 transition-all duration-300'
-        }
         ease-out border border-gray-200`}
+      style={{
+        ...style,
+        width: '280px',
+        minWidth: '220px',
+        flex: '0 0 auto',
+        height: 'calc(100vh - 14rem)',
+        borderTop: `4px solid ${
+          column.id === 'todo'
+            ? '#94a3b8'
+            : column.id === 'inprogress'
+              ? '#3b82f6'
+              : column.id === 'review'
+                ? '#f59e0b'
+                : column.id === 'completed'
+                  ? '#22c55e'
+                  : '#94a3b8'
+        }`,
+        transformOrigin: 'center',
+      }}
     >
       <div
         {...(column.isLocked ? {} : { ...attributes, ...listeners })}
-        className={`p-3 font-bold text-gray-700 bg-gray-50 rounded-t-lg flex items-center justify-between
-          ${column.isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}
-          transition-all duration-200 border-b border-gray-200 sticky top-0 z-10`}
+        className={`flex items-center justify-between sticky top-0 backdrop-blur-sm bg-white/95 z-10 py-3 px-4 mb-3 rounded-t-lg border-b ${column.isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
       >
-        <div className="flex items-center">
+        <div className="font-medium flex items-center">
           <div
             className={`w-3 h-3 rounded-full mr-2 ${
               column.id === 'todo'
@@ -91,21 +110,22 @@ export function Column({
                       : 'bg-gray-400'
             }`}
           />
-          <h3>{column.title}</h3>
-          {column.isLocked && <Lock className="h-4 w-4 ml-2 text-gray-500" />}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium bg-gray-200 px-2 py-1 rounded-full">
+          <span className="font-semibold text-gray-800">{column.title}</span>
+          <span className="ml-2 bg-gray-100 text-gray-700 font-medium text-xs px-2 py-1 rounded-full">
             {cards.length}
           </span>
+          {column.isLocked && <Lock className="h-4 w-4 ml-2 text-gray-500" />}
+        </div>
 
-          {!column.isLocked && onDeleteColumn && (
+        {!column.isLocked &&
+          onDeleteColumn &&
+          !defaultColumns.some(col => col.id === column.id) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 p-0 hover:bg-gray-200 rounded-full"
+                  className="h-7 w-7 p-0 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <MoreVertical className="h-4 w-4 text-gray-500" />
                 </Button>
@@ -121,7 +141,6 @@ export function Column({
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-        </div>
       </div>
 
       <div className="flex-grow p-2 overflow-y-auto custom-scrollbar">
@@ -136,7 +155,7 @@ export function Column({
             <div
               className={`flex items-center justify-center h-20 border-2 border-dashed
                 ${currentlyDragging ? 'border-primary/30 bg-gray-50' : 'border-gray-200'}
-                rounded-md transition-all duration-300 hover:border-primary/30 hover:bg-gray-50`}
+                rounded-md transition-all duration-300 hover:border-primary/30 hover:bg-gray-50 mx-3 mb-4`}
             >
               <p className="text-gray-500 text-sm">Drop cards here</p>
             </div>

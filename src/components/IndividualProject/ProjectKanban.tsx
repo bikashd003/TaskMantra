@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -22,7 +22,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { KanbanSettingsService, KanbanColumn } from '@/services/KanbanSettings.service';
+import {
+  KanbanSettingsService,
+  KanbanColumn as KanbanColumnType,
+} from '@/services/KanbanSettings.service';
 import { toast } from 'sonner';
 import { TaskService } from '@/services/Task.service';
 import { KanbanSkeleton } from './KanbanSkeleton';
@@ -59,6 +62,10 @@ export default function ProjectKanban({ project }: ProjectProps) {
   const [lastDroppedId, setLastDroppedId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
+  // Store the previous state for rollback in case of API failure
+  const previousColumnsRef = useRef<ColumnType[]>([]);
+  const dragSourceColumnRef = useRef<string | null>(null);
+
   const { data: kanbanSetting, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['kanban-settings'],
     queryFn: async () => {
@@ -66,6 +73,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
       return response;
     },
   });
+
   const updateTaskStatus = useMutation({
     mutationFn: async ({ taskId, newStatus }: { taskId: string; newStatus: string }) => {
       await TaskService.updateTaskStatus(taskId, newStatus);
@@ -74,16 +82,30 @@ export default function ProjectKanban({ project }: ProjectProps) {
       queryClient.invalidateQueries({ queryKey: ['project', project._id] });
       toast.success('Task status updated');
     },
-    onError: () => {
-      toast.error('Failed to update task status');
+    onError: _error => {
+      // Restore the previous state on error
+      setColumns(previousColumnsRef.current);
+      toast.error('Failed to update task status. Changes reverted.');
     },
   });
 
   useEffect(() => {
-    if (kanbanSetting && project) {
-      const initialColumns: ColumnType[] = kanbanSetting.columns
-        .sort((a, b) => a.order - b.order)
-        .map(column => ({
+    if (project) {
+      const defaultKanbanColumns: KanbanColumnType[] = [
+        { id: 'todo', title: 'To Do', order: 0 },
+        { id: 'inProgress', title: 'In Progress', order: 1 },
+        { id: 'review', title: 'Review', order: 2 },
+        { id: 'completed', title: 'Completed', order: 5 },
+      ];
+
+      const columnsToUse =
+        kanbanSetting?.columns && kanbanSetting.columns.length > 0
+          ? kanbanSetting.columns
+          : defaultKanbanColumns;
+
+      const initialColumns: ColumnType[] = columnsToUse
+        .sort((a: KanbanColumnType, b: KanbanColumnType) => a.order - b.order)
+        .map((column: KanbanColumnType) => ({
           id: column.id,
           title: column.title,
           cards: [],
@@ -91,9 +113,25 @@ export default function ProjectKanban({ project }: ProjectProps) {
         }));
 
       if (project.tasks && project.tasks.length > 0) {
-        project.tasks.forEach(task => {
-          const columnId = task.status.toLowerCase().replace(/\s+/g, '');
-          const columnIndex = initialColumns.findIndex(col => col.id === columnId);
+        project.tasks.forEach((task: any) => {
+          // Create a more flexible mapping for task status to column ID
+          let columnId = task.status.toLowerCase().replace(/\s+/g, '');
+
+          // Handle common status variations
+          if (columnId === 'inprogress') columnId = 'inProgress';
+          if (columnId === 'done' || columnId === 'finished') columnId = 'completed';
+          if (columnId === 'needsreview') columnId = 'review';
+          if (columnId === 'discussion' || columnId === 'discussing') columnId = 'discussion';
+
+          // Find the column for this task
+          let columnIndex = initialColumns.findIndex(col => col.id === columnId);
+
+          // If no matching column found, default to first column (usually "To Do")
+          if (columnIndex === -1 && initialColumns.length > 0) {
+            columnIndex = 0;
+            // Use toast instead of console.log for better user experience
+            toast.info(`Task "${task.name}" placed in ${initialColumns[0].title} column`);
+          }
 
           if (columnIndex !== -1) {
             const card: CardType = {
@@ -114,6 +152,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
       }
 
       setColumns(initialColumns);
+      previousColumnsRef.current = initialColumns;
     }
   }, [kanbanSetting, project]);
 
@@ -144,6 +183,9 @@ export default function ProjectKanban({ project }: ProjectProps) {
     const { active } = event;
     const activeId = active.id as string;
 
+    // Save the current state before any drag operation
+    previousColumnsRef.current = JSON.parse(JSON.stringify(columns));
+
     if (activeId.includes('column')) {
       const columnId = activeId.replace('column-', '');
       const activeColumn = columns.find(col => col.id === columnId);
@@ -156,8 +198,16 @@ export default function ProjectKanban({ project }: ProjectProps) {
       return;
     }
 
+    // Track source column for card drag
     const card = findCardById(activeId);
-    if (card) setActiveCard(card);
+    if (card) {
+      setActiveCard(card);
+      const sourceColumn = findColumnByCardId(activeId);
+      if (sourceColumn) {
+        // Store the source column ID for later comparison
+        dragSourceColumnRef.current = sourceColumn.id;
+      }
+    }
   }
 
   function handleDragOver(event: DragOverEvent) {
@@ -234,29 +284,68 @@ export default function ProjectKanban({ project }: ProjectProps) {
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    if (active && active.id) {
-      setLastDroppedId(active.id as string);
 
+    // Visual feedback for the user
+    if (active && active.id) {
+      const activeId = active.id as string;
+      setLastDroppedId(activeId);
       setTimeout(() => {
         setLastDroppedId(null);
       }, 1000);
     }
 
+    // Reset refs and state
     setActiveColumn(null);
     setActiveCard(null);
 
-    if (!over) return;
+    if (!over) {
+      // Reset source column ref if drag is cancelled
+      dragSourceColumnRef.current = null;
+      return;
+    }
 
     const activeId = active.id as string;
     const overId = over.id as string;
-    if (activeId === overId) return;
+
+    // If the item is dropped on itself, we still need to check if it's a card
+    // that might have been moved to a different column during dragOver
+    if (activeId === overId && !activeId.includes('column')) {
+      // For cards dropped on themselves, we need to check if the column changed
+      const currentColumn = findColumnByCardId(activeId);
+
+      if (
+        currentColumn &&
+        dragSourceColumnRef.current &&
+        currentColumn.id !== dragSourceColumnRef.current
+      ) {
+        // The card was moved to a different column during dragOver
+        const card = findCardById(activeId);
+        if (card) {
+          updateTaskStatus.mutate({
+            taskId: activeId,
+            newStatus: currentColumn.title,
+          });
+        }
+      }
+
+      // Reset source column ref
+      dragSourceColumnRef.current = null;
+      return;
+    }
+
+    // If the item is dropped on a different item
     if (activeId.includes('column') && overId.includes('column')) {
+      // Handle column reordering
       const activeColumnId = activeId.replace('column-', '');
       const overColumnId = overId.replace('column-', '');
+
       // Find the columns
       const activeColumn = columns.find(col => col.id === activeColumnId);
       const overColumn = columns.find(col => col.id === overColumnId);
-      if (activeColumn?.isLocked || overColumn?.isLocked) return;
+      if (activeColumn?.isLocked || overColumn?.isLocked) {
+        dragSourceColumnRef.current = null;
+        return;
+      }
 
       const activeIndex = columns.findIndex(col => col.id === activeColumnId);
       const overIndex = columns.findIndex(col => col.id === overColumnId);
@@ -277,27 +366,30 @@ export default function ProjectKanban({ project }: ProjectProps) {
           updateColumnsMutation.mutate(updatedKanbanColumns);
         }
       }
-    } else if (!activeId.includes('column') && overId.includes('column')) {
-      const sourceColumn = findColumnByCardId(activeId);
-      const targetColumnId = overId.replace('column-', '');
-      const targetColumn = columns.find(col => col.id === targetColumnId);
+    } else if (!activeId.includes('column')) {
+      // Handle card drag
+      let targetColumnId: string | null = null;
 
-      if (sourceColumn && targetColumn && sourceColumn.id !== targetColumn.id) {
-        const card = findCardById(activeId);
-        if (card) {
-          updateTaskStatus.mutate({
-            taskId: activeId,
-            newStatus: targetColumn.title,
-          });
+      if (overId.includes('column')) {
+        // Card dropped on a column
+        targetColumnId = overId.replace('column-', '');
+      } else {
+        // Card dropped on another card
+        const targetColumn = findColumnByCardId(overId);
+        if (targetColumn) {
+          targetColumnId = targetColumn.id;
+        } else {
+          dragSourceColumnRef.current = null;
+          return;
         }
       }
-    } else if (!activeId.includes('column') && !overId.includes('column')) {
-      const sourceColumn = findColumnByCardId(activeId);
-      const targetColumn = findColumnByCardId(overId);
 
-      if (sourceColumn && targetColumn && sourceColumn.id !== targetColumn.id) {
+      // Only update status if the card was moved to a different column
+      if (targetColumnId && dragSourceColumnRef.current !== targetColumnId) {
         const card = findCardById(activeId);
-        if (card) {
+        const targetColumn = columns.find(col => col.id === targetColumnId);
+
+        if (card && targetColumn) {
           updateTaskStatus.mutate({
             taskId: activeId,
             newStatus: targetColumn.title,
@@ -305,9 +397,13 @@ export default function ProjectKanban({ project }: ProjectProps) {
         }
       }
     }
+
+    // Always reset source column ref at the end
+    dragSourceColumnRef.current = null;
   }
+
   const updateColumnsMutation = useMutation({
-    mutationFn: async (columns: KanbanColumn[]) => {
+    mutationFn: async (columns: KanbanColumnType[]) => {
       return await KanbanSettingsService.updateColumns(columns);
     },
     onSuccess: () => {
@@ -315,6 +411,8 @@ export default function ProjectKanban({ project }: ProjectProps) {
       toast.success('Kanban columns updated');
     },
     onError: () => {
+      // Revert to the previous state
+      setColumns(previousColumnsRef.current);
       toast.error('Failed to update kanban columns');
     },
   });
@@ -325,6 +423,9 @@ export default function ProjectKanban({ project }: ProjectProps) {
       toast.error('Cannot delete column with tasks. Move tasks to another column first.');
       return;
     }
+
+    // Save current state before mutation
+    previousColumnsRef.current = JSON.parse(JSON.stringify(columns));
 
     const updatedColumns = columns.filter(col => col.id !== columnId);
     setColumns(updatedColumns);
@@ -348,6 +449,10 @@ export default function ProjectKanban({ project }: ProjectProps) {
       toast.error('A column with this name already exists');
       return;
     }
+
+    // Save current state before mutation
+    previousColumnsRef.current = JSON.parse(JSON.stringify(columns));
+
     const newColumn: ColumnType = {
       id: columnId,
       title: newColumnTitle,
@@ -399,7 +504,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
         <div className="flex-1 min-h-0 min-w-0 flex flex-col">
           <div className="flex-1 min-h-0 min-w-0 overflow-x-auto overflow-y-auto custom-scrollbar">
             <SortableContext items={columns.map(col => `column-${col.id}`)}>
-              <div className="flex gap-6 min-w-max pb-6">
+              <div className="flex gap-2 min-w-max pb-6">
                 {columns.map(column => (
                   <div key={column.id} className="flex-shrink-0 w-[300px]">
                     <Column
@@ -411,7 +516,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
                   </div>
                 ))}
 
-                <div className="flex flex-col items-center justify-center w-16 min-h-[300px] h-[500px] rounded-md border-2 border-dashed border-gray-200 flex-shrink-0 hover:border-primary/50 hover:bg-gray-50 transition-all duration-300">
+                <div className="flex flex-col items-center justify-center w-16  rounded-md border-2 border-dashed border-gray-200 flex-shrink-0 hover:border-primary/50 hover:bg-gray-50 transition-all duration-300">
                   <div className="relative group">
                     {newColumnTitle ? (
                       <div className="absolute bottom-full mb-2 w-64 bg-white shadow-lg rounded-md p-3 border border-gray-200 z-50">
@@ -456,7 +561,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
         {typeof document !== 'undefined' &&
           createPortal(
             <DragOverlay adjustScale={true} zIndex={100}>
-              {activeCard && <Card card={activeCard} isDragging={true} />}
+              {activeCard && <Card card={activeCard} isDragging={true} isOverlay={true} />}
               {activeColumn && (
                 <Column
                   column={activeColumn}
