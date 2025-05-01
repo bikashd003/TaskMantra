@@ -1,10 +1,9 @@
-"use client";
+'use client';
 
-import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { ChevronDownIcon, Slash } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { ChevronDownIcon, Slash } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import {
   Breadcrumb,
@@ -12,31 +11,33 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from '@/components/ui/breadcrumb';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useProject } from "@/context/ProjectContext";
-import Link from "next/link";
-import ProjectPageContent from "@/components/IndividualProject/ProjectPageContent";
+} from '@/components/ui/dropdown-menu';
+import Link from 'next/link';
+import { ProjectService } from '@/services/Project.service';
+import ProjectKanban from '@/components/IndividualProject/ProjectKanban';
+import ProjectAnalytics from '@/components/IndividualProject/ProjectAnalytics';
 
 export default function ProjectPage() {
   const { projectId } = useParams();
-  const { data: projectData, isLoading } = useQuery({
-    queryKey: ["project", projectId],
-    queryFn: async () => {
-      const { data } = await axios.get(`/api/get-project/${projectId}`);
-      return data;
-    },
-  });
-  const projectContext = useProject();
-  const projects = projectContext?.allProjects?.projects || [];
 
-  const project = projectData?.project?.projectId;
-  // const _projectRole = projectData?.project?.projectRole;
+  const { data: projectData, isLoading } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: async () => {
+      if (!projectId) {
+        return { project: null };
+      }
+      const response = await ProjectService.getProjectById(projectId as string);
+      return response || { project: null };
+    },
+    enabled: !!projectId,
+  });
+  const project = projectData?.project;
 
   if (isLoading) {
     return (
@@ -45,48 +46,64 @@ export default function ProjectPage() {
       </div>
     );
   }
-
   return (
-    <ScrollArea className="py-2 px-4 bg-white min-h-[calc(100vh-96px)] rounded-lg">
-      <header>
-        <Breadcrumb>
+    <div className="h-full w-full flex flex-col overflow-hidden bg-background">
+      <header className="py-4 px-2 border-b">
+        <Breadcrumb className="text-sm">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <Link href="/home">Home</Link>
+              <Link
+                href="/home"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                Home
+              </Link>
             </BreadcrumbItem>
             <BreadcrumbSeparator>
-              <Slash />
+              <Slash className="h-4 w-4 text-muted-foreground" />
             </BreadcrumbSeparator>
             <BreadcrumbItem>
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1">
+                <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
                   Projects
-                  <ChevronDownIcon />
+                  <ChevronDownIcon className="h-4 w-4" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem>Create Project +</DropdownMenuItem>
-                  {projects.map((project: any) => (
-                    <DropdownMenuItem
-                      key={project?._id}
-                      className="cursor-pointer"
-                      onClick={() => {}}
-                    >
-                      {project?.projectId?.name}
-                    </DropdownMenuItem>
-                  ))}
+                <DropdownMenuContent align="start" className="shadow-lg">
+                  <DropdownMenuItem className="flex items-center gap-2 font-medium">
+                    Create Project +
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </BreadcrumbItem>
             <BreadcrumbSeparator>
-              <Slash />
+              <Slash className="h-4 w-4 text-muted-foreground" />
             </BreadcrumbSeparator>
             <BreadcrumbItem>
-              <BreadcrumbPage>{project?.name}</BreadcrumbPage>
+              <BreadcrumbPage className="font-semibold text-primary">
+                {project?.name}
+              </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </header>
-      <ProjectPageContent project={project}/>
-    </ScrollArea>
+      <div className="flex-1 p-2 w-full">
+        <Tabs defaultValue="kanban" className="w-full h-full flex flex-col space-y-4">
+          <TabsList className="w-fit border bg-card">
+            <TabsTrigger value="kanban" className="px-6">
+              Kanban
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="px-6">
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="kanban" className="w-full h-full">
+            <ProjectKanban project={project} />
+          </TabsContent>
+          <TabsContent value="analytics" className="w-full ">
+            <ProjectAnalytics project={project} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
   );
 }

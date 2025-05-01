@@ -100,6 +100,14 @@ export class TaskService {
       throw new Error(`Failed to fetch ${period}'s tasks`);
     }
   }
+  static async updateTaskStatus(taskId: string, status: string): Promise<Task> {
+    try {
+      const response = await axios.patch(`/api/tasks/${taskId}/status`, { status });
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to update task status');
+    }
+  }
 
   // Keeping this for backward compatibility
   static async getTodaysTasks(): Promise<Task[]> {

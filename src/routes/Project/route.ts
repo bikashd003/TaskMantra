@@ -136,7 +136,12 @@ const getAllProjects = async (userId: string) => {
 const getProjectById = async (projectId: string, _userId: string) => {
   try {
     await connectDB();
-    const project = await Project.findById(projectId);
+    const project = await Project.findById(projectId).populate({
+      path: 'tasks',
+      populate: {
+        path: 'assignedTo',
+      },
+    });
     return project;
   } catch (error: any) {
     return error;
