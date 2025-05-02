@@ -19,8 +19,7 @@ import { Card } from './KanbanCard';
 import { createPortal } from 'react-dom';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Plus, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   KanbanSettingsService,
@@ -29,6 +28,7 @@ import {
 import { toast } from 'sonner';
 import { TaskService } from '@/services/Task.service';
 import { KanbanSkeleton } from './KanbanSkeleton';
+import CreateColumnModal from './CreateColumnModal';
 
 // Types
 export type CardType = {
@@ -58,7 +58,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
   const [columns, setColumns] = useState<ColumnType[]>([]);
   const [activeColumn, setActiveColumn] = useState<ColumnType | null>(null);
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
-  const [newColumnTitle, setNewColumnTitle] = useState('');
+  const [openColumnCreateModal, setOpenColumnCreateModal] = useState(false);
   const [lastDroppedId, setLastDroppedId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -397,8 +397,6 @@ export default function ProjectKanban({ project }: ProjectProps) {
         }
       }
     }
-
-    // Always reset source column ref at the end
     dragSourceColumnRef.current = null;
   }
 
@@ -411,7 +409,6 @@ export default function ProjectKanban({ project }: ProjectProps) {
       toast.success('Kanban columns updated');
     },
     onError: () => {
-      // Revert to the previous state
       setColumns(previousColumnsRef.current);
       toast.error('Failed to update kanban columns');
     },
@@ -442,8 +439,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
     }
   }
 
-  function addNewColumn() {
-    if (!newColumnTitle.trim()) return;
+  function addNewColumn(newColumnTitle: string) {
     const columnId = newColumnTitle.toLowerCase().replace(/\s+/g, '-');
     if (columns.some(col => col.id === columnId)) {
       toast.error('A column with this name already exists');
@@ -473,7 +469,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
       updateColumnsMutation.mutate(updatedKanbanColumns);
     }
 
-    setNewColumnTitle('');
+    setOpenColumnCreateModal(false);
   }
 
   if (isLoadingSettings) {
@@ -517,46 +513,26 @@ export default function ProjectKanban({ project }: ProjectProps) {
                 ))}
 
                 <div className="flex flex-col items-center justify-center w-16  rounded-md border-2 border-dashed border-gray-200 flex-shrink-0 hover:border-primary/50 hover:bg-gray-50 transition-all duration-300">
-                  <div className="relative group">
-                    {newColumnTitle ? (
-                      <div className="absolute bottom-full mb-2 w-64 bg-white shadow-lg rounded-md p-3 border border-gray-200 z-50">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-medium">Add New Column</h4>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={() => setNewColumnTitle('')}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <Input
-                          type="text"
-                          placeholder="Column name"
-                          value={newColumnTitle}
-                          onChange={e => setNewColumnTitle(e.target.value)}
-                          className="mb-2"
-                        />
-                        <Button onClick={addNewColumn} size="sm" className="w-full">
-                          Add Column
-                        </Button>
-                      </div>
-                    ) : null}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full h-10 w-10 bg-gray-100 hover:bg-primary/10"
-                      onClick={() => setNewColumnTitle(newColumnTitle ? '' : 'New Column')}
-                    >
-                      <Plus className="h-5 w-5 text-gray-600" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full h-10 w-10 bg-gray-100 hover:bg-primary/10"
+                    onClick={() => setOpenColumnCreateModal(true)}
+                  >
+                    <Plus className="h-5 w-5 text-gray-600" />
+                  </Button>
                 </div>
               </div>
             </SortableContext>
           </div>
         </div>
+
+        <CreateColumnModal
+          isOpen={openColumnCreateModal}
+          onClose={() => setOpenColumnCreateModal(false)}
+          onCreateColumn={addNewColumn}
+          isLoading={updateColumnsMutation.isPending}
+        />
 
         {typeof document !== 'undefined' &&
           createPortal(
