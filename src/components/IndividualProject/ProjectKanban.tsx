@@ -29,6 +29,7 @@ import { toast } from 'sonner';
 import { TaskService } from '@/services/Task.service';
 import { KanbanSkeleton } from './KanbanSkeleton';
 import CreateColumnModal from './CreateColumnModal';
+import { Task } from '../Tasks/types';
 
 // Types
 export type CardType = {
@@ -472,10 +473,61 @@ export default function ProjectKanban({ project }: ProjectProps) {
     setOpenColumnCreateModal(false);
   }
 
+  const addTaskMutation = useMutation({
+    mutationFn: async (taskData: Partial<Task>) => {
+      const response = await TaskService.createTask(taskData as any);
+      return response;
+    },
+    onSuccess: task => {
+      setColumns(prevColumns => {
+        const newColumns = [...prevColumns];
+        const columnIndex = newColumns.findIndex(
+          col => col.title.toLowerCase() === task.status.toLowerCase()
+        );
+
+        if (columnIndex !== -1) {
+          const card: CardType = {
+            id: task._id,
+            title: task.name,
+            description: task.description || '',
+            priority: task.priority.toLowerCase() as 'low' | 'medium' | 'high',
+            status: task.status,
+            dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : undefined,
+            estimatedTime: task.estimatedTime,
+            loggedTime: task.loggedTime,
+            assignedTo: task.assignedTo,
+          };
+          newColumns[columnIndex].cards.push(card);
+        }
+
+        return newColumns;
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['project', project._id] });
+    },
+  });
+
+  const handleAddTask = async (newTask: Partial<Task>) => {
+    try {
+      const taskWithProject = {
+        ...newTask,
+        projectId: project._id,
+        name: newTask.name || '',
+        title: newTask.name || '', // Ensure both name and title are set to the same value
+      };
+      const task = await addTaskMutation.mutateAsync(taskWithProject as any);
+
+      toast.success('Task created successfully');
+      return task;
+    } catch (error) {
+      toast.error('Failed to create task');
+      throw error;
+    }
+  };
+
   if (isLoadingSettings) {
     return <KanbanSkeleton />;
   }
-
   if (!project || !project.tasks) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-200px)]">
@@ -508,6 +560,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
                       cards={column.cards}
                       isHighlighted={lastDroppedId === `column-${column.id}`}
                       onDeleteColumn={handleDeleteColumn}
+                      onAddTask={handleAddTask}
                     />
                   </div>
                 ))}

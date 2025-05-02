@@ -5,8 +5,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { Card } from './KanbanCard';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { CardType, ColumnType } from './ProjectKanban';
-import { Lock, MoreVertical, Trash2 } from 'lucide-react';
+import { Lock, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,12 +15,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { KanbanColumn as KanbanColumnType } from '@/services/KanbanSettings.service';
+import { useState } from 'react';
+import QuickTaskCreateForm from './QuickTaskCreateForm';
+import { Task } from '../Tasks/types';
 interface ColumnProps {
   column: ColumnType;
   cards: CardType[];
   isDragging?: boolean;
   isHighlighted?: boolean;
   onDeleteColumn?: (columnId: string) => void;
+  onAddTask?: (task: Partial<Task>) => void;
 }
 type ColumnDefinition = KanbanColumnType;
 
@@ -36,6 +41,7 @@ export function Column({
   isDragging = false,
   isHighlighted = false,
   onDeleteColumn,
+  onAddTask,
 }: ColumnProps) {
   const {
     attributes,
@@ -52,10 +58,30 @@ export function Column({
     },
     disabled: column.isLocked,
   });
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const [newTaskName, setNewTaskName] = useState('');
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+  };
+
+  const handleAddTask = async () => {
+    if (!newTaskName.trim() || !onAddTask) return;
+
+    const newTask: Partial<Task> = {
+      name: newTaskName.trim(),
+      status: column.title as any,
+      priority: 'Medium',
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default due date (1 week from now)
+      subtasks: [],
+      assignedTo: [],
+      comments: [],
+      dependencies: [],
+    };
+    onAddTask(newTask);
+    setNewTaskName('');
+    setIsAddingTask(false);
   };
 
   const currentlyDragging = isDragging || isSortableDragging;
@@ -116,32 +142,52 @@ export function Column({
           </span>
           {column.isLocked && <Lock className="h-4 w-4 ml-2 text-gray-500" />}
         </div>
-
-        {!column.isLocked &&
-          onDeleteColumn &&
-          !defaultColumns.some(col => col.id === column.id) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 p-0 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <MoreVertical className="h-4 w-4 text-gray-500" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  className="text-red-500 focus:text-red-500 cursor-pointer"
-                  onClick={() => onDeleteColumn(column.id)}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Column
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+        <div className="flex items-center space-x-1">
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors"
+              title="Add task"
+              onClick={() => setIsAddingTask(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </motion.div>
+          {!column.isLocked &&
+            onDeleteColumn &&
+            !defaultColumns.some(col => col.id === column.id) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 p-0 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <MoreVertical className="h-4 w-4 text-gray-500" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    className="text-red-500 focus:text-red-500 cursor-pointer"
+                    onClick={() => onDeleteColumn(column.id)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Column
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+        </div>
       </div>
+      {isAddingTask && (
+        <QuickTaskCreateForm
+          setIsAddingTask={setIsAddingTask}
+          newTaskName={newTaskName}
+          setNewTaskName={setNewTaskName}
+          handleAddTask={handleAddTask}
+        />
+      )}
 
       <div className="flex-grow p-2 overflow-y-auto custom-scrollbar">
         <SortableContext items={cards.map(card => card.id)} strategy={verticalListSortingStrategy}>

@@ -191,7 +191,7 @@ app.post('/', async c => {
         $push: { tasks: task._id },
       });
     }
-    return c.json({ task });
+    return c.json(task);
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
   }

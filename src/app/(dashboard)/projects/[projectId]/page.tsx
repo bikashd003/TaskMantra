@@ -22,9 +22,11 @@ import Link from 'next/link';
 import { ProjectService } from '@/services/Project.service';
 import ProjectKanban from '@/components/IndividualProject/ProjectKanban';
 import ProjectAnalytics from '@/components/IndividualProject/ProjectAnalytics';
+import { useEffect, useState } from 'react';
 
 export default function ProjectPage() {
   const { projectId } = useParams();
+  const [project, setProject] = useState<any>(null);
 
   const { data: projectData, isLoading } = useQuery({
     queryKey: ['project', projectId],
@@ -37,7 +39,11 @@ export default function ProjectPage() {
     },
     enabled: !!projectId,
   });
-  const project = projectData?.project;
+  useEffect(() => {
+    if (projectData?.project) {
+      setProject(projectData.project);
+    }
+  }, [projectData]);
 
   if (isLoading) {
     return (
