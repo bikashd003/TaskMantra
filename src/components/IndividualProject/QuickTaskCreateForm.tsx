@@ -4,7 +4,13 @@ import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
 import React from 'react';
 
-const QuickTaskCreateForm = ({ setIsAddingTask, newTaskName, setNewTaskName, handleAddTask }) => {
+const QuickTaskCreateForm = ({
+  setIsAddingTask,
+  newTaskName,
+  setNewTaskName,
+  handleAddTask,
+  loadingAddTask,
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -58,9 +64,10 @@ const QuickTaskCreateForm = ({ setIsAddingTask, newTaskName, setNewTaskName, han
           <Button
             size="sm"
             onClick={handleAddTask}
-            disabled={!newTaskName.trim()}
+            disabled={!newTaskName.trim() || loadingAddTask}
             className="shadow-sm"
           >
+            {loadingAddTask ? 'Adding...' : 'Add Task'}
             Add Task
           </Button>
         </motion.div>

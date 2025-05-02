@@ -561,6 +561,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
                       isHighlighted={lastDroppedId === `column-${column.id}`}
                       onDeleteColumn={handleDeleteColumn}
                       onAddTask={handleAddTask}
+                      loadingAddTask={addTaskMutation.isPending}
                     />
                   </div>
                 ))}

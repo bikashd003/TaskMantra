@@ -25,6 +25,7 @@ interface ColumnProps {
   isHighlighted?: boolean;
   onDeleteColumn?: (columnId: string) => void;
   onAddTask?: (task: Partial<Task>) => void;
+  loadingAddTask?: boolean;
 }
 type ColumnDefinition = KanbanColumnType;
 
@@ -42,6 +43,7 @@ export function Column({
   isHighlighted = false,
   onDeleteColumn,
   onAddTask,
+  loadingAddTask = false,
 }: ColumnProps) {
   const {
     attributes,
@@ -186,6 +188,7 @@ export function Column({
           newTaskName={newTaskName}
           setNewTaskName={setNewTaskName}
           handleAddTask={handleAddTask}
+          loadingAddTask={loadingAddTask}
         />
       )}
 
