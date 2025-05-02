@@ -297,24 +297,15 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
       {/* Main Analytics Dashboard */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="mb-4 bg-slate-100/80 p-1 rounded-lg">
-          <TabsTrigger
-            value="overview"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
-          >
+          <TabsTrigger value="overview">
             <BarChart2 className="h-4 w-4 mr-2" />
             Overview
           </TabsTrigger>
-          <TabsTrigger
-            value="team"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
-          >
+          <TabsTrigger value="team">
             <Users className="h-4 w-4 mr-2" />
             Team Workload
           </TabsTrigger>
-          <TabsTrigger
-            value="timeline"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
-          >
+          <TabsTrigger value="timeline">
             <Calendar className="h-4 w-4 mr-2" />
             Timeline
           </TabsTrigger>
@@ -330,7 +321,6 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
               transition={{ duration: 0.3 }}
             >
               <Card className="overflow-hidden border border-blue-100 shadow-md">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-50" />
                 <CardContent className="p-6 relative">
                   <div className="flex justify-between items-center">
                     <div>
@@ -351,7 +341,6 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
               transition={{ duration: 0.3, delay: 0.1 }}
             >
               <Card className="overflow-hidden border border-blue-100 shadow-md">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 opacity-50" />
                 <CardContent className="p-6 relative">
                   <div className="flex justify-between items-center">
                     <div>
@@ -374,7 +363,6 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
               transition={{ duration: 0.3, delay: 0.2 }}
             >
               <Card className="overflow-hidden border border-green-100 shadow-md">
-                <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 opacity-50" />
                 <CardContent className="p-6 relative">
                   <div className="flex justify-between items-center">
                     <div>
@@ -397,7 +385,6 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
               transition={{ duration: 0.3, delay: 0.3 }}
             >
               <Card className="overflow-hidden border border-red-100 shadow-md">
-                <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-orange-50 opacity-50" />
                 <CardContent className="p-6 relative">
                   <div className="flex justify-between items-center">
                     <div>
@@ -711,7 +698,6 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                   transition={{ duration: 0.3, delay: index * 0.1 }}
                 >
                   <Card className="bg-white shadow-md border border-slate-100 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-indigo-50 opacity-50" />
                     <CardContent className="pt-6 relative">
                       <div className="flex items-center gap-4 mb-4">
                         <Avatar className="h-14 w-14 border-2 border-purple-100 shadow-sm">
@@ -783,7 +769,6 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
             transition={{ duration: 0.3 }}
           >
             <Card className="bg-white shadow-md border border-slate-100 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-blue-50 opacity-30" />
               <CardHeader className="pb-2 relative">
                 <CardTitle className="text-lg font-semibold text-slate-800">
                   Due Date Analysis
@@ -860,7 +845,6 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
             transition={{ duration: 0.4 }}
           >
             <Card className="bg-white shadow-md border border-slate-100 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-indigo-50 opacity-30" />
               <CardHeader className="pb-2 relative">
                 <CardTitle className="text-lg font-semibold text-slate-800">
                   Tasks Created by Month

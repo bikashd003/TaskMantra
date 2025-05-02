@@ -130,8 +130,6 @@ export default function ProjectKanban({ project }: ProjectProps) {
           // If no matching column found, default to first column (usually "To Do")
           if (columnIndex === -1 && initialColumns.length > 0) {
             columnIndex = 0;
-            // Use toast instead of console.log for better user experience
-            toast.info(`Task "${task.name}" placed in ${initialColumns[0].title} column`);
           }
 
           if (columnIndex !== -1) {
