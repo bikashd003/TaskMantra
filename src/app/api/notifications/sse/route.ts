@@ -4,6 +4,9 @@ import { authOptions } from '../../auth/[...nextauth]/options';
 import { connectDB } from '@/Utility/db';
 import { Notification } from '@/models/Notification';
 
+// This file is automatically treated as an Edge Function by Vercel
+export const runtime = 'edge';
+
 // Store active SSE connections
 const clients = new Map<string, ReadableStreamDefaultController>();
 
@@ -23,11 +26,34 @@ export async function GET(_req: NextRequest) {
   // Ensure userId is a string
   const userId = session.user.id.toString();
 
+  // Check if there's an existing connection for this user
+  const hasExistingConnection = clients.has(userId);
+
+  // If there's an existing connection, return a 429 response
+  if (hasExistingConnection) {
+    // console.log(`User ${userId} already has an active SSE connection`);
+    return new Response(
+      JSON.stringify({
+        error: 'Too many connections',
+        message: 'You already have an active notification connection',
+      }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': '5',
+        },
+      }
+    );
+  }
+
   // Clear any existing heartbeat interval for this user
   if (heartbeatIntervals.has(userId)) {
     clearInterval(heartbeatIntervals.get(userId));
     heartbeatIntervals.delete(userId);
   }
+
+  // console.log(`Establishing new SSE connection for user ${userId}`);
 
   // Create a new ReadableStream
   const stream = new ReadableStream({
@@ -50,6 +76,7 @@ export async function GET(_req: NextRequest) {
           controller.enqueue(new TextEncoder().encode(heartbeat));
         } catch (error) {
           // If there's an error sending the heartbeat, clear the interval and remove the client
+          // console.error(`Error sending heartbeat to user ${userId}:`, error);
           clearInterval(heartbeatInterval);
           heartbeatIntervals.delete(userId);
           clients.delete(userId);
@@ -60,6 +87,8 @@ export async function GET(_req: NextRequest) {
       heartbeatIntervals.set(userId, heartbeatInterval);
     },
     cancel() {
+      // console.log(`SSE connection closed for user ${userId}`);
+
       // Remove the client when the connection is closed
       clients.delete(userId);
 

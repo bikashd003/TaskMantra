@@ -18,6 +18,60 @@ export type NotificationType = {
   updatedAt: string;
 };
 
+// Global connection tracking to prevent multiple connections
+// Using a singleton pattern for the EventSource connection
+class NotificationConnection {
+  private static instance: NotificationConnection;
+  private eventSource: EventSource | null = null;
+  private lastHeartbeat: number = Date.now();
+  private connectedClients: Set<string> = new Set();
+
+  private constructor() {}
+
+  public static getInstance(): NotificationConnection {
+    if (!NotificationConnection.instance) {
+      NotificationConnection.instance = new NotificationConnection();
+    }
+    return NotificationConnection.instance;
+  }
+
+  public connect(clientId: string): EventSource {
+    this.connectedClients.add(clientId);
+
+    if (!this.eventSource || this.eventSource.readyState === EventSource.CLOSED) {
+      // console.log('Creating new SSE connection');
+      this.eventSource = new EventSource('/api/notifications/sse');
+    }
+
+    return this.eventSource;
+  }
+
+  public disconnect(clientId: string): void {
+    this.connectedClients.delete(clientId);
+
+    if (this.connectedClients.size === 0 && this.eventSource) {
+      // console.log('Closing SSE connection - no more clients');
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+  }
+
+  public updateHeartbeat(): void {
+    this.lastHeartbeat = Date.now();
+  }
+
+  public getLastHeartbeat(): number {
+    return this.lastHeartbeat;
+  }
+
+  public getEventSource(): EventSource | null {
+    return this.eventSource;
+  }
+}
+
+// Get the singleton instance
+const notificationConnection = NotificationConnection.getInstance();
+
 export function useNotifications() {
   const { data: session } = useSession();
   const [notifications, setNotifications] = useState<NotificationType[]>([]);
@@ -124,11 +178,14 @@ export function useNotifications() {
   useEffect(() => {
     if (!session?.user) return;
 
-    let eventSource: EventSource | null = null;
-    let reconnectAttempt = 0;
+    // Generate a unique client ID for this component instance
+    const clientId = `notification-client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+    // Track if this component instance is mounted
+    const isMounted = { current: true };
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let lastHeartbeat = Date.now();
     let heartbeatCheckInterval: ReturnType<typeof setInterval> | null = null;
+    let reconnectAttempt = 0;
 
     // Function to calculate backoff time based on reconnect attempts
     const getReconnectDelay = () => {
@@ -145,23 +202,16 @@ export function useNotifications() {
         clearInterval(heartbeatCheckInterval);
       }
 
-      // Set last heartbeat to now
-      lastHeartbeat = Date.now();
-
       // Check every 30 seconds if we've received a heartbeat in the last 45 seconds
       heartbeatCheckInterval = setInterval(() => {
+        if (!isMounted.current) return;
+
         const now = Date.now();
+        const lastHeartbeat = notificationConnection.getLastHeartbeat();
         const timeSinceLastHeartbeat = now - lastHeartbeat;
 
         // If no heartbeat for 45 seconds, reconnect
         if (timeSinceLastHeartbeat > 45000) {
-          // console.log('No heartbeat received for 45 seconds, reconnecting...');
-
-          // Close existing connection
-          if (eventSource) {
-            eventSource.close();
-          }
-
           // Reset connection state
           setIsConnected(false);
           setError('Connection timeout. Reconnecting...');
@@ -170,103 +220,140 @@ export function useNotifications() {
           if (reconnectTimer) {
             clearTimeout(reconnectTimer);
           }
-          reconnectTimer = setTimeout(connectSSE, getReconnectDelay());
+
+          // Increment reconnect attempt counter
+          reconnectAttempt++;
+
+          // Try to reconnect with exponential backoff
+          const delay = getReconnectDelay();
+          reconnectTimer = setTimeout(connectSSE, delay);
         }
       }, 30000);
     };
 
-    const connectSSE = () => {
-      // Clear any existing timers
+    const handleMessage = (event: MessageEvent) => {
+      if (!isMounted.current) return;
+
+      try {
+        const data = JSON.parse(event.data);
+
+        // Update last heartbeat timestamp for any message
+        notificationConnection.updateHeartbeat();
+
+        if (data.type === 'heartbeat') {
+          // Just a heartbeat, no need to process further
+          return;
+        } else if (data.type === 'connection') {
+          // Connection established message
+          setIsConnected(true);
+        } else if (data.type === 'notification') {
+          // Single new notification
+          const newNotification = data.notification;
+
+          setNotifications(prev => [newNotification, ...prev]);
+
+          if (!newNotification.read) {
+            setUnreadCount(prev => prev + 1);
+          }
+
+          // Show browser notification if enabled
+          showBrowserNotification(newNotification);
+
+          // Invalidate queries
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        } else if (data.type === 'notifications') {
+          // Batch of notifications
+          const newNotifications = data.notifications;
+
+          setNotifications(prev => {
+            // Merge notifications, avoiding duplicates
+            const existingIds = new Set(prev.map((n: NotificationType) => n._id));
+            const uniqueNew = newNotifications.filter(
+              (n: NotificationType) => !existingIds.has(n._id)
+            );
+            return [...uniqueNew, ...prev];
+          });
+
+          // Update unread count
+          fetchUnreadCount();
+
+          // Invalidate queries
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        }
+      } catch (error) {
+        setError('Failed to parse SSE data');
+      }
+    };
+
+    const handleError = async () => {
+      if (!isMounted.current) return;
+
+      setIsConnected(false);
+      setError('Connection to notification server lost. Reconnecting...');
+
+      // Check if the error is due to a 429 response (too many requests)
+      try {
+        const response = await fetch('/api/notifications/sse');
+
+        if (response.status === 429) {
+          // Get retry-after header or default to 5 seconds
+          const retryAfter = parseInt(response.headers.get('Retry-After') || '5', 10);
+          const retryMs = retryAfter * 1000;
+
+          setError(`Too many connection attempts. Retrying in ${retryAfter} seconds.`);
+
+          // Set a longer delay for reconnection
+          if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+          }
+          reconnectTimer = setTimeout(connectSSE, retryMs);
+          return;
+        }
+      } catch (fetchError) {
+        // Continue with standard reconnection
+      }
+
+      // Increment reconnect attempt counter
+      reconnectAttempt++;
+
+      // Try to reconnect with exponential backoff
+      const delay = getReconnectDelay();
+
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
-        reconnectTimer = null;
       }
+      reconnectTimer = setTimeout(connectSSE, delay);
+    };
 
-      // Close any existing connection
-      if (eventSource) {
-        eventSource.close();
-      }
+    const connectSSE = () => {
+      if (!isMounted.current) return;
 
-      // Create a new EventSource connection
-      eventSource = new EventSource('/api/notifications/sse');
+      try {
+        // Get the EventSource from the singleton
+        const eventSource = notificationConnection.connect(clientId);
 
-      // Connection opened
-      eventSource.onopen = () => {
-        setIsConnected(true);
-        setError(null);
-        reconnectAttempt = 0; // Reset reconnect attempts on successful connection
-        startHeartbeatCheck(); // Start monitoring heartbeats
-      };
+        // Set up event handlers
+        eventSource.onmessage = handleMessage;
+        eventSource.onerror = handleError;
+        eventSource.onopen = () => {
+          if (!isMounted.current) return;
 
-      // Handle incoming messages
-      eventSource.onmessage = event => {
-        try {
-          const data = JSON.parse(event.data);
+          setIsConnected(true);
+          setError(null);
+          reconnectAttempt = 0; // Reset reconnect attempts on successful connection
+          startHeartbeatCheck(); // Start monitoring heartbeats
+        };
 
-          // Update last heartbeat timestamp for any message
-          lastHeartbeat = Date.now();
+        // Start heartbeat check
+        startHeartbeatCheck();
+      } catch (error) {
+        setError('Failed to establish notification connection');
 
-          if (data.type === 'heartbeat') {
-            // Just a heartbeat, no need to process further
-            return;
-          } else if (data.type === 'connection') {
-            // Connection established message
-            // console.log('SSE connection established');
-          } else if (data.type === 'notification') {
-            // Single new notification
-            const newNotification = data.notification;
-
-            setNotifications(prev => [newNotification, ...prev]);
-
-            if (!newNotification.read) {
-              setUnreadCount(prev => prev + 1);
-            }
-
-            // Show browser notification if enabled
-            showBrowserNotification(newNotification);
-
-            // Invalidate queries
-            queryClient.invalidateQueries({ queryKey: ['notifications'] });
-          } else if (data.type === 'notifications') {
-            // Batch of notifications
-            const newNotifications = data.notifications;
-
-            setNotifications(prev => {
-              // Merge notifications, avoiding duplicates
-              const existingIds = new Set(prev.map(n => n._id));
-              const uniqueNew = newNotifications.filter(n => !existingIds.has(n._id));
-              return [...uniqueNew, ...prev];
-            });
-
-            // Update unread count
-            fetchUnreadCount();
-
-            // Invalidate queries
-            queryClient.invalidateQueries({ queryKey: ['notifications'] });
-          }
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
-          setError('Failed to parse SSE data');
-        }
-      };
-
-      // Handle errors
-      eventSource.onerror = _err => {
-        setIsConnected(false);
-        setError('Connection to notification server lost. Reconnecting...');
-
-        // Close the connection
-        eventSource?.close();
-
-        // Increment reconnect attempt counter
+        // Try to reconnect
         reconnectAttempt++;
-
-        // Try to reconnect with exponential backoff
         const delay = getReconnectDelay();
-        // console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempt})...`);
-
         reconnectTimer = setTimeout(connectSSE, delay);
-      };
+      }
     };
 
     // Initial connection
@@ -274,17 +361,21 @@ export function useNotifications() {
 
     // Initial data fetch
     fetchNotifications().then(data => {
-      setNotifications(data.notifications || []);
+      if (isMounted.current) {
+        setNotifications(data.notifications || []);
+      }
     });
 
     fetchUnreadCount();
 
     // Cleanup on unmount
     return () => {
-      if (eventSource) {
-        eventSource.close();
-      }
+      isMounted.current = false;
 
+      // Disconnect this client from the notification connection
+      notificationConnection.disconnect(clientId);
+
+      // Clear timers
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
       }
