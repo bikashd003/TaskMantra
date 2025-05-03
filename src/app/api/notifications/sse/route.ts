@@ -4,9 +4,6 @@ import { authOptions } from '../../auth/[...nextauth]/options';
 import { connectDB } from '@/Utility/db';
 import { Notification } from '@/models/Notification';
 
-// This file is automatically treated as an Edge Function by Vercel
-export const runtime = 'edge';
-
 // Store active SSE connections
 const clients = new Map<string, ReadableStreamDefaultController>();
 

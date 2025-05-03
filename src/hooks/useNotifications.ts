@@ -39,7 +39,6 @@ class NotificationConnection {
     this.connectedClients.add(clientId);
 
     if (!this.eventSource || this.eventSource.readyState === EventSource.CLOSED) {
-      // console.log('Creating new SSE connection');
       this.eventSource = new EventSource('/api/notifications/sse');
     }
 
@@ -50,7 +49,6 @@ class NotificationConnection {
     this.connectedClients.delete(clientId);
 
     if (this.connectedClients.size === 0 && this.eventSource) {
-      // console.log('Closing SSE connection - no more clients');
       this.eventSource.close();
       this.eventSource = null;
     }
