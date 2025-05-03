@@ -1,6 +1,6 @@
-import "next-auth";
+import 'next-auth';
 
-declare module "next-auth" {
+declare module 'next-auth' {
   interface Session {
     user: {
       id: string;
@@ -8,6 +8,7 @@ declare module "next-auth" {
       email: string;
       systemRole: string;
       image?: string;
+      organizationId?: string | null;
     };
   }
   interface JWT {
@@ -29,7 +30,7 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth/providers/GoogleProvider" {
+declare module 'next-auth/providers/GoogleProvider' {
   interface Profile {
     picture?: string;
   }

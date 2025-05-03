@@ -121,7 +121,6 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
           resource: task,
           status: task.status,
           priority: task.priority,
-          color: task.color,
         };
       });
   }, [tasks, taskFilter]);

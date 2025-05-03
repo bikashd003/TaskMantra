@@ -8,7 +8,6 @@ import {
   CheckSquare,
   Calendar,
   Timer,
-  Tag,
   Link as LinkIcon,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -221,20 +220,6 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
             <Progress value={progress} className="h-2 bg-gray-200" />
           </div>
 
-          {/* Tags */}
-          {task.tags && task.tags.length > 0 && (
-            <div className="flex items-center gap-2 bg-gray-50 p-4 rounded-lg">
-              <Tag className="h-5 w-5 text-blue-500" />
-              <div className="flex flex-wrap gap-2">
-                {task.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs px-2 py-1">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Dependencies */}
           {task.dependencies && task.dependencies.length > 0 && (
             <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
@@ -260,9 +245,9 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
                     className="flex items-center gap-2 bg-white rounded-full pl-1 pr-3 py-1 shadow-sm"
                   >
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarImage src={user.image} alt={user.name} />
                       <AvatarFallback className="text-xs bg-blue-500 text-white">
-                        {user.initials || user.name.charAt(0)}
+                        {user?.name?.charAt(0) || ''}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium">{user.name}</span>

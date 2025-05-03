@@ -1,16 +1,4 @@
-import {
-  CalendarDays,
-  CheckCircle2,
-  Flag,
-  Folder,
-  Tags,
-  Clock,
-  Users,
-  Trash,
-  Plus,
-} from 'lucide-react';
-import { RecurrenceRule } from './types/RecurringTask';
-import RecurringTaskForm from './RecurringTaskForm';
+import { CalendarDays, CheckCircle2, Flag, Folder, Clock, Users, Trash, Plus } from 'lucide-react';
 import Modal from '@/components/Global/Modal';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,11 +14,15 @@ import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import { TaskStatus, TaskPriority, statusOptions, priorityOptions, Subtask, Task } from './types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import React from 'react';
 import { ScrollArea } from '../ui/scroll-area';
+import { taskSchema } from '@/Schemas/Task';
+import { OrganizationService } from '@/services/Organization.service';
+import { useQuery } from '@tanstack/react-query';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { ProjectService } from '@/services/Project.service';
 
 interface TaskData {
   name: string;
@@ -44,13 +36,7 @@ interface TaskData {
   projectId: string;
   subtasks: Subtask[];
   assignedTo: string[];
-  tags: string[];
-  color?: string;
-  category?: string;
-  recurring?: {
-    isRecurring: boolean;
-    recurrenceRule?: RecurrenceRule;
-  };
+  dependencies?: string[];
 }
 
 interface CreateTaskModalProps {
@@ -74,35 +60,8 @@ const initialTaskState: TaskData = {
   projectId: '',
   subtasks: [],
   assignedTo: [],
-  tags: [],
-  color: 'default',
-  category: 'none',
-  recurring: {
-    isRecurring: false,
-  },
+  dependencies: [],
 };
-
-const validationSchema = Yup.object().shape({
-  name: Yup.string().required('Task name is required'),
-  description: Yup.string(),
-  status: Yup.string()
-    .oneOf(['To Do', 'In Progress', 'Review', 'Completed'])
-    .required('Status is required'),
-  priority: Yup.string().oneOf(['High', 'Medium', 'Low']).required('Priority is required'),
-  dueDate: Yup.date(),
-  startDate: Yup.date(),
-  estimatedTime: Yup.number().min(0, 'Estimated time cannot be negative'),
-  loggedTime: Yup.number().min(0, 'Logged time cannot be negative'),
-  projectId: Yup.string(),
-  subtasks: Yup.array().of(
-    Yup.object().shape({
-      name: Yup.string().required('Subtask name is required'),
-      completed: Yup.boolean().default(false),
-    })
-  ),
-  assignedTo: Yup.array().of(Yup.string()),
-  tags: Yup.array().of(Yup.string()),
-});
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   isOpen,
@@ -112,6 +71,35 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   initialDate,
   editTask,
 }) => {
+  const { data: organization } = useQuery({
+    queryKey: ['organizations'],
+    queryFn: async () => {
+      try {
+        return await OrganizationService.getOrganizations();
+      } catch (error: any) {
+        toast.error('Failed to fetch organization data', {
+          description: error.message || 'Unknown error',
+        });
+        throw error;
+      }
+    },
+  });
+
+  const { data: projects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      try {
+        return await ProjectService.getProjects();
+      } catch (error: any) {
+        toast.error('Failed to fetch projects', {
+          description: error.message || 'Unknown error',
+        });
+        throw error;
+      }
+    },
+  });
+  const availableProject = projects?.projects || [];
+
   // Prepare initial values based on props
   const getInitialValues = () => {
     if (editTask) {
@@ -132,7 +120,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         assignedTo: editTask.assignedTo
           ? editTask.assignedTo.map(user => (typeof user === 'string' ? user : user.id))
           : [],
-        tags: editTask.tags || [],
+        dependencies: editTask.dependencies || [],
       };
     } else {
       // For new tasks, use default values with initialDate if provided
@@ -149,10 +137,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   const formik = useFormik({
     initialValues: getInitialValues(),
-    validationSchema: validationSchema,
-    onSubmit: async values => {
+    validationSchema: taskSchema,
+    onSubmit: values => {
       try {
-        await onCreateTask(values);
+        onCreateTask(values);
         formik.resetForm();
         onClose();
       } catch (error) {
@@ -170,7 +158,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="xl">
-      <ScrollArea className="max-h-[85vh] overflow-hidden flex flex-col pr-2">
+      <ScrollArea className="max-h-[85vh] overflow-hidden flex flex-col px-2">
         {/* Header */}
         <div className="flex items-center justify-between gap-3 border-b pb-4">
           <div className="flex items-center gap-3">
@@ -275,7 +263,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               <TabsList className="grid grid-cols-5 mb-4">
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="dates">Dates & Time</TabsTrigger>
-                <TabsTrigger value="recurring">Recurring</TabsTrigger>
                 <TabsTrigger value="subtasks">Subtasks</TabsTrigger>
                 <TabsTrigger value="assignments">Assignments</TabsTrigger>
               </TabsList>
@@ -298,41 +285,36 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tags" className="text-sm font-medium">
-                    Tags
-                  </Label>
-                  <div className="relative">
-                    <Tags className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="tags"
-                      placeholder="Enter tags separated by commas"
-                      value={formik.values.tags.join(', ')}
-                      onChange={e =>
-                        formik.setFieldValue(
-                          'tags',
-                          e.target.value.split(',').map(tag => tag.trim())
-                        )
-                      }
-                      className="h-10 pl-9"
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">Example: design, frontend, urgent</p>
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="projectId" className="text-sm font-medium">
                     Project
                   </Label>
                   <div className="relative">
                     <Folder className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="projectId"
-                      placeholder="Select project"
-                      {...formik.getFieldProps('projectId')}
-                      className="h-10 pl-9"
+                    <Select
+                      value={formik.values.projectId}
+                      onValueChange={value => formik.setFieldValue('projectId', value)}
                       disabled={isLoading}
-                    />
+                    >
+                      <SelectTrigger id="projectId" className="h-10 pl-9">
+                        <SelectValue placeholder="Select a project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableProject.map((project: any) => (
+                          <SelectItem
+                            key={project._id || project.id}
+                            value={project._id || project.id}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: project.color }}
+                              />
+                              <span className="truncate max-w-[150px]">{project.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </TabsContent>
@@ -409,25 +391,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     </div>
                   </div>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="recurring" className="space-y-4">
-                <RecurringTaskForm
-                  initialRule={formik.values.recurring?.recurrenceRule}
-                  isRecurring={formik.values.recurring?.isRecurring || false}
-                  onSave={(rule, isRecurring) => {
-                    formik.setFieldValue('recurring', {
-                      isRecurring,
-                      recurrenceRule: rule,
-                    });
-                  }}
-                  onToggleRecurring={isRecurring => {
-                    formik.setFieldValue('recurring', {
-                      ...formik.values.recurring,
-                      isRecurring,
-                    });
-                  }}
-                />
               </TabsContent>
 
               <TabsContent value="subtasks" className="space-y-4">
@@ -508,23 +471,91 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     Assigned To
                   </Label>
                   <div className="relative">
-                    <Users className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="assignedTo"
-                      placeholder="Assign to users"
-                      value={formik.values.assignedTo.join(', ')}
-                      onChange={e =>
-                        formik.setFieldValue(
-                          'assignedTo',
-                          e.target.value.split(',').map(id => id.trim())
-                        )
-                      }
-                      className="h-10 pl-9"
+                    <Users className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
+                    <Select
+                      value={formik.values.assignedTo.length > 0 ? formik.values.assignedTo[0] : ''}
+                      onValueChange={value => {
+                        // If value is empty, clear the assignedTo array
+                        if (!value) {
+                          formik.setFieldValue('assignedTo', []);
+                          return;
+                        }
+
+                        // If the value is already in the array, don't add it again
+                        if (formik.values.assignedTo.includes(value)) {
+                          return;
+                        }
+
+                        // Add the value to the assignedTo array
+                        formik.setFieldValue('assignedTo', [...formik.values.assignedTo, value]);
+                      }}
                       disabled={isLoading}
-                    />
+                    >
+                      <SelectTrigger id="assignedTo" className="h-10 pl-9">
+                        <SelectValue placeholder="Select a user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organization?.members?.map((member: any) => (
+                          <SelectItem key={member.userId._id} value={member.userId._id}>
+                            <span className="flex">
+                              <Avatar className="h-4 w-4 mr-2">
+                                <AvatarImage src={member.userId.image} alt={member.userId.name} />
+                                <AvatarFallback className="bg-muted/30 text-muted-foreground">
+                                  {member.userId.name.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              {member.userId.name}
+                            </span>
+                          </SelectItem>
+                        )) || (
+                          <SelectItem value="" disabled>
+                            No members found
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  {/* Display selected users with option to remove */}
+                  {formik.values.assignedTo.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      <Label className="text-sm font-medium">Selected Users</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {formik.values.assignedTo.map(userId => {
+                          const member = organization?.members?.find(
+                            (m: any) => m.userId._id === userId
+                          );
+                          const userName = member ? member.userId.name : userId;
+
+                          return (
+                            <div
+                              key={userId}
+                              className="flex items-center gap-1 bg-primary/10 text-primary rounded-full px-3 py-1 text-xs"
+                            >
+                              <span>{userName}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-4 w-4 rounded-full"
+                                onClick={() => {
+                                  formik.setFieldValue(
+                                    'assignedTo',
+                                    formik.values.assignedTo.filter(id => id !== userId)
+                                  );
+                                }}
+                              >
+                                <Trash className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <p className="text-xs text-muted-foreground">
-                    Enter user IDs separated by commas
+                    Select users to assign this task to
                   </p>
                 </div>
               </TabsContent>
@@ -551,7 +582,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               formik.handleSubmit();
             }}
           >
-            {isLoading ? 'Creating...' : 'Create Task'}
+            {isLoading
+              ? editTask
+                ? 'Updating...'
+                : 'Creating...'
+              : editTask
+                ? 'Update Task'
+                : 'Create Task'}
           </Button>
         </div>
       </ScrollArea>

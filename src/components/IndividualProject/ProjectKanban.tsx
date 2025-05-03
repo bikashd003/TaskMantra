@@ -1,201 +1,607 @@
-import React, { useState, useEffect } from "react";
+'use client';
+
+import { useEffect, useState, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
+  closestCorners,
+  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  defaultDropAnimationSideEffects,
-  closestCorners
-} from "@dnd-kit/core";
-import { SortableContext, arrayMove } from "@dnd-kit/sortable";
-import KanbanColumn from "./KanbanColumn";
-import KanbanTask from "./KanbanTask";
-import { createPortal } from "react-dom";
-import { useToast } from "@/hooks/use-toast"
-import {TaskSidebar} from "./TaskSidebar";
+  type DragStartEvent,
+  type DragOverEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { Column } from './KanbanColumn';
+import { Card } from './KanbanCard';
+import { createPortal } from 'react-dom';
+import { restrictToWindowEdges } from '@dnd-kit/modifiers';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  KanbanSettingsService,
+  KanbanColumn as KanbanColumnType,
+} from '@/services/KanbanSettings.service';
+import { toast } from 'sonner';
+import { TaskService } from '@/services/Task.service';
+import { KanbanSkeleton } from './KanbanSkeleton';
+import CreateColumnModal from './CreateColumnModal';
+import { Task } from '../Tasks/types';
 
-
-const defaultColumns = [
-  { id: "todo", title: "To Do" },
-  { id: "inProgress", title: "In Progress" },
-  { id: "completed", title: "Done" },
-  { id: "review", title: "Review" },
-];
-
-const dropAnimation = {
-  sideEffects: defaultDropAnimationSideEffects({
-    styles: {
-      active: {
-        opacity: "0.5",
-      },
-    },
-  }),
+// Types
+export type CardType = {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  status: string;
+  dueDate?: string;
+  estimatedTime?: number;
+  loggedTime?: number;
+  assignedTo?: any[];
 };
 
-const ProjectKanban = ({ project }: { project: any }) => {
-  const { toast } = useToast()
-  const formattedTasks = project.tasks.map((task: any) => ({
-    ...task,
-    columnId: task.status.replace(/\s+/g, "").toLowerCase(),
-  }));
+export type ColumnType = {
+  id: string;
+  title: string;
+  cards: CardType[];
+  isLocked?: boolean;
+};
 
-  // Initialize columns from localStorage or default
-  const [columns, setColumns] = useState(() => {
-    const savedColumns = localStorage.getItem(`kanban-columns-${project._id}`);
-    return savedColumns ? JSON.parse(savedColumns) : defaultColumns;
+interface ProjectProps {
+  project: any;
+}
+
+export default function ProjectKanban({ project }: ProjectProps) {
+  const [columns, setColumns] = useState<ColumnType[]>([]);
+  const [activeColumn, setActiveColumn] = useState<ColumnType | null>(null);
+  const [activeCard, setActiveCard] = useState<CardType | null>(null);
+  const [openColumnCreateModal, setOpenColumnCreateModal] = useState(false);
+  const [lastDroppedId, setLastDroppedId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // Store the previous state for rollback in case of API failure
+  const previousColumnsRef = useRef<ColumnType[]>([]);
+  const dragSourceColumnRef = useRef<string | null>(null);
+
+  const { data: kanbanSetting, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['kanban-settings'],
+    queryFn: async () => {
+      const response = await KanbanSettingsService.getSettings();
+      return response;
+    },
   });
 
-  const [tasks, setTasks] = useState(formattedTasks);
-  const [activeTask, setActiveTask] = useState<any>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const updateTaskStatus = useMutation({
+    mutationFn: async ({ taskId, newStatus }: { taskId: string; newStatus: string }) => {
+      await TaskService.updateTaskStatus(taskId, newStatus);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', project._id] });
+      toast.success('Task status updated');
+    },
+    onError: _error => {
+      // Restore the previous state on error
+      setColumns(previousColumnsRef.current);
+      toast.error('Failed to update task status. Changes reverted.');
+    },
+  });
 
-  // Save columns to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem(`kanban-columns-${project._id}`, JSON.stringify(columns));
-  }, [columns, project._id]);
+    if (project) {
+      const defaultKanbanColumns: KanbanColumnType[] = [
+        { id: 'todo', title: 'To Do', order: 0 },
+        { id: 'inProgress', title: 'In Progress', order: 1 },
+        { id: 'review', title: 'Review', order: 2 },
+        { id: 'completed', title: 'Completed', order: 5 },
+      ];
 
-  const handleOpenSidebar = (taskId: string) => {
-    setSelectedTaskId(taskId);
-    setIsSidebarOpen(true);
-  };
+      const columnsToUse =
+        kanbanSetting?.columns && kanbanSetting.columns.length > 0
+          ? kanbanSetting.columns
+          : defaultKanbanColumns;
+
+      const initialColumns: ColumnType[] = columnsToUse
+        .sort((a: KanbanColumnType, b: KanbanColumnType) => a.order - b.order)
+        .map((column: KanbanColumnType) => ({
+          id: column.id,
+          title: column.title,
+          cards: [],
+          isLocked: column.id === 'completed',
+        }));
+
+      if (project.tasks && project.tasks.length > 0) {
+        project.tasks.forEach((task: any) => {
+          // Create a more flexible mapping for task status to column ID
+          let columnId = task.status.toLowerCase().replace(/\s+/g, '');
+
+          // Handle common status variations
+          if (columnId === 'inprogress') columnId = 'inProgress';
+          if (columnId === 'done' || columnId === 'finished') columnId = 'completed';
+          if (columnId === 'needsreview') columnId = 'review';
+          if (columnId === 'discussion' || columnId === 'discussing') columnId = 'discussion';
+
+          // Find the column for this task
+          let columnIndex = initialColumns.findIndex(col => col.id === columnId);
+
+          // If no matching column found, default to first column (usually "To Do")
+          if (columnIndex === -1 && initialColumns.length > 0) {
+            columnIndex = 0;
+          }
+
+          if (columnIndex !== -1) {
+            const card: CardType = {
+              id: task._id,
+              title: task.name,
+              description: task.description || '',
+              priority: task.priority.toLowerCase() as 'low' | 'medium' | 'high',
+              status: task.status,
+              dueDate: task.dueDate,
+              estimatedTime: task.estimatedTime,
+              loggedTime: task.loggedTime,
+              assignedTo: task.assignedTo,
+            };
+
+            initialColumns[columnIndex].cards.push(card);
+          }
+        });
+      }
+
+      setColumns(initialColumns);
+      previousColumnsRef.current = initialColumns;
+    }
+  }, [kanbanSetting, project]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        delay: 200,
-        tolerance: 5,
+        distance: 3,
       },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
-  const updateTaskStatus = async (taskId: string, newStatus: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`/api/update-task-status/${taskId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: newStatus,
-        }),
-      });
+  function findColumnByCardId(cardId: string) {
+    return columns.find(column => column.cards.some(card => card.id === cardId));
+  }
 
-      if (!response.ok) {
-        throw new Error("Failed to update task status");
-      }
-      if(response.ok){
-        toast({
-          variant: "success",
-          title: "Success",
-          description: "Task status updated",
-        })
-      }
-
-      return true;
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-      return false;
+  function findCardById(cardId: string) {
+    for (const column of columns) {
+      const card = column.cards.find(card => card.id === cardId);
+      if (card) return card;
     }
-  };
+    return null;
+  }
 
-  const onDragStart = (event: any) => {
+  function handleDragStart(event: DragStartEvent) {
     const { active } = event;
-    if (!active.id.startsWith("col-")) {
-      const task = tasks.find((t) => t._id === active.id);
-      setActiveTask(task);
-    }
-  };
+    const activeId = active.id as string;
 
-  const onDragEnd = async (event: any) => {
-    const { active, over } = event;
-    setActiveTask(null);
+    // Save the current state before any drag operation
+    previousColumnsRef.current = JSON.parse(JSON.stringify(columns));
 
-    if (!over) return;
+    if (activeId.includes('column')) {
+      const columnId = activeId.replace('column-', '');
+      const activeColumn = columns.find(col => col.id === columnId);
 
-    if (active.id.startsWith("col-") && over.id.startsWith("col-")) {
-      const oldIndex = columns.findIndex(
-        (c) => `col-${c.id}` === active.id
-      );
-      const newIndex = columns.findIndex(
-        (c) => `col-${c.id}` === over.id
-      );
-      
-      if (oldIndex !== newIndex) {
-        setColumns(arrayMove(columns, oldIndex, newIndex));
+      if (activeColumn?.isLocked) {
+        return;
       }
+
+      if (activeColumn) setActiveColumn(activeColumn);
       return;
     }
 
-    const activeTask = tasks.find((t) => t._id === active.id);
-    if (activeTask) {
-      const newColumnId = over.id;
-      const newStatus = columns.find((col) => col.id === newColumnId)?.title || "";
-
-      // Update local state optimistically
-      setTasks((prev) =>
-        prev.map((task) =>
-          task._id === active.id ? { ...task, columnId: newColumnId } : task
-        )
-      );
-
-      // Call API to update status
-      const success = await updateTaskStatus(active.id, newStatus);
-      
-      // Revert changes if API call failed
-      if (!success) {
-        setTasks((prev) =>
-          prev.map((task) =>
-            task._id === active.id ? { ...task, columnId: activeTask.columnId } : task
-          )
-        );
+    // Track source column for card drag
+    const card = findCardById(activeId);
+    if (card) {
+      setActiveCard(card);
+      const sourceColumn = findColumnByCardId(activeId);
+      if (sourceColumn) {
+        // Store the source column ID for later comparison
+        dragSourceColumnRef.current = sourceColumn.id;
       }
+    }
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    if (activeId === overId) return;
+
+    if (!activeId.includes('column') && !overId.includes('column')) {
+      const activeColumn = findColumnByCardId(activeId);
+      const overColumn = findColumnByCardId(overId);
+
+      if (!activeColumn || !overColumn) return;
+
+      setColumns(columns => {
+        // Create new columns array
+        const newColumns = [...columns];
+
+        // Find indices
+        const activeColumnIndex = newColumns.findIndex(col => col.id === activeColumn.id);
+        const overColumnIndex = newColumns.findIndex(col => col.id === overColumn.id);
+
+        // Find card indices
+        const activeCardIndex = newColumns[activeColumnIndex].cards.findIndex(
+          card => card.id === activeId
+        );
+        const overCardIndex = newColumns[overColumnIndex].cards.findIndex(
+          card => card.id === overId
+        );
+
+        if (activeColumn.id === overColumn.id) {
+          newColumns[activeColumnIndex].cards = arrayMove(
+            newColumns[activeColumnIndex].cards,
+            activeCardIndex,
+            overCardIndex
+          );
+        } else {
+          const [movedCard] = newColumns[activeColumnIndex].cards.splice(activeCardIndex, 1);
+
+          newColumns[overColumnIndex].cards.splice(overCardIndex, 0, movedCard);
+        }
+
+        return newColumns;
+      });
+    }
+
+    if (!activeId.includes('column') && overId.includes('column')) {
+      const activeColumn = findColumnByCardId(activeId);
+      const overColumnId = overId.replace('column-', '');
+
+      if (!activeColumn || activeColumn.id === overColumnId) return;
+
+      setColumns(columns => {
+        const newColumns = [...columns];
+
+        const activeColumnIndex = newColumns.findIndex(col => col.id === activeColumn.id);
+        const overColumnIndex = newColumns.findIndex(col => col.id === overColumnId);
+
+        const activeCardIndex = newColumns[activeColumnIndex].cards.findIndex(
+          card => card.id === activeId
+        );
+
+        const [movedCard] = newColumns[activeColumnIndex].cards.splice(activeCardIndex, 1);
+
+        newColumns[overColumnIndex].cards.push(movedCard);
+
+        return newColumns;
+      });
+    }
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    // Visual feedback for the user
+    if (active && active.id) {
+      const activeId = active.id as string;
+      setLastDroppedId(activeId);
+      setTimeout(() => {
+        setLastDroppedId(null);
+      }, 1000);
+    }
+
+    // Reset refs and state
+    setActiveColumn(null);
+    setActiveCard(null);
+
+    if (!over) {
+      // Reset source column ref if drag is cancelled
+      dragSourceColumnRef.current = null;
+      return;
+    }
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // If the item is dropped on itself, we still need to check if it's a card
+    // that might have been moved to a different column during dragOver
+    if (activeId === overId && !activeId.includes('column')) {
+      // For cards dropped on themselves, we need to check if the column changed
+      const currentColumn = findColumnByCardId(activeId);
+
+      if (
+        currentColumn &&
+        dragSourceColumnRef.current &&
+        currentColumn.id !== dragSourceColumnRef.current
+      ) {
+        // The card was moved to a different column during dragOver
+        const card = findCardById(activeId);
+        if (card) {
+          updateTaskStatus.mutate({
+            taskId: activeId,
+            newStatus: currentColumn.title,
+          });
+        }
+      }
+
+      // Reset source column ref
+      dragSourceColumnRef.current = null;
+      return;
+    }
+
+    // If the item is dropped on a different item
+    if (activeId.includes('column') && overId.includes('column')) {
+      // Handle column reordering
+      const activeColumnId = activeId.replace('column-', '');
+      const overColumnId = overId.replace('column-', '');
+
+      // Find the columns
+      const activeColumn = columns.find(col => col.id === activeColumnId);
+      const overColumn = columns.find(col => col.id === overColumnId);
+      if (activeColumn?.isLocked || overColumn?.isLocked) {
+        dragSourceColumnRef.current = null;
+        return;
+      }
+
+      const activeIndex = columns.findIndex(col => col.id === activeColumnId);
+      const overIndex = columns.findIndex(col => col.id === overColumnId);
+
+      if (activeIndex !== -1 && overIndex !== -1) {
+        const reorderedColumns = arrayMove(columns, activeIndex, overIndex);
+        setColumns(reorderedColumns);
+
+        if (kanbanSetting) {
+          const updatedKanbanColumns = kanbanSetting.columns.map(col => {
+            const newIndex = reorderedColumns.findIndex(c => c.id === col.id);
+            return {
+              ...col,
+              order: newIndex !== -1 ? newIndex : col.order,
+            };
+          });
+
+          updateColumnsMutation.mutate(updatedKanbanColumns);
+        }
+      }
+    } else if (!activeId.includes('column')) {
+      // Handle card drag
+      let targetColumnId: string | null = null;
+
+      if (overId.includes('column')) {
+        // Card dropped on a column
+        targetColumnId = overId.replace('column-', '');
+      } else {
+        // Card dropped on another card
+        const targetColumn = findColumnByCardId(overId);
+        if (targetColumn) {
+          targetColumnId = targetColumn.id;
+        } else {
+          dragSourceColumnRef.current = null;
+          return;
+        }
+      }
+
+      // Only update status if the card was moved to a different column
+      if (targetColumnId && dragSourceColumnRef.current !== targetColumnId) {
+        const card = findCardById(activeId);
+        const targetColumn = columns.find(col => col.id === targetColumnId);
+
+        if (card && targetColumn) {
+          updateTaskStatus.mutate({
+            taskId: activeId,
+            newStatus: targetColumn.title,
+          });
+        }
+      }
+    }
+    dragSourceColumnRef.current = null;
+  }
+
+  const updateColumnsMutation = useMutation({
+    mutationFn: async (columns: KanbanColumnType[]) => {
+      return await KanbanSettingsService.updateColumns(columns);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kanban-settings'] });
+      toast.success('Kanban columns updated');
+    },
+    onError: () => {
+      setColumns(previousColumnsRef.current);
+      toast.error('Failed to update kanban columns');
+    },
+  });
+
+  function handleDeleteColumn(columnId: string) {
+    const columnToDelete = columns.find(col => col.id === columnId);
+    if (columnToDelete && columnToDelete.cards.length > 0) {
+      toast.error('Cannot delete column with tasks. Move tasks to another column first.');
+      return;
+    }
+
+    // Save current state before mutation
+    previousColumnsRef.current = JSON.parse(JSON.stringify(columns));
+
+    const updatedColumns = columns.filter(col => col.id !== columnId);
+    setColumns(updatedColumns);
+    if (kanbanSetting) {
+      const updatedKanbanColumns = kanbanSetting.columns.filter(col => col.id !== columnId);
+
+      const reorderedColumns = updatedKanbanColumns.map((col, index) => ({
+        ...col,
+        order: index,
+      }));
+
+      updateColumnsMutation.mutate(reorderedColumns);
+      toast.success('Column deleted');
+    }
+  }
+
+  function addNewColumn(newColumnTitle: string) {
+    const columnId = newColumnTitle.toLowerCase().replace(/\s+/g, '-');
+    if (columns.some(col => col.id === columnId)) {
+      toast.error('A column with this name already exists');
+      return;
+    }
+
+    // Save current state before mutation
+    previousColumnsRef.current = JSON.parse(JSON.stringify(columns));
+
+    const newColumn: ColumnType = {
+      id: columnId,
+      title: newColumnTitle,
+      cards: [],
+    };
+    const updatedColumns = [...columns, newColumn];
+    setColumns(updatedColumns);
+    if (kanbanSetting) {
+      const updatedKanbanColumns = [
+        ...kanbanSetting.columns,
+        {
+          id: columnId,
+          title: newColumnTitle,
+          order: kanbanSetting.columns.length,
+        },
+      ];
+
+      updateColumnsMutation.mutate(updatedKanbanColumns);
+    }
+
+    setOpenColumnCreateModal(false);
+  }
+
+  const addTaskMutation = useMutation({
+    mutationFn: async (taskData: Partial<Task>) => {
+      const response = await TaskService.createTask(taskData as any);
+      return response;
+    },
+    onSuccess: task => {
+      setColumns(prevColumns => {
+        const newColumns = [...prevColumns];
+        const columnIndex = newColumns.findIndex(
+          col => col.title.toLowerCase() === task.status.toLowerCase()
+        );
+
+        if (columnIndex !== -1) {
+          const card: CardType = {
+            id: task._id,
+            title: task.name,
+            description: task.description || '',
+            priority: task.priority.toLowerCase() as 'low' | 'medium' | 'high',
+            status: task.status,
+            dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : undefined,
+            estimatedTime: task.estimatedTime,
+            loggedTime: task.loggedTime,
+            assignedTo: task.assignedTo,
+          };
+          newColumns[columnIndex].cards.push(card);
+        }
+
+        return newColumns;
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['project', project._id] });
+    },
+  });
+
+  const handleAddTask = async (newTask: Partial<Task>) => {
+    try {
+      const taskWithProject = {
+        ...newTask,
+        projectId: project._id,
+        name: newTask.name || '',
+        title: newTask.name || '', // Ensure both name and title are set to the same value
+      };
+      const task = await addTaskMutation.mutateAsync(taskWithProject as any);
+
+      toast.success('Task created successfully');
+      return task;
+    } catch (error) {
+      toast.error('Failed to create task');
+      throw error;
     }
   };
 
+  if (isLoadingSettings) {
+    return <KanbanSkeleton />;
+  }
+  if (!project || !project.tasks) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+        <div className="text-center">
+          <h3 className="text-lg font-medium">No project data available</h3>
+          <p className="text-gray-500">This project doesn&apos;t have any tasks yet.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-2 w-full overflow-x-auto">
-      {selectedTaskId && (
-      <TaskSidebar taskId={selectedTaskId!} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      )}
+    <div className="h-full w-full flex flex-col overflow-hidden">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        modifiers={[restrictToWindowEdges]}
       >
-        <SortableContext items={columns.map((col) => `col-${col.id}`)}>
-          <div className="flex space-x-6">
-            {columns.map((column) => (
-              <KanbanColumn
-                key={column.id}
-                column={column}
-                tasks={tasks.filter((task) => task.columnId === column.id)}
-                draggingTask={activeTask?._id}
-                onOpenSidebar={handleOpenSidebar}
-              />
-            ))}
-          </div>
-        </SortableContext>
-        {typeof window !== "undefined" &&
-          createPortal(
-            <DragOverlay dropAnimation={dropAnimation}>
-              {activeTask ? (
-                <div className="rotate-3 scale-105">
-                  <KanbanTask task={activeTask} isDragging={true} />
+        <div className="flex-1 min-h-0 min-w-0 flex flex-col">
+          <div className="flex-1 min-h-0 min-w-0 overflow-x-auto overflow-y-auto custom-scrollbar">
+            <SortableContext items={columns.map(col => `column-${col.id}`)}>
+              <div className="flex gap-2 min-w-max pb-6">
+                {columns.map(column => (
+                  <div key={column.id} className="flex-shrink-0 w-[300px]">
+                    <Column
+                      column={column}
+                      cards={column.cards}
+                      isHighlighted={lastDroppedId === `column-${column.id}`}
+                      onDeleteColumn={handleDeleteColumn}
+                      onAddTask={handleAddTask}
+                      loadingAddTask={addTaskMutation.isPending}
+                    />
+                  </div>
+                ))}
+
+                <div className="flex flex-col items-center justify-center w-16  rounded-md border-2 border-dashed border-gray-200 flex-shrink-0 hover:border-primary/50 hover:bg-gray-50 transition-all duration-300">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full h-10 w-10 bg-gray-100 hover:bg-primary/10"
+                    onClick={() => setOpenColumnCreateModal(true)}
+                  >
+                    <Plus className="h-5 w-5 text-gray-600" />
+                  </Button>
                 </div>
-              ) : null}
+              </div>
+            </SortableContext>
+          </div>
+        </div>
+
+        <CreateColumnModal
+          isOpen={openColumnCreateModal}
+          onClose={() => setOpenColumnCreateModal(false)}
+          onCreateColumn={addNewColumn}
+          isLoading={updateColumnsMutation.isPending}
+        />
+
+        {typeof document !== 'undefined' &&
+          createPortal(
+            <DragOverlay adjustScale={true} zIndex={100}>
+              {activeCard && <Card card={activeCard} isDragging={true} isOverlay={true} />}
+              {activeColumn && (
+                <Column
+                  column={activeColumn}
+                  cards={activeColumn.cards}
+                  isDragging={true}
+                  onDeleteColumn={handleDeleteColumn}
+                />
+              )}
             </DragOverlay>,
             document.body
           )}
       </DndContext>
     </div>
   );
-};
-
-export default ProjectKanban;
+}
