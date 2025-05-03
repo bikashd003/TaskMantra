@@ -156,6 +156,24 @@ app.get('/get-task/:taskId', async c => {
     return c.json({ error: error.message }, 500);
   }
 });
+app.get('/my-tasks', async c => {
+  const user = c.get('user');
+
+  if (!user) {
+    return c.json({ error: 'User not authenticated' }, 401);
+  }
+
+  try {
+    const tasks = await Task.find({
+      assignedTo: user.id,
+      organizationId: user.organizationId,
+    }).populate('assignedTo');
+
+    return c.json({ tasks });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
 
 app.post('/', async c => {
   const user = c.get('user');

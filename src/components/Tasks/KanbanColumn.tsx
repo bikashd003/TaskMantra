@@ -9,7 +9,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronUp, Plus, Trash2, GripVertical } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion } from 'framer-motion';
-import QuickTaskForm from './QuickTaskForm';
+import QuickTaskCreateForm from '../IndividualProject/QuickTaskCreateForm';
 
 const defaultColumns = [
   { id: 'todo', title: 'To Do' },
@@ -26,6 +26,7 @@ interface ExtendedKanbanColumnProps extends KanbanColumnProps {
   columnWidth?: number;
   compactView?: boolean;
   isOverlay?: boolean;
+  loadingAddTask?: boolean;
 }
 
 const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
@@ -41,10 +42,12 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   columnWidth = 280,
   compactView = false,
   isOverlay = false,
+  loadingAddTask = false,
 }) => {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [assignedTo, setAssignedTo] = useState([]);
 
   const handleAddTask = () => {
     if (!newTaskName.trim() || !onAddTask) return;
@@ -55,7 +58,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       priority: 'Medium', // Default priority
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default due date (1 week from now)
       subtasks: [],
-      assignedTo: [],
+      assignedTo: assignedTo.map((user: any) => user.value),
       comments: [],
       dependencies: [],
     };
@@ -191,13 +194,15 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         </div>
       </div>
 
-      {/* Quick add task form */}
       {isAddingTask && (
-        <QuickTaskForm
+        <QuickTaskCreateForm
           setIsAddingTask={setIsAddingTask}
           newTaskName={newTaskName}
           setNewTaskName={setNewTaskName}
           handleAddTask={handleAddTask}
+          loadingAddTask={loadingAddTask}
+          assignedTo={assignedTo}
+          setAssignedTo={setAssignedTo}
         />
       )}
 

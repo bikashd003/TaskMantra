@@ -43,6 +43,7 @@ interface KanbanBoardProps {
   onAddTask?: (task: Partial<Task>) => void;
   renderPriorityBadge: (priority: TaskPriority) => React.ReactNode;
   isLoading?: boolean;
+  loadingAddTask?: boolean;
   onCreateTask?: () => void;
   viewMode: 'kanban' | 'calendar' | 'list';
   // Settings props
@@ -69,6 +70,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onAddTask,
   renderPriorityBadge,
   isLoading,
+  loadingAddTask,
   columnWidth,
   compactView,
   showCompletedTasks,
@@ -642,6 +644,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onDeleteColumn={() => handleDeleteColumn(column.id)}
                   columnWidth={columnWidth}
                   compactView={compactView}
+                  loadingAddTask={loadingAddTask}
                 />
               ))}
             </div>
