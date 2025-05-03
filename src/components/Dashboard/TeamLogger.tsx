@@ -21,7 +21,6 @@ export function TeamLoggerPopover() {
   const [currentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [todaySelectedTaskIds, setTodaySelectedTaskIds] = useState<string[]>([]);
 
-  // Fetch tasks
   const { data: tasks } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
@@ -33,7 +32,6 @@ export function TeamLoggerPopover() {
     setMyTasks(tasks as any);
   }, [tasks]);
 
-  // Fetch time logs for today
   const { data: timeLogs = [], refetch: refetchLogs } = useQuery({
     queryKey: ['teamlogs', currentDate],
     queryFn: async () => {
@@ -41,10 +39,8 @@ export function TeamLoggerPopover() {
     },
   });
 
-  // Process time logs to extract task IDs
   useEffect(() => {
     if (timeLogs && timeLogs.length > 0) {
-      // Extract all task IDs that were used today
       const taskIds = new Set<string>();
       timeLogs.forEach(log => {
         if (log.task && Array.isArray(log.task)) {
@@ -64,15 +60,12 @@ export function TeamLoggerPopover() {
     }
   }, [timeLogs]);
 
-  // Fetch active log if any
   const { data: activeLog, refetch: refetchActiveLog } = useQuery({
     queryKey: ['activeLog'],
     queryFn: async () => {
       return await TeamLoggerService.getActiveLog();
     },
   });
-
-  // Process active log to extract task IDs
   useEffect(() => {
     if (activeLog && activeLog.task && Array.isArray(activeLog.task) && tasks) {
       // Extract task IDs from active log
@@ -99,12 +92,10 @@ export function TeamLoggerPopover() {
     }
   }, [activeLog, tasks]);
 
-  // Update checked-in status when active log changes
   useEffect(() => {
     setIsCheckedIn(!!activeLog);
   }, [activeLog]);
 
-  // Pre-select tasks that were used today if no active log
   useEffect(() => {
     if (!activeLog && tasks && todaySelectedTaskIds.length > 0 && selectedTasks.length === 0) {
       const recentTaskOptions = todaySelectedTaskIds.map(taskId => {
@@ -119,7 +110,6 @@ export function TeamLoggerPopover() {
   }, [todaySelectedTaskIds, tasks, activeLog, selectedTasks.length]);
 
   useEffect(() => {
-    // Update time every minute
     const interval = setInterval(updateCurrentTime, 60000);
     updateCurrentTime();
     return () => clearInterval(interval);
@@ -142,11 +132,8 @@ export function TeamLoggerPopover() {
       setIsCheckedIn(true);
       toast.success('Successfully checked in');
 
-      // Refetch data
       await refetchActiveLog();
       await refetchLogs();
-
-      // Don't reset selected tasks - they will be shown during checkout
     } catch (error) {
       console.error('Check-in failed:', error);
       toast.error('Failed to check in');
@@ -160,14 +147,12 @@ export function TeamLoggerPopover() {
 
     setIsLoading(true);
     try {
-      // Handle MongoDB ObjectId format
       const logId = typeof activeLog._id === 'string' ? activeLog._id : activeLog._id.$oid || '';
 
       await TeamLoggerService.checkOut(logId);
       setIsCheckedIn(false);
       toast.success('Successfully checked out');
 
-      // Refetch data
       await refetchActiveLog();
       await refetchLogs();
     } catch (error) {
@@ -177,13 +162,9 @@ export function TeamLoggerPopover() {
       setIsLoading(false);
     }
   };
-
-  // Helper function to get task title from task ID
   const getTaskTitle = (taskId: string) => {
     return tasks?.find(task => task._id === taskId)?.name || 'Task ' + taskId.substring(0, 6);
   };
-
-  // Helper function to parse MongoDB date format
   const parseMongoDate = (date: string | Date | any): Date => {
     if (date instanceof Date) return date;
     if (typeof date === 'string') return new Date(date);
@@ -191,7 +172,6 @@ export function TeamLoggerPopover() {
     return new Date();
   };
 
-  // Format duration between check-in and check-out
   const formatDuration = (checkIn: any, checkOut: any): string => {
     if (!checkOut) return 'Ongoing';
 
@@ -379,14 +359,11 @@ export function TeamLoggerPopover() {
             {!isLoading &&
               timeLogs
                 .sort((a, b) => {
-                  // Convert dates to timestamps for comparison
                   const aTime = parseMongoDate(a.checkIn).getTime();
                   const bTime = parseMongoDate(b.checkIn).getTime();
-                  // Sort in descending order (newest first)
                   return bTime - aTime;
                 })
                 .map(log => {
-                  // Get task IDs from task array
                   const taskIds: string[] = [];
 
                   if (log.task && Array.isArray(log.task)) {
@@ -404,19 +381,15 @@ export function TeamLoggerPopover() {
                     taskIds.push(log.taskId);
                   }
 
-                  // If no tasks found, add unknown
                   if (taskIds.length === 0) {
                     taskIds.push('Unknown');
                   }
 
-                  // Format check-in time
                   const checkInDate = parseMongoDate(log.checkIn);
                   const checkInTime = checkInDate.toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
                   });
-
-                  // Format check-out time
                   let checkOutTime = 'Ongoing';
                   if (log.checkOut) {
                     const checkOutDate = parseMongoDate(log.checkOut);
@@ -426,12 +399,10 @@ export function TeamLoggerPopover() {
                     });
                   }
 
-                  // Calculate duration
                   const duration = log.checkOut
                     ? formatDuration(log.checkIn, log.checkOut)
                     : 'Ongoing';
 
-                  // Generate a unique key for the card
                   const cardKey =
                     typeof log._id === 'string'
                       ? log._id

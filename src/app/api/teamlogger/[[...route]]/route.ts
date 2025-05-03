@@ -20,7 +20,6 @@ const app = new Hono<{ Variables: Variables }>().basePath('/api/teamlogger');
 
 app.use('*', logger());
 
-// Middleware to inject user details
 app.use('*', async (c, next) => {
   try {
     const session = await getServerSession(authOptions);
@@ -41,7 +40,6 @@ app.use('*', async (c, next) => {
   await next();
 });
 
-// Get all logs for the current user
 app.get('/', async c => {
   const user = c.get('user');
 
@@ -56,7 +54,6 @@ app.get('/', async c => {
     const query: any = { userId: user.id };
 
     if (date) {
-      // If date is provided, filter logs for that specific date
       const startDate = new Date(date);
       startDate.setHours(0, 0, 0, 0);
 
