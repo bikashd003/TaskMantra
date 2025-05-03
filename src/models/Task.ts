@@ -28,6 +28,7 @@ const taskSchema = new Schema(
     ],
     assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     organizationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization' },
+    order: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
