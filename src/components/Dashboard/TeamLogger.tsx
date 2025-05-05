@@ -30,6 +30,7 @@ export function TeamLoggerPopover() {
 
   useEffect(() => {
     setMyTasks(tasks as any);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tasks]);
 
   const { data: timeLogs = [], refetch: refetchLogs } = useQuery({
@@ -130,12 +131,9 @@ export function TeamLoggerPopover() {
       const taskIds = selectedTasks.map((task: any) => task.value);
       await TeamLoggerService.checkIn(taskIds);
       setIsCheckedIn(true);
-      toast.success('Successfully checked in');
-
       await refetchActiveLog();
       await refetchLogs();
     } catch (error) {
-      console.error('Check-in failed:', error);
       toast.error('Failed to check in');
     } finally {
       setIsLoading(false);
@@ -151,12 +149,9 @@ export function TeamLoggerPopover() {
 
       await TeamLoggerService.checkOut(logId);
       setIsCheckedIn(false);
-      toast.success('Successfully checked out');
-
       await refetchActiveLog();
       await refetchLogs();
     } catch (error) {
-      console.error('Check-out failed:', error);
       toast.error('Failed to check out');
     } finally {
       setIsLoading(false);
