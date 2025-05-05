@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { useSession } from 'next-auth/react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
+import { NotificationService } from '@/services/Notifications.service';
 
 export type NotificationType = {
   _id: string;
@@ -20,107 +20,64 @@ export type NotificationType = {
 
 export function useNotifications() {
   const { data: session } = useSession();
-  const [notifications, setNotifications] = useState<NotificationType[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Function to fetch notifications
-  const fetchNotifications = useCallback(async (page = 0, limit = 10) => {
-    try {
-      const response = await axios.get(`/api/notifications?page=${page}&limit=${limit}`);
-      return response.data;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch notifications');
-      return { notifications: [], hasMore: false };
-    }
-  }, []);
-
-  // Function to fetch unread count
-  const fetchUnreadCount = useCallback(async () => {
-    try {
-      const response = await axios.get('/api/notifications/unread-count');
-      setUnreadCount(response.data.count);
-      return response.data.count;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch unread count');
-      return 0;
-    }
-  }, []);
-
-  // Function to mark a notification as read
-  const markAsRead = useCallback(
-    async (notificationId: string) => {
-      try {
-        await axios.patch(`/api/notifications/${notificationId}/read`);
-
-        // Update local state
-        setNotifications(prev =>
-          prev.map(notification =>
-            notification._id === notificationId ? { ...notification, read: true } : notification
-          )
-        );
-
-        // Decrement unread count if the notification was unread
-        const notification = notifications.find(n => n._id === notificationId);
-        if (notification && !notification.read) {
-          setUnreadCount(prev => Math.max(0, prev - 1));
-        }
-
-        // Invalidate queries
-        queryClient.invalidateQueries({ queryKey: ['notifications'] });
-
-        return true;
-      } catch (err: any) {
-        setError(err.message || 'Failed to mark notification as read');
-        return false;
-      }
+  // Query for notifications
+  const { data: notificationsData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const response = await NotificationService.getNotifications();
+      return response;
     },
-    [notifications, queryClient]
-  );
+    enabled: !!session?.user,
+  });
 
-  // Function to mark all notifications as read
-  const markAllAsRead = useCallback(async () => {
-    try {
-      await axios.patch('/api/notifications/mark-all-read');
+  // Query for unread count
+  const { data: unreadCountData } = useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: async () => {
+      const count = await NotificationService.getUnreadCount();
+      return count;
+    },
+    enabled: !!session?.user,
+  });
 
-      // Update local state
-      setNotifications(prev => prev.map(notification => ({ ...notification, read: true })));
-
-      // Reset unread count
-      setUnreadCount(0);
-
-      // Invalidate queries
+  // Mutation to mark a notification as read
+  const markAsReadMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      return await NotificationService.markAsRead(notificationId);
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    },
+  });
 
-      return true;
-    } catch (err: any) {
-      setError(err.message || 'Failed to mark all notifications as read');
-      return false;
-    }
-  }, [queryClient]);
-
-  // Function to clear all notifications
-  const clearAllNotifications = useCallback(async () => {
-    try {
-      await axios.delete('/api/notifications/clear-all');
-
-      // Update local state
-      setNotifications([]);
-      setUnreadCount(0);
-
-      // Invalidate queries
+  // Mutation to mark all notifications as read
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      return await NotificationService.markAllAsRead();
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    },
+  });
 
-      return true;
-    } catch (err: any) {
-      setError(err.message || 'Failed to clear notifications');
-      return false;
-    }
-  }, [queryClient]);
+  // Mutation to clear all notifications
+  const clearAllNotificationsMutation = useMutation({
+    mutationFn: async () => {
+      return await NotificationService.clearAllNotifications();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    },
+  });
 
-  // Set up SSE connection
+  // Set up SSE connection for real-time notifications
   useEffect(() => {
     if (!session?.user) return;
 
@@ -155,8 +112,6 @@ export function useNotifications() {
 
         // If no heartbeat for 45 seconds, reconnect
         if (timeSinceLastHeartbeat > 45000) {
-          // console.log('No heartbeat received for 45 seconds, reconnecting...');
-
           // Close existing connection
           if (eventSource) {
             eventSource.close();
@@ -211,40 +166,21 @@ export function useNotifications() {
             return;
           } else if (data.type === 'connection') {
             // Connection established message
-            // console.log('SSE connection established');
           } else if (data.type === 'notification') {
             // Single new notification
             const newNotification = data.notification;
 
-            setNotifications(prev => [newNotification, ...prev]);
-
-            if (!newNotification.read) {
-              setUnreadCount(prev => prev + 1);
-            }
-
             // Show browser notification if enabled
             showBrowserNotification(newNotification);
 
-            // Invalidate queries
+            // Invalidate queries to refresh data
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
           } else if (data.type === 'notifications') {
-            // Batch of notifications
-            const newNotifications = data.notifications;
-
-            setNotifications(prev => {
-              // Merge notifications, avoiding duplicates
-              const existingIds = new Set(prev.map(n => n._id));
-              const uniqueNew = newNotifications.filter(n => !existingIds.has(n._id));
-              return [...uniqueNew, ...prev];
-            });
-
-            // Update unread count
-            fetchUnreadCount();
-
-            // Invalidate queries
+            // Batch of notifications - invalidate queries to refresh data
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
           }
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           setError('Failed to parse SSE data');
         }
@@ -263,21 +199,12 @@ export function useNotifications() {
 
         // Try to reconnect with exponential backoff
         const delay = getReconnectDelay();
-        // console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempt})...`);
-
         reconnectTimer = setTimeout(connectSSE, delay);
       };
     };
 
     // Initial connection
     connectSSE();
-
-    // Initial data fetch
-    fetchNotifications().then(data => {
-      setNotifications(data.notifications || []);
-    });
-
-    fetchUnreadCount();
 
     // Cleanup on unmount
     return () => {
@@ -293,7 +220,7 @@ export function useNotifications() {
         clearInterval(heartbeatCheckInterval);
       }
     };
-  }, [session, fetchNotifications, fetchUnreadCount, queryClient]);
+  }, [session, queryClient]);
 
   // Function to show browser notifications
   const showBrowserNotification = (notification: NotificationType) => {
@@ -321,14 +248,79 @@ export function useNotifications() {
         return true;
       }
       return false;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return false;
     }
   }, []);
+
+  // Wrapper functions to maintain the same API
+  const markAsRead = async (notificationId: string) => {
+    try {
+      await markAsReadMutation.mutateAsync(notificationId);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await markAllAsReadMutation.mutateAsync();
+
+      // Update local state to mark all notifications as read
+      const currentData = queryClient.getQueryData<{ notifications: NotificationType[] }>([
+        'notifications',
+      ]);
+      if (currentData?.notifications) {
+        const updatedNotifications = currentData.notifications.map(notification => ({
+          ...notification,
+          read: true,
+        }));
+        queryClient.setQueryData(['notifications'], {
+          ...currentData,
+          notifications: updatedNotifications,
+        });
+      }
+
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      await clearAllNotificationsMutation.mutateAsync();
+      // Update local state to reflect cleared notifications
+      queryClient.setQueryData(['notifications'], { notifications: [] });
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  // For backward compatibility and pagination support
+  const fetchNotifications = useCallback(async (page = 0) => {
+    try {
+      const response = await NotificationService.getNotifications(page);
+      return {
+        notifications: response.notifications || [],
+        hasMore: response.pagination?.page < response.pagination?.pages - 1,
+        nextPage: response.pagination?.page + 1,
+      };
+    } catch (error) {
+      setError('Failed to fetch notifications');
+      return { notifications: [], hasMore: false };
+    }
+  }, []);
+
+  const fetchUnreadCount = useCallback(async () => {
+    return unreadCountData || 0;
+  }, [unreadCountData]);
+
   return {
-    notifications,
-    unreadCount,
+    notifications: notificationsData?.notifications || [],
+    unreadCount: unreadCountData || 0,
     isConnected,
     error,
     fetchNotifications,
