@@ -3,6 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { OrganizationService } from '@/services/Organization.service';
+import { toast } from 'sonner';
+import { MultiSelect } from '../Global/MultiSelect';
 
 const QuickTaskCreateForm = ({
   setIsAddingTask,
@@ -10,35 +14,65 @@ const QuickTaskCreateForm = ({
   setNewTaskName,
   handleAddTask,
   loadingAddTask,
+  assignedTo,
+  setAssignedTo,
 }) => {
+  const { data: organization } = useQuery({
+    queryKey: ['organizations'],
+    queryFn: async () => {
+      try {
+        return await OrganizationService.getOrganizations();
+      } catch (error: any) {
+        toast.error('Failed to fetch organization data', {
+          description: error.message || 'Unknown error',
+        });
+        throw error;
+      }
+    },
+  });
+  const users = organization?.members
+    ?.map((member: any) => member.userId)
+    .map((user: any) => ({
+      value: user._id,
+      label: user.name,
+      name: user.name,
+      image: user.image,
+    }));
+
+  const userRenderer = option => (
+    <div className="flex items-center">
+      <span className="mr-2 text-lg">
+        <img src={option.image} alt={option.name} className="w-6 h-6 rounded-full" />
+      </span>
+      <div>
+        <div className="font-medium">{option.name}</div>
+      </div>
+    </div>
+  );
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="px-3 py-2 mx-3 mb-2 border border-dashed border-gray-300 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm"
+      className="px-2 py-1 mx-3 mb-2 border border-border/40 rounded-xl bg-card/95 backdrop-blur-md shadow-lg relative"
     >
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="text-sm font-medium">Add New Task</h4>
-        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 hover:bg-gray-100 rounded-full"
-            onClick={() => {
-              setIsAddingTask(false);
-              setNewTaskName('');
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </motion.div>
-      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 w-7 p-0 rounded-full  bg-muted transition-colors absolute top-[-0.5rem] right-[-0.5rem]"
+        onClick={() => {
+          setIsAddingTask(false);
+          setNewTaskName('');
+          setAssignedTo([]);
+        }}
+      >
+        <X className="h-5 w-5" />
+      </Button>
       <Input
-        placeholder="Task name"
+        placeholder="What needs to be done?"
         value={newTaskName}
         onChange={e => setNewTaskName(e.target.value)}
-        className="mb-2 border-gray-300 focus:ring-2 focus:ring-primary/30"
+        className="my-2 bg-background/50 border-input/50 focus-visible:ring-2 focus-visible:ring-primary/30 transition-all"
         autoFocus
         onKeyDown={e => {
           if (e.key === 'Enter' && newTaskName.trim()) {
@@ -46,31 +80,35 @@ const QuickTaskCreateForm = ({
           }
         }}
       />
-      <div className="flex justify-end space-x-2">
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setIsAddingTask(false);
-              setNewTaskName('');
-            }}
-            className="border-gray-300 hover:bg-gray-100"
-          >
-            Cancel
-          </Button>
-        </motion.div>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button
-            size="sm"
-            onClick={handleAddTask}
-            disabled={!newTaskName.trim() || loadingAddTask}
-            className="shadow-sm"
-          >
-            {loadingAddTask ? 'Adding...' : 'Add Task'}
-            Add Task
-          </Button>
-        </motion.div>
+      <MultiSelect
+        options={users}
+        selectedValues={assignedTo}
+        onChange={setAssignedTo}
+        placeholder="Select team members..."
+        itemRenderer={userRenderer}
+      />
+
+      <div className="flex justify-end space-x-3 pt-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setIsAddingTask(false);
+            setNewTaskName('');
+            setAssignedTo([]);
+          }}
+          className="border-input/50 hover:bg-muted transition-colors"
+        >
+          Cancel
+        </Button>
+        <Button
+          size="sm"
+          onClick={handleAddTask}
+          disabled={!newTaskName.trim() || loadingAddTask}
+          className="shadow-sm bg-primary hover:bg-primary/90 transition-colors"
+        >
+          {loadingAddTask ? 'Adding...' : 'Add Task'}
+        </Button>
       </div>
     </motion.div>
   );

@@ -14,14 +14,26 @@ import {
 } from '@/components/ui/select';
 import { useProject, User } from '@/context/ProjectContext';
 import ReusableSelect from '../Global/ReactSelect';
+import { useQuery } from '@tanstack/react-query';
+import { OrganizationService } from '@/services/Organization.service';
+import { toast } from 'sonner';
 
 const TasksStep: React.FC = () => {
   const { control, errors, trigger } = useProject()!;
-  const users: User[] = [
-    { id: "001", name: 'Alice', role: 'Developer' },
-    { id: "002", name: 'Bob', role: 'Designer' },
-    { id: "003", name: 'Charlie', role: 'Manager' },
-  ];
+  const { data: organizations } = useQuery({
+    queryKey: ['organizations'],
+    queryFn: async () => {
+      try {
+        return await OrganizationService.getOrganizations();
+      } catch (error: any) {
+        toast.error('Failed to fetch organization data', {
+          description: error.message || 'Unknown error',
+        });
+        throw error;
+      }
+    },
+  });
+  const users = organizations?.members?.map((member: any) => member.userId);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -30,7 +42,6 @@ const TasksStep: React.FC = () => {
   });
 
   const handleAddTask = async () => {
-
     const isValid = await trigger(['tasks']);
     if (!isValid) {
       return;
@@ -46,9 +57,8 @@ const TasksStep: React.FC = () => {
       estimatedTime: 0,
       loggedTime: 0,
       subtasks: [],
-      comments: []
+      comments: [],
     });
-
   };
   const handleAddSubtask = (taskIndex: number) => {
     const currentTasks = [...fields];
@@ -60,7 +70,7 @@ const TasksStep: React.FC = () => {
 
     currentTask.subtasks.push({
       name: '',
-      completed: false
+      completed: false,
     });
 
     // Update the entire tasks array
@@ -81,13 +91,9 @@ const TasksStep: React.FC = () => {
   };
   return (
     <div className="p-6 max-h-[75vh] overflow-y-auto">
-      <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center gap-2">
-        Add Tasks
-      </h2>
+      <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center gap-2">Add Tasks</h2>
       <div className="space-y-6">
-
         {fields.map((task, taskIndex) => {
-
           return (
             <div
               key={task.id}
@@ -111,7 +117,9 @@ const TasksStep: React.FC = () => {
                   className={`mt-1 ${errors.tasks?.[taskIndex]?.name ? 'border-red-500' : 'border-gray-300'}`}
                 />
                 {errors.tasks?.[taskIndex]?.name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].name.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.tasks[taskIndex].name.message}
+                  </p>
                 )}
               </div>
               <div className="mb-4">
@@ -150,7 +158,9 @@ const TasksStep: React.FC = () => {
                     )}
                   />
                   {errors.tasks?.[taskIndex]?.priority && (
-                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].priority.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.tasks[taskIndex].priority.message}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -175,7 +185,9 @@ const TasksStep: React.FC = () => {
                     )}
                   />
                   {errors.tasks?.[taskIndex]?.status && (
-                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].status.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.tasks[taskIndex].status.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -189,14 +201,17 @@ const TasksStep: React.FC = () => {
                       <Input
                         {...field}
                         placeholder="Enter due date"
-                        type='date'
-                        className={`mt-1 ${errors.tasks?.[taskIndex]?.dueDate ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                        type="date"
+                        className={`mt-1 ${
+                          errors.tasks?.[taskIndex]?.dueDate ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       />
                     )}
                   />
                   {errors.tasks?.[taskIndex]?.dueDate && (
-                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].dueDate.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.tasks[taskIndex].dueDate.message}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -208,14 +223,19 @@ const TasksStep: React.FC = () => {
                       <Input
                         {...field}
                         placeholder="Enter start date"
-                        type='date'
-                        className={`mt-1 ${errors.tasks?.[taskIndex]?.startDate ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                        type="date"
+                        className={`mt-1 ${
+                          errors.tasks?.[taskIndex]?.startDate
+                            ? 'border-red-500'
+                            : 'border-gray-300'
+                        }`}
                       />
                     )}
                   />
                   {errors.tasks?.[taskIndex]?.startDate && (
-                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].startDate.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.tasks[taskIndex].startDate.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -226,21 +246,32 @@ const TasksStep: React.FC = () => {
                     name={`tasks.${taskIndex}.assignedTo`}
                     control={control}
                     render={({ field }) => {
-                      const options = users.map((user) => ({
-                        value: user.id,
-                        label: `${user.name} (${user.role})`,
+                      const options = users.map(user => ({
+                        value: user._id,
+                        label: (
+                          <div className="flex items-center">
+                            <img
+                              src={user.image}
+                              alt={user.name}
+                              className="w-6 h-6 rounded-full mr-2"
+                            />
+                            <span>{user.name}</span>
+                          </div>
+                        ),
                       }));
-                      const selectedValues = options.filter((option) =>
+                      const selectedValues = options.filter(option =>
                         Array.isArray(field.value)
-                          ? field.value.some((user: User) => user.id === option.value)
+                          ? field.value.some((user: User) => user._id === option.value)
                           : (field.value as User | undefined)?.id === option.value
                       );
 
                       const handleChange = (newValue: any) => {
                         if (Array.isArray(newValue)) {
-                          field.onChange(newValue.map((opt) => users.find((user) => user.id === opt.value)));
+                          field.onChange(
+                            newValue.map(opt => users.find(user => user._id === opt.value))
+                          );
                         } else if (newValue) {
-                          field.onChange(users.find((user) => user.id === newValue.value) || null);
+                          field.onChange(users.find(user => user._id === newValue.value) || null);
                         } else {
                           field.onChange([]);
                         }
@@ -258,7 +289,9 @@ const TasksStep: React.FC = () => {
                     }}
                   />
                   {errors.tasks?.[taskIndex]?.assignedTo && (
-                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].assignedTo.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.tasks[taskIndex].assignedTo.message}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -271,13 +304,18 @@ const TasksStep: React.FC = () => {
                       <Input
                         {...field}
                         placeholder="Enter estimated time"
-                        className={`mt-1 ${errors.tasks?.[taskIndex]?.estimatedTime ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                        className={`mt-1 ${
+                          errors.tasks?.[taskIndex]?.estimatedTime
+                            ? 'border-red-500'
+                            : 'border-gray-300'
+                        }`}
                       />
                     )}
                   />
                   {errors.tasks?.[taskIndex]?.estimatedTime && (
-                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].estimatedTime.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.tasks[taskIndex].estimatedTime.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -302,14 +340,13 @@ const TasksStep: React.FC = () => {
                       <div className="mb-2">
                         <label className="text-sm font-medium text-blue-700">Subtask Name</label>
                         <Input
-                          {...control.register(
-                            `tasks.${taskIndex}.subtasks.${subtaskIndex}.name`
-                          )}
+                          {...control.register(`tasks.${taskIndex}.subtasks.${subtaskIndex}.name`)}
                           placeholder="Enter subtask name"
-                          className={`mt-1 ${errors.tasks?.[taskIndex]?.subtasks?.[subtaskIndex]?.name
-                            ? 'border-red-500'
-                            : 'border-gray-300'
-                            }`}
+                          className={`mt-1 ${
+                            errors.tasks?.[taskIndex]?.subtasks?.[subtaskIndex]?.name
+                              ? 'border-red-500'
+                              : 'border-gray-300'
+                          }`}
                         />
                         {errors.tasks?.[taskIndex]?.subtasks?.[subtaskIndex]?.name && (
                           <p className="text-red-500 text-sm mt-1">

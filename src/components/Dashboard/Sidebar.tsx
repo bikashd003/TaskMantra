@@ -95,28 +95,28 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
       <aside
         className={`
                     sidebar
-                    top-0 left-0 z-50 h-full bg-gray-900 text-white
-                    flex flex-col
+                    top-0 left-0 z-50 h-full bg-white text-gray-800
+                    flex flex-col shadow-md border-r border-gray-100
                     ${isExpanded ? '' : 'collapsed'}
                     ${isMobileOpen ? 'mobile-open' : ''}
                 `}
       >
         {/* Mobile Close Button */}
         <button
-          className="absolute top-4 right-4 p-1 md:hidden"
+          className="absolute top-4 right-4 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 md:hidden"
           onClick={onMobileClose}
           aria-label="Close sidebar"
         >
-          <X className="h-6 w-6" />
+          <X className="h-5 w-5 text-gray-700" />
         </button>
         <Logo isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
 
         {/* Navigation Items */}
-        <div className="flex-1 px-3 py-4 space-y-4">
+        <div className="flex-1 px-3 py-4 space-y-5 overflow-y-auto scrollbar-custom">
           {menuItems.map(group => (
             <div key={group.label}>
               {isExpanded && (
-                <div className="text-gray-400 text-xs uppercase font-semibold px-2 mb-2">
+                <div className="text-gray-500 text-xs uppercase font-semibold px-2 mb-2.5 tracking-wider">
                   {group.label}
                 </div>
               )}

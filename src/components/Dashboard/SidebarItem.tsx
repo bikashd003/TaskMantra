@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import Link from 'next/link';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,16 +31,17 @@ export function SidebarItem({
   };
 
   return (
-    <div className='relative overflow-hidden'>
+    <div className="relative overflow-hidden">
       {path ? (
         <Link
           href={path}
           className={`
-            flex items-center h-12 px-3 my-1 rounded-lg
-            transition-colors duration-200
-            ${isActive
-              ? 'bg-gray-800 text-white'
-              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+            flex items-center h-10 px-3 my-1 rounded-lg
+            transition-all duration-200
+            ${
+              isActive
+                ? 'bg-primary/10 text-primary font-medium shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
             }
             ${subItems ? 'cursor-pointer' : ''}
           `}
@@ -51,12 +52,14 @@ export function SidebarItem({
           {isExpanded ? (
             <span className="ml-3">{label}</span>
           ) : (
-            <div className="
-              fixed left-14 ml-2 px-2 py-1 bg-gray-900 text-white
-              rounded-md text-sm whitespace-nowrap opacity-0 invisible
-              group-hover:opacity-100 group-hover:visible
+            <div
+              className="
+              fixed left-14 ml-2 px-2.5 py-1.5 bg-white text-gray-800
+              rounded-md text-xs font-medium whitespace-nowrap opacity-0 invisible
+              group-hover:opacity-100 group-hover:visible shadow-lg border border-gray-100
               transition-all duration-200 z-50
-            ">
+            "
+            >
               {label}
             </div>
           )}
@@ -65,8 +68,8 @@ export function SidebarItem({
             <span
               className={`
                 ml-auto ${isExpanded ? '' : 'hidden'}
-                px-2 py-0.5 text-xs rounded-full
-                ${typeof badge === 'string' ? 'bg-blue-500' : 'bg-red-500'}
+                px-2 py-0.5 text-xs font-medium rounded-full
+                ${typeof badge === 'string' ? 'bg-primary/15 text-primary' : 'bg-red-100 text-red-600'}
               `}
             >
               {badge}
@@ -76,9 +79,9 @@ export function SidebarItem({
           {isExpanded && subItems && (
             <div className="ml-auto">
               {isOpen ? (
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-4 w-4 text-gray-500" />
               ) : (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4 text-gray-500" />
               )}
             </div>
           )}
@@ -86,11 +89,12 @@ export function SidebarItem({
       ) : (
         <div
           className={`
-            flex items-center h-12 px-3 my-1 rounded-lg
-            transition-colors duration-200
-            ${isActive
-              ? 'bg-gray-800 text-white'
-              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+            flex items-center h-10 px-3 my-1 rounded-lg
+            transition-all duration-200
+            ${
+              isActive
+                ? 'bg-primary/10 text-primary font-medium shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
             }
             ${subItems ? 'cursor-pointer' : ''}
           `}
@@ -101,12 +105,14 @@ export function SidebarItem({
           {isExpanded ? (
             <span className="ml-3">{label}</span>
           ) : (
-            <div className="
-              fixed left-14 ml-2 px-2 py-1 bg-gray-900 text-white
-              rounded-md text-sm whitespace-nowrap opacity-0 invisible
-              group-hover:opacity-100 group-hover:visible
+            <div
+              className="
+              fixed left-14 ml-2 px-2.5 py-1.5 bg-white text-gray-800
+              rounded-md text-xs font-medium whitespace-nowrap opacity-0 invisible
+              group-hover:opacity-100 group-hover:visible shadow-lg border border-gray-100
               transition-all duration-200 z-50
-            ">
+            "
+            >
               {label}
             </div>
           )}
@@ -115,8 +121,8 @@ export function SidebarItem({
             <span
               className={`
                 ml-auto ${isExpanded ? '' : 'hidden'}
-                px-2 py-0.5 text-xs rounded-full
-                ${typeof badge === 'string' ? 'bg-blue-500' : 'bg-red-500'}
+                px-2 py-0.5 text-xs font-medium rounded-full
+                ${typeof badge === 'string' ? 'bg-primary/15 text-primary' : 'bg-red-100 text-red-600'}
               `}
             >
               {badge}
@@ -126,9 +132,9 @@ export function SidebarItem({
           {isExpanded && subItems && (
             <div className="ml-auto">
               {isOpen ? (
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-4 w-4 text-gray-500" />
               ) : (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4 text-gray-500" />
               )}
             </div>
           )}
@@ -144,19 +150,20 @@ export function SidebarItem({
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="overflow-hidden group-hover:block"
+              className="overflow-hidden group-hover:block pl-2 border-l border-gray-200 ml-4 mt-1"
             >
-              {subItems.map((subItem) => (
+              {subItems.map(subItem => (
                 <Link
                   key={subItem.label}
                   href={subItem.path}
                   className={`
                     pl-8 block py-2 text-sm
                     truncate
-                    transition-colors duration-200 rounded-lg
-                    ${pathname === subItem.path
-                      ? 'bg-gray-700 text-white'
-                      : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                    transition-all duration-200 rounded-lg
+                    ${
+                      pathname === subItem.path
+                        ? 'bg-primary/5 text-primary font-medium'
+                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
                     }
                   `}
                 >

@@ -18,10 +18,18 @@ import {
 } from 'recharts';
 import { format, isBefore, addDays } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CheckCircle, Clock, AlertTriangle, BarChart2, Users, Calendar } from 'lucide-react';
+import {
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  BarChart2,
+  Users,
+  Calendar,
+  PieChart as PieChartIcon,
+  Percent,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Define types for our project data
@@ -263,15 +271,27 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
     };
   }, [project]);
 
-  // Custom tooltip for charts
+  // Enhanced custom tooltip for charts
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      // Get color from payload if available
+      const color = payload[0].color || payload[0].fill || '#4f46e5';
+
       return (
-        <div className="bg-white p-3 border rounded-md shadow-md">
-          <p className="font-medium">{label || payload[0].name}</p>
-          <p className="text-sm">
-            {payload[0].name}: <span className="font-medium">{payload[0].value}</span>
-          </p>
+        <div className="bg-white p-4 border border-slate-100 rounded-lg shadow-lg">
+          <p className="font-semibold text-slate-800 mb-1">{label || payload[0].name}</p>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }}></div>
+            <p className="text-sm text-slate-600">
+              {payload[0].name || 'Value'}:{' '}
+              <span className="font-medium text-slate-900">{payload[0].value}</span>
+              {payload[0].payload && typeof payload[0].payload.percent === 'number' && (
+                <span className="ml-1 text-slate-500">
+                  ({(payload[0].payload.percent * 100).toFixed(0)}%)
+                </span>
+              )}
+            </p>
+          </div>
         </div>
       );
     }
@@ -279,42 +299,39 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
   };
 
   return (
-    <div className="space-y-6 bg-gradient-to-br from-slate-50 to-white p-6 rounded-xl shadow-sm">
-      {/* Project Overview Header */}
-      <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            {project.name} Analytics
-          </h1>
-          <p className="text-muted-foreground">{project.description}</p>
-        </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-100">
-          <CheckCircle className="h-5 w-5 text-green-500" />
-          <span className="text-base font-medium text-green-600">{completionRate}% Complete</span>
-        </div>
-      </div>
-
-      {/* Main Analytics Dashboard */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="mb-4 bg-slate-100/80 p-1 rounded-lg">
-          <TabsTrigger value="overview">
-            <BarChart2 className="h-4 w-4 mr-2" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="team">
-            <Users className="h-4 w-4 mr-2" />
-            Team Workload
-          </TabsTrigger>
-          <TabsTrigger value="timeline">
-            <Calendar className="h-4 w-4 mr-2" />
-            Timeline
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4">
+    <ScrollArea className="h-[calc(100vh-12rem)]">
+      <div className="space-y-8 bg-gradient-to-br from-slate-50 to-white p-6 rounded-xl shadow-sm">
+        {/* Overview Section */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <BarChart2 className="h-5 w-5 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-800">Overview</h2>
+          </div>
           {/* Top Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Completion Rate Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+              className="lg:col-span-1"
+            >
+              <Card className="overflow-hidden border border-indigo-100 shadow-md">
+                <CardContent className="p-6 relative">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm font-medium text-indigo-600">Completion Rate</p>
+                      <p className="text-3xl font-bold mt-1">{completionRate}%</p>
+                    </div>
+                    <div className="h-14 w-14 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                      <Percent className="h-7 w-7 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -327,7 +344,7 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                       <p className="text-sm font-medium text-blue-600">Total Tasks</p>
                       <p className="text-3xl font-bold mt-1">{totalTasks}</p>
                     </div>
-                    <div className="h-14 w-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-md">
+                    <div className="h-14 w-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
                       <BarChart2 className="h-7 w-7 text-white" />
                     </div>
                   </div>
@@ -349,7 +366,7 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                         {taskStatusData.find(item => item.name === 'In Progress')?.value || 0}
                       </p>
                     </div>
-                    <div className="h-14 w-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-md">
+                    <div className="h-14 w-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
                       <Clock className="h-7 w-7 text-white" />
                     </div>
                   </div>
@@ -371,7 +388,7 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                         {taskStatusData.find(item => item.name === 'Completed')?.value || 0}
                       </p>
                     </div>
-                    <div className="h-14 w-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-md">
+                    <div className="h-14 w-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
                       <CheckCircle className="h-7 w-7 text-white" />
                     </div>
                   </div>
@@ -393,7 +410,7 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                         {dueDateAnalysis.find(item => item.name === 'Overdue')?.value || 0}
                       </p>
                     </div>
-                    <div className="h-14 w-14 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-md">
+                    <div className="h-14 w-14 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center shadow-md">
                       <AlertTriangle className="h-7 w-7 text-white" />
                     </div>
                   </div>
@@ -431,34 +448,9 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                             paddingAngle={2}
                             dataKey="value"
                             // Fix label conflicts by using a custom label renderer
-                            label={({
-                              name,
-                              percent,
-                              cx,
-                              cy,
-                              midAngle,
-                              innerRadius,
-                              outerRadius,
-                            }) => {
-                              const RADIAN = Math.PI / 180;
-                              const radius = 25 + innerRadius + (outerRadius - innerRadius);
-                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-                              return (
-                                <text
-                                  x={x}
-                                  y={y}
-                                  fill={STATUS_COLORS[name as keyof typeof STATUS_COLORS] || '#666'}
-                                  textAnchor={x > cx ? 'start' : 'end'}
-                                  dominantBaseline="central"
-                                  className="text-xs font-medium"
-                                >
-                                  {`${name}: ${(percent * 100).toFixed(0)}%`}
-                                </text>
-                              );
-                            }}
-                            labelLine={true}
+                            // Improved label positioning to prevent overlaps
+                            label={false}
+                            labelLine={false}
                           >
                             {taskStatusData.map((entry, index) => (
                               <Cell
@@ -470,6 +462,14 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                             ))}
                           </Pie>
                           <Tooltip content={<CustomTooltip />} />
+                          <Legend
+                            layout="horizontal"
+                            verticalAlign="bottom"
+                            align="center"
+                            iconType="circle"
+                            iconSize={10}
+                            wrapperStyle={{ paddingTop: 20 }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -505,36 +505,9 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                             paddingAngle={2}
                             dataKey="value"
                             // Fix label conflicts by using a custom label renderer
-                            label={({
-                              name,
-                              percent,
-                              cx,
-                              cy,
-                              midAngle,
-                              innerRadius,
-                              outerRadius,
-                            }) => {
-                              const RADIAN = Math.PI / 180;
-                              const radius = 25 + innerRadius + (outerRadius - innerRadius);
-                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-                              return (
-                                <text
-                                  x={x}
-                                  y={y}
-                                  fill={
-                                    PRIORITY_COLORS[name as keyof typeof PRIORITY_COLORS] || '#666'
-                                  }
-                                  textAnchor={x > cx ? 'start' : 'end'}
-                                  dominantBaseline="central"
-                                  className="text-xs font-medium"
-                                >
-                                  {`${name}: ${(percent * 100).toFixed(0)}%`}
-                                </text>
-                              );
-                            }}
-                            labelLine={true}
+                            // Improved label positioning to prevent overlaps
+                            label={false}
+                            labelLine={false}
                           >
                             {taskPriorityData.map((entry, index) => (
                               <Cell
@@ -546,6 +519,14 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                             ))}
                           </Pie>
                           <Tooltip content={<CustomTooltip />} />
+                          <Legend
+                            layout="horizontal"
+                            verticalAlign="bottom"
+                            align="center"
+                            iconType="circle"
+                            iconSize={10}
+                            wrapperStyle={{ paddingTop: 20 }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -610,10 +591,16 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
               </CardContent>
             </Card>
           </motion.div>
-        </TabsContent>
+        </div>
 
-        {/* Team Workload Tab */}
-        <TabsContent value="team" className="space-y-4">
+        {/* Team Workload Section */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
+              <Users className="h-5 w-5 text-purple-600" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-800">Team Workload</h2>
+          </div>
           {/* Team Workload Chart */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -687,81 +674,80 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
             </Card>
           </motion.div>
 
-          {/* Team Member Cards */}
-          <ScrollArea className="h-[400px]">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
-              {assigneeWorkloadData.map((member, index) => (
-                <motion.div
-                  key={member.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                >
-                  <Card className="bg-white shadow-md border border-slate-100 overflow-hidden">
-                    <CardContent className="pt-6 relative">
-                      <div className="flex items-center gap-4 mb-4">
-                        <Avatar className="h-14 w-14 border-2 border-purple-100 shadow-sm">
-                          <AvatarImage src={member.image} alt={member.name} />
-                          <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
-                            {member.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold text-slate-800">{member.name}</h3>
-                          <p className="text-sm text-slate-500">{member.tasks} tasks assigned</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
+            {assigneeWorkloadData.map((member, index) => (
+              <motion.div
+                key={member.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <Card className="bg-white shadow-md border border-slate-100 overflow-hidden">
+                  <CardContent className="pt-6 relative">
+                    <div className="flex items-center gap-4 mb-4">
+                      <Avatar className="h-14 w-14 border-2 border-purple-100 shadow-sm">
+                        <AvatarImage src={member.image} alt={member.name} />
+                        <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+                          {member.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-semibold text-slate-800">{member.name}</h3>
+                        <p className="text-sm text-slate-500">{member.tasks} tasks assigned</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-slate-600">Completion Rate</span>
+                          <span className="font-medium text-purple-600">{member.completion}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full"
+                            style={{ width: `${member.completion}%` }}
+                          />
                         </div>
                       </div>
 
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-slate-600">Completion Rate</span>
-                            <span className="font-medium text-purple-600">
-                              {member.completion}%
-                            </span>
-                          </div>
-                          <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full"
-                              style={{ width: `${member.completion}%` }}
-                            />
-                          </div>
+                      <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-lg">
+                        <div className="text-center">
+                          <span className="text-xs text-slate-500 block">Estimated</span>
+                          <span className="font-medium text-slate-800">
+                            {member.estimatedHours}h
+                          </span>
                         </div>
-
-                        <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-lg">
-                          <div className="text-center">
-                            <span className="text-xs text-slate-500 block">Estimated</span>
-                            <span className="font-medium text-slate-800">
-                              {member.estimatedHours}h
-                            </span>
-                          </div>
-                          <div className="text-center border-x border-slate-200">
-                            <span className="text-xs text-slate-500 block">Logged</span>
-                            <span className="font-medium text-slate-800">
-                              {member.loggedHours}h
-                            </span>
-                          </div>
-                          <div className="text-center">
-                            <span className="text-xs text-slate-500 block">Efficiency</span>
-                            <span className="font-medium text-slate-800">
-                              {member.estimatedHours > 0
-                                ? Math.round((member.loggedHours / member.estimatedHours) * 100)
-                                : 0}
-                              %
-                            </span>
-                          </div>
+                        <div className="text-center border-x border-slate-200">
+                          <span className="text-xs text-slate-500 block">Logged</span>
+                          <span className="font-medium text-slate-800">{member.loggedHours}h</span>
+                        </div>
+                        <div className="text-center">
+                          <span className="text-xs text-slate-500 block">Efficiency</span>
+                          <span className="font-medium text-slate-800">
+                            {member.estimatedHours > 0
+                              ? Math.round((member.loggedHours / member.estimatedHours) * 100)
+                              : 0}
+                            %
+                          </span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Timeline Section */}
+        <div className="space-2-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-indigo-600" />
             </div>
-          </ScrollArea>
-        </TabsContent>
-
-        {/* Timeline Tab */}
-        <TabsContent value="timeline" className="space-y-4">
+            <h2 className="text-xl font-bold text-slate-800">Timeline</h2>
+          </div>
           {/* Due Date Analysis */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -770,7 +756,8 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
           >
             <Card className="bg-white shadow-md border border-slate-100 overflow-hidden">
               <CardHeader className="pb-2 relative">
-                <CardTitle className="text-lg font-semibold text-slate-800">
+                <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <PieChartIcon className="h-4 w-4 text-indigo-500" />
                   Due Date Analysis
                 </CardTitle>
                 <CardDescription>Status of tasks based on deadlines</CardDescription>
@@ -789,36 +776,9 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                           paddingAngle={2}
                           dataKey="value"
                           // Fix label conflicts by using a custom label renderer
-                          label={({
-                            name,
-                            percent,
-                            cx,
-                            cy,
-                            midAngle,
-                            innerRadius,
-                            outerRadius,
-                          }) => {
-                            const RADIAN = Math.PI / 180;
-                            const radius = 25 + innerRadius + (outerRadius - innerRadius);
-                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-                            return (
-                              <text
-                                x={x}
-                                y={y}
-                                fill={
-                                  dueDateAnalysis.find(item => item.name === name)?.color || '#666'
-                                }
-                                textAnchor={x > cx ? 'start' : 'end'}
-                                dominantBaseline="central"
-                                className="text-xs font-medium"
-                              >
-                                {`${name}: ${(percent * 100).toFixed(0)}%`}
-                              </text>
-                            );
-                          }}
-                          labelLine={true}
+                          // Improved label positioning to prevent overlaps
+                          label={false}
+                          labelLine={false}
                         >
                           {dueDateAnalysis.map((entry, index) => (
                             <Cell
@@ -830,6 +790,14 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                           ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />
+                        <Legend
+                          layout="horizontal"
+                          verticalAlign="bottom"
+                          align="center"
+                          iconType="circle"
+                          iconSize={10}
+                          wrapperStyle={{ paddingTop: 20 }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -875,10 +843,17 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
                           tick={{ fill: '#64748b', fontSize: 12 }}
                         />
                         <Tooltip content={<CustomTooltip />} />
+                        <Legend
+                          layout="horizontal"
+                          verticalAlign="top"
+                          align="right"
+                          iconType="circle"
+                          wrapperStyle={{ paddingBottom: 10 }}
+                        />
                         <Area
                           type="monotone"
                           dataKey="tasks"
-                          name="Tasks"
+                          name="Tasks Created"
                           stroke="#4f46e5"
                           strokeWidth={2}
                           fillOpacity={1}
@@ -891,9 +866,9 @@ const ProjectAnalytics = ({ project }: { project: Project }) => {
               </CardContent>
             </Card>
           </motion.div>
-        </TabsContent>
-      </Tabs>
-    </div>
+        </div>
+      </div>
+    </ScrollArea>
   );
 };
 

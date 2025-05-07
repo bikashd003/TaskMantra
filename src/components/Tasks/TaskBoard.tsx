@@ -42,6 +42,7 @@ interface TaskBoardProps {
   isLoading?: boolean;
   onCreateTask?: () => void;
   onUpdateTask?: (taskId: string, updates: Partial<Task>) => void;
+  loadingAddTask?: boolean;
 }
 
 const TaskBoard: React.FC<TaskBoardProps> = ({
@@ -53,6 +54,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   isLoading,
   onCreateTask,
   onUpdateTask,
+  loadingAddTask,
 }) => {
   const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'calendar' | 'dependencies'>('list');
 
@@ -459,6 +461,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
                 onAddTask={onAddTask}
                 renderPriorityBadge={renderPriorityBadge}
                 isLoading={false}
+                loadingAddTask={loadingAddTask}
                 onCreateTask={onCreateTask}
                 viewMode="kanban"
                 columnWidth={columnWidth}

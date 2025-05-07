@@ -186,6 +186,7 @@ export default function TasksPage() {
         onStatusChange={handleStatusChange}
         onDelete={handleDeleteTask}
         onAddTask={handleCreateTask}
+        loadingAddTask={createTaskMutation.isPending}
         renderPriorityBadge={renderPriorityBadge}
         isLoading={isLoading}
         onCreateTask={() => setIsCreateModalOpen(true)}

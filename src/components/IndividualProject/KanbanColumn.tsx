@@ -62,6 +62,7 @@ export function Column({
   });
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
+  const [assignedTo, setAssignedTo] = useState([]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -77,7 +78,7 @@ export function Column({
       priority: 'Medium',
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default due date (1 week from now)
       subtasks: [],
-      assignedTo: [],
+      assignedTo: assignedTo.map((user: any) => user.value),
       comments: [],
       dependencies: [],
     };
@@ -189,6 +190,8 @@ export function Column({
           setNewTaskName={setNewTaskName}
           handleAddTask={handleAddTask}
           loadingAddTask={loadingAddTask}
+          assignedTo={assignedTo}
+          setAssignedTo={setAssignedTo}
         />
       )}
 

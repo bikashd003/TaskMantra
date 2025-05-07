@@ -113,4 +113,13 @@ export class TaskService {
   static async getTodaysTasks(): Promise<Task[]> {
     return this.getTasksByTimePeriod('today');
   }
+
+  static async getMyTasks(): Promise<Task[]> {
+    try {
+      const response = await axios.get('/api/tasks/my-tasks');
+      return response.data?.tasks || [];
+    } catch (error) {
+      throw new Error('Failed to fetch my tasks');
+    }
+  }
 }
