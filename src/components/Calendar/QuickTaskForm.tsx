@@ -4,15 +4,25 @@ import { Input } from '@/components/ui/input';
 import { Plus, X, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { OrganizationService } from '@/services/Organization.service';
+import { MultiSelect } from '../Global/MultiSelect';
 
 interface QuickTaskFormProps {
   date: Date;
-  onSubmit: (taskData: { name: string; startDate: Date; dueDate: Date }) => void;
+  onSubmit: (taskData: {
+    name: string;
+    startDate: Date;
+    dueDate: Date;
+    assignedTo: string[];
+  }) => void;
   onCancel: () => void;
 }
 
 const QuickTaskForm: React.FC<QuickTaskFormProps> = ({ date, onSubmit, onCancel }) => {
   const [taskName, setTaskName] = useState('');
+  const [assignedTo, setAssignedTo] = useState<any>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -28,11 +38,44 @@ const QuickTaskForm: React.FC<QuickTaskFormProps> = ({ date, onSubmit, onCancel 
         name: taskName.trim(),
         startDate: date,
         dueDate: date,
+        assignedTo: assignedTo?.map((user: any) => user.value),
       });
       setTaskName('');
+      setAssignedTo([]);
     }
   };
+  const { data: organization } = useQuery({
+    queryKey: ['organizations'],
+    queryFn: async () => {
+      try {
+        return await OrganizationService.getOrganizations();
+      } catch (error: any) {
+        toast.error('Failed to fetch organization data', {
+          description: error.message || 'Unknown error',
+        });
+        throw error;
+      }
+    },
+  });
+  const users = organization?.members
+    ?.map((member: any) => member.userId)
+    .map((user: any) => ({
+      value: user._id,
+      label: user.name,
+      name: user.name,
+      image: user.image,
+    }));
 
+  const userRenderer = option => (
+    <div className="flex items-center">
+      <span className="mr-2 text-lg">
+        <img src={option.image} alt={option.name} className="w-6 h-6 rounded-full" />
+      </span>
+      <div>
+        <div className="font-medium">{option.name}</div>
+      </div>
+    </div>
+  );
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -63,6 +106,13 @@ const QuickTaskForm: React.FC<QuickTaskFormProps> = ({ date, onSubmit, onCancel 
             placeholder="Enter task name..."
             className="h-9 text-sm  border-blue-100 focus:border-blue-300 focus:ring-blue-200"
             autoFocus
+          />
+          <MultiSelect
+            options={users}
+            selectedValues={assignedTo}
+            onChange={setAssignedTo}
+            placeholder="Select team members..."
+            itemRenderer={userRenderer}
           />
         </div>
 

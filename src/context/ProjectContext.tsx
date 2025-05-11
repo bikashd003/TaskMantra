@@ -1,198 +1,212 @@
 /* eslint-disable no-unused-vars */
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { projectInfoSchema } from "@/Schemas/ProjectInfo"
-import { useForm, Control, FieldErrors, UseFormHandleSubmit, UseFormTrigger, Resolver } from 'react-hook-form'
-import { yupResolver } from '@hookform/resolvers/yup'
+import { projectInfoSchema } from '@/Schemas/ProjectInfo';
+import {
+  useForm,
+  Control,
+  FieldErrors,
+  UseFormHandleSubmit,
+  UseFormTrigger,
+  Resolver,
+} from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import axios from 'axios';
 
-
-
-
 interface Attachment {
-    filename: string;
-    url: string;
+  filename: string;
+  url: string;
 }
 
 interface Comment {
-    userId: string;
-    text: string;
-    timestamp: string;
-    attachments: Attachment[];
+  userId: string;
+  text: string;
+  timestamp: string;
+  attachments: Attachment[];
 }
 
 export interface User {
-    id: string;
-    name: string;
-    role: string;
+  _id: string;
+  id: string;
+  name: string;
+  role: string;
+  image: string;
 }
 interface Subtask {
-    name: string;
-    completed: boolean;
+  name: string;
+  completed: boolean;
 }
 
 interface Task {
-    name: string;
-    description?: string;
-    assignedTo: User[];
-    status: 'To Do' | 'In Progress' | 'Review' | 'Completed';
-    priority: 'High' | 'Medium' | 'Low';
-    dueDate: string;
-    startDate: string;
-    estimatedTime: number;
-    loggedTime: number;
-    subtasks: Subtask[];
-    comments: Comment[];
+  name: string;
+  description?: string;
+  assignedTo: User[];
+  status: 'To Do' | 'In Progress' | 'Review' | 'Completed';
+  priority: 'High' | 'Medium' | 'Low';
+  dueDate: string;
+  startDate: string;
+  estimatedTime: number;
+  loggedTime: number;
+  subtasks: Subtask[];
+  comments: Comment[];
 }
 interface ActivityLogEntry {
-    timestamp: string;
-    userId: string;
-    action: string;
-    details: Record<string, string | number | boolean | null>;
+  timestamp: string;
+  userId: string;
+  action: string;
+  details: Record<string, string | number | boolean | null>;
 }
-
 
 interface FileData {
-    name: string;
-    data: string;
-    type: string;
+  name: string;
+  data: string;
+  type: string;
 }
 export interface Project {
-    name: string;
-    description?: string;
-    status: 'Planning' | 'In Progress' | 'Completed' | 'On Hold' | 'Cancelled';
-    priority: 'High' | 'Medium' | 'Low';
-    tasks: Task[];
-    history: ActivityLogEntry[]
-    files: FileData[];
+  name: string;
+  description?: string;
+  status: 'Planning' | 'In Progress' | 'Completed' | 'On Hold' | 'Cancelled';
+  priority: 'High' | 'Medium' | 'Low';
+  tasks: Task[];
+  history: ActivityLogEntry[];
+  files: FileData[];
 }
 
 interface ProjectsResponse {
-    projects: Project[];
+  projects: Project[];
 }
 
 interface ProjectContextType {
-    projectData: Project | null;
-    setProjectData: (project: Project | null) => void;
-    createProject: (project: Project) => void;
-    currentStep: number;
-    setCurrentStep: (step: number) => void;
-    onSubmit: (data: Project) => void;
-    control: Control<Project>;
-    errors: FieldErrors<Project>;
-    handleSubmit: UseFormHandleSubmit<Project>;
-    trigger: UseFormTrigger<Project>;
-    isProjectCreating: boolean;
-    allProjects: ProjectsResponse | null;
-    isLoadingProjects: boolean;
-    resetUploader: boolean;
-    setResetUploader: React.Dispatch<React.SetStateAction<boolean>>;
-    setProjectFiles: React.Dispatch<React.SetStateAction<FileData[]>>;
+  projectData: Project | null;
+  setProjectData: (project: Project | null) => void;
+  createProject: (project: Project) => void;
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
+  onSubmit: (data: Project) => void;
+  control: Control<Project>;
+  errors: FieldErrors<Project>;
+  handleSubmit: UseFormHandleSubmit<Project>;
+  trigger: UseFormTrigger<Project>;
+  isProjectCreating: boolean;
+  allProjects: ProjectsResponse | null;
+  isLoadingProjects: boolean;
+  resetUploader: boolean;
+  setResetUploader: React.Dispatch<React.SetStateAction<boolean>>;
+  setProjectFiles: React.Dispatch<React.SetStateAction<FileData[]>>;
 }
 
 export const ProjectContext = createContext<ProjectContextType | null>(null);
 
 export const ProjectProvider = ({ children }: { children: React.ReactNode }) => {
-    const [projectData, setProjectData] = useState<Project | null>(null);
-    const [projectFiles, setProjectFiles] = useState<FileData[]>([]);
-    const [resetUploader, setResetUploader] = useState(false);
-    const [currentStep, setCurrentStep] = useState(1);
-    const { control, handleSubmit, formState: { errors }, trigger, reset } = useForm<Project>({
-        resolver: yupResolver(projectInfoSchema) as Resolver<Project>,
-        defaultValues: {
-            name: '',
-            description: '',
-            priority: 'Medium',
-            status: 'Planning',
-            tasks: [
-                {
-                    name: '',
-                    description: '',
-                    assignedTo: [],
-                    status: 'To Do',
-                    priority: 'Medium',
-                    dueDate: '',
-                    startDate: '',
-                    estimatedTime: 0,
-                    loggedTime: 0,
-                    subtasks: [],
-                    comments: [],
-                },
-            ],
-            history: [],
+  const [projectData, setProjectData] = useState<Project | null>(null);
+  const [projectFiles, setProjectFiles] = useState<FileData[]>([]);
+  const [resetUploader, setResetUploader] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    trigger,
+    reset,
+  } = useForm<Project>({
+    resolver: yupResolver(projectInfoSchema) as Resolver<Project>,
+    defaultValues: {
+      name: '',
+      description: '',
+      priority: 'Medium',
+      status: 'Planning',
+      tasks: [
+        {
+          name: '',
+          description: '',
+          assignedTo: [],
+          status: 'To Do',
+          priority: 'Medium',
+          dueDate: '',
+          startDate: '',
+          estimatedTime: 0,
+          loggedTime: 0,
+          subtasks: [],
+          comments: [],
         },
-    });
-    const { mutate, isPending: isProjectCreating } = useMutation<void, Error, Project>({
-        mutationFn: async (data: Project) => {
-            await axios.post('/api/create-project', data)
-        },
-        onError: (error) => {
-            toast.error(error.message)
-        },
-        onSuccess: () => {
-            toast.success("Project created successfully")
-            setCurrentStep(1)
-            setProjectData(null)
-            // reset form
-            reset()
-            setResetUploader(true)
-        }
-    })
-    const { data: projects, error, isLoading: isLoadingProjects } = useQuery<ProjectsResponse>({
-        queryKey: ['projects'],
-        queryFn: async () => {
-            const { data } = await axios.get('/api/get-all-projects');
-            return data as ProjectsResponse;
-        }
-    })
+      ],
+      history: [],
+    },
+  });
+  const { mutate, isPending: isProjectCreating } = useMutation<void, Error, Project>({
+    mutationFn: async (data: Project) => {
+      await axios.post('/api/create-project', data);
+    },
+    onError: error => {
+      toast.error(error.message);
+    },
+    onSuccess: () => {
+      toast.success('Project created successfully');
+      setCurrentStep(1);
+      setProjectData(null);
+      // reset form
+      reset();
+      setResetUploader(true);
+    },
+  });
+  const {
+    data: projects,
+    error,
+    isLoading: isLoadingProjects,
+  } = useQuery<ProjectsResponse>({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const { data } = await axios.get('/api/get-all-projects');
+      return data as ProjectsResponse;
+    },
+  });
 
-    useEffect(() => {
-        if (error) {
-            toast.error(error.message);
-        }
-    }, [error]);
-
-    const onSubmit = async (data: Project) => {
-        try {
-            const formatedData = {
-                ...data,
-                files: projectFiles || []
-            }
-            mutate(formatedData);
-        } catch (error: any) {
-            toast.error(error.message)
-        }
-    };
-
-    const createProject = (project: Project) => {
-        setProjectData(project);
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message);
     }
-    const contextValue = useMemo(() => ({
-        projectData,
-        setProjectData,
-        createProject,
-        currentStep,
-        setCurrentStep,
-        onSubmit,
-        control,
-        errors,
-        handleSubmit,
-        trigger,
-        isProjectCreating,
-        allProjects: projects || null,
-        isLoadingProjects,
-        resetUploader,
-        setResetUploader,
-        setProjectFiles
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }), [projectData, currentStep, errors, projects]);
+  }, [error]);
 
-    return (
-        <ProjectContext.Provider value={contextValue}>
-            {children}
-        </ProjectContext.Provider>
-    );
+  const onSubmit = async (data: Project) => {
+    try {
+      const formatedData = {
+        ...data,
+        files: projectFiles || [],
+      };
+      mutate(formatedData);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const createProject = (project: Project) => {
+    setProjectData(project);
+  };
+  const contextValue = useMemo(
+    () => ({
+      projectData,
+      setProjectData,
+      createProject,
+      currentStep,
+      setCurrentStep,
+      onSubmit,
+      control,
+      errors,
+      handleSubmit,
+      trigger,
+      isProjectCreating,
+      allProjects: projects || null,
+      isLoadingProjects,
+      resetUploader,
+      setResetUploader,
+      setProjectFiles,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }),
+    [projectData, currentStep, errors, projects]
+  );
+
+  return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;
 };
 
 export const useProject = () => useContext(ProjectContext);

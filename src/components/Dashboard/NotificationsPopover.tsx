@@ -12,13 +12,14 @@ import {
   Trash2,
   Settings,
   Users,
+  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import { useNotifications, NotificationType } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
@@ -39,20 +40,19 @@ export function NotificationsPopover() {
     requestNotificationPermission,
   } = useNotifications();
 
-  // Request notification permission when component mounts
   React.useEffect(() => {
     requestNotificationPermission();
   }, [requestNotificationPermission]);
 
-  // Fetch more notifications when scrolling to the bottom
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications-infinite'],
     queryFn: async ({ pageParam = 0 }) => {
       const result = await fetchNotifications(pageParam);
       return result;
     },
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.nextPage : undefined),
     initialPageParam: 0,
+    enabled: !!open,
   });
 
   React.useEffect(() => {
@@ -61,77 +61,133 @@ export function NotificationsPopover() {
     }
   }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  // Combine SSE notifications with paginated ones, removing duplicates
   const allNotifications = React.useMemo(() => {
+    if (
+      notifications.length === 0 &&
+      (!data?.pages || data.pages.length === 0 || data.pages[0].notifications.length === 0)
+    ) {
+      return [];
+    }
+
     const paginatedNotifications = data?.pages?.flatMap(page => page.notifications) || [];
+    const existingIds = new Set(paginatedNotifications.map((n: NotificationType) => n._id));
 
-    // Create a Set of IDs from paginated notifications
-    const existingIds = new Set(paginatedNotifications.map(n => n._id));
+    const uniqueSSENotifications = notifications.filter(
+      (n: NotificationType) => !existingIds.has(n._id)
+    );
 
-    // Filter out SSE notifications that are already in the paginated results
-    const uniqueSSENotifications = notifications.filter(n => !existingIds.has(n._id));
-
-    // Combine and sort by creation date (newest first)
     return [...uniqueSSENotifications, ...paginatedNotifications].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a: NotificationType, b: NotificationType) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [data, notifications]);
 
   const getNotificationIcon = (type: NotificationType['type']) => {
     const iconStyles = 'h-4 w-4';
-    const containerStyles = 'p-2 rounded-xl shadow-lg backdrop-blur-sm';
+
+    const getContainerStyles = (
+      colorFrom: string,
+      colorTo: string,
+      darkColorFrom: string,
+      darkColorTo: string
+    ) => {
+      return `p-2 rounded-lg shadow-sm bg-gradient-to-br from-${colorFrom}/15 to-${colorTo}/10 dark:from-${darkColorFrom}/15 dark:to-${darkColorTo}/10 ring-1 ring-${colorFrom}/20 dark:ring-${darkColorFrom}/20`;
+    };
+
+    const getIconStyles = (color: string, darkColor: string) => {
+      return `${iconStyles} text-${color}-600 dark:text-${darkColor}-400 drop-shadow-sm`;
+    };
 
     switch (type) {
       case 'mention':
         return (
-          <div className={`${containerStyles} bg-blue-500/10 dark:bg-blue-400/10`}>
-            <Bell className={`${iconStyles} text-blue-600 dark:text-blue-400`} />
+          <div className={getContainerStyles('blue', 'sky', 'blue', 'sky')}>
+            <Bell className={getIconStyles('blue', 'blue')} />
           </div>
         );
       case 'task':
         return (
-          <div className={`${containerStyles} bg-purple-500/10 dark:bg-purple-400/10`}>
-            <Clock className={`${iconStyles} text-purple-600 dark:text-purple-400`} />
+          <div className={getContainerStyles('purple', 'violet', 'purple', 'violet')}>
+            <Clock className={getIconStyles('purple', 'purple')} />
           </div>
         );
       case 'team':
         return (
-          <div className={`${containerStyles} bg-green-500/10 dark:bg-green-400/10`}>
-            <Users className={`${iconStyles} text-green-600 dark:text-green-400`} />
+          <div className={getContainerStyles('emerald', 'green', 'emerald', 'green')}>
+            <Users className={getIconStyles('emerald', 'emerald')} />
           </div>
         );
       case 'onboarding':
         return (
-          <div className={`${containerStyles} bg-indigo-500/10 dark:bg-indigo-400/10`}>
-            <UserPlus className={`${iconStyles} text-indigo-600 dark:text-indigo-400`} />
+          <div className={getContainerStyles('indigo', 'violet', 'indigo', 'violet')}>
+            <UserPlus className={getIconStyles('indigo', 'indigo')} />
           </div>
         );
       case 'system':
         return (
-          <div className={`${containerStyles} bg-amber-500/10 dark:bg-amber-400/10`}>
-            <Settings className={`${iconStyles} text-amber-600 dark:text-amber-400`} />
+          <div className={getContainerStyles('amber', 'yellow', 'amber', 'yellow')}>
+            <Settings className={getIconStyles('amber', 'amber')} />
           </div>
         );
       default:
         return (
-          <div className={`${containerStyles} bg-gray-500/10 dark:bg-gray-400/10`}>
-            <MailIcon className={`${iconStyles} text-gray-600 dark:text-gray-400`} />
+          <div className={getContainerStyles('slate', 'gray', 'slate', 'gray')}>
+            <MailIcon className={getIconStyles('slate', 'slate')} />
           </div>
         );
     }
   };
 
-  const handleMarkAllAsRead = () => {
-    markAllAsRead();
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+      toast.success('All notifications marked as read');
+    } catch (error) {
+      toast.error('Failed to mark notifications as read');
+    }
   };
 
-  const handleClearNotifications = () => {
-    clearAllNotifications();
+  const queryClient = useQueryClient();
+
+  const handleClearNotifications = async () => {
+    try {
+      const success = await clearAllNotifications();
+
+      if (success) {
+        queryClient.setQueryData(['notifications'], { notifications: [] });
+        queryClient.setQueryData(['notifications-infinite'], {
+          pages: [{ notifications: [], hasMore: false }],
+          pageParams: [0],
+        });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications-infinite'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+
+        toast.success('All notifications cleared');
+      } else {
+        toast.error('Failed to clear notifications');
+      }
+    } catch (error) {
+      toast.error('Failed to clear notifications');
+    }
   };
 
-  const handleNotificationClick = (notificationId: string) => {
-    markAsRead(notificationId);
-    setOpen(false);
+  const handleNotificationClick = async (notificationId: string) => {
+    try {
+      await markAsRead(notificationId);
+      setOpen(false);
+    } catch (error) {
+      toast.error('Failed to mark notification as read');
+    }
+  };
+
+  const handleRefreshNotifications = () => {
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications-infinite'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    toast.success('Notifications refreshed');
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -149,15 +205,19 @@ export function NotificationsPopover() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative hover:bg-muted/50 transition-all duration-300 group"
+          className="relative bg-gray-100 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm overflow-visible"
         >
-          <Bell className="h-5 w-5 group-hover:text-primary transition-colors duration-300" />
+          <span className="relative inline-flex">
+            <Bell className="h-6 w-6 group-hover:text-primary transition-colors duration-300" />
+            {unreadCount > 0 && <span className="absolute inset-0 z-0 animate-ping-slow" />}
+          </span>
+
           {unreadCount > 0 && (
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-[10px] font-medium text-white flex items-center justify-center shadow-lg"
+              className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-gradient-to-br from-red-500 via-rose-500 to-pink-500 text-[10px] font-medium text-white flex items-center justify-center shadow-md ring-2 ring-background"
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </motion.div>
@@ -165,46 +225,69 @@ export function NotificationsPopover() {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[400px] p-0 shadow-md border border-border/40 backdrop-blur-md bg-card/95 rounded-2xl overflow-hidden"
+        className="w-[420px] p-0 shadow-xl border border-border/30 backdrop-blur-xl bg-gradient-to-b from-background/95 to-background/80 rounded-xl overflow-hidden"
         align="end"
-        sideOffset={8}
+        sideOffset={10}
         asChild
       >
         <motion.div
           initial={{ opacity: 0, y: 10, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-background/80 via-background to-background/80">
-            <div className="flex items-center gap-3">
-              {unreadCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="text-xs px-2.5 py-0.5 h-5 font-medium rounded-full bg-gradient-to-r from-red-500 to-pink-500"
-                >
-                  {unreadCount} new
-                </Badge>
-              )}
+          <div className="flex flex-col border-b border-border/50">
+            <div className="flex items-center justify-between px-5 py-3.5">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-semibold">Notifications</h3>
+                {unreadCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="text-xs px-2.5 py-0.5 h-5 font-medium rounded-full bg-gradient-to-br from-red-500 via-rose-500 to-pink-500 shadow-sm"
+                  >
+                    {unreadCount} new
+                  </Badge>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full hover:bg-muted/80 transition-all duration-200"
+                onClick={handleRefreshNotifications}
+                title="Refresh notifications"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs hover:bg-primary/10 hover:text-primary transition-all duration-300 h-8 rounded-full"
-                onClick={handleMarkAllAsRead}
-              >
-                <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
-                Mark all read
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs hover:bg-destructive/10 hover:text-destructive transition-all duration-300 h-8 rounded-full"
-                onClick={handleClearNotifications}
-              >
-                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                Clear all
-              </Button>
+
+            {/* Action buttons */}
+            <div className="flex items-center justify-between px-5 py-2.5 bg-muted/30">
+              <div className="text-xs text-muted-foreground">
+                {allNotifications.length > 0
+                  ? `${allNotifications.length} notification${allNotifications.length !== 1 ? 's' : ''}`
+                  : 'No notifications'}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs hover:bg-primary/10 hover:text-primary transition-all duration-200 h-7 rounded-md"
+                  onClick={handleMarkAllAsRead}
+                  disabled={allNotifications.length === 0 || allNotifications.every(n => n.read)}
+                >
+                  <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
+                  Mark all read
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs hover:bg-destructive/10 hover:text-destructive transition-all duration-200 h-7 rounded-md"
+                  onClick={handleClearNotifications}
+                  disabled={allNotifications.length === 0}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  Clear all
+                </Button>
+              </div>
             </div>
           </div>
           <ScrollArea className="h-[500px] overflow-y-auto">
@@ -218,32 +301,41 @@ export function NotificationsPopover() {
             )}
             {status === 'pending' ? (
               <div className="flex h-[300px] items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary/60" />
-                  <p className="text-sm text-muted-foreground animate-pulse">
-                    Loading notifications...
-                  </p>
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping opacity-75"></div>
+                    <div className="relative p-3 rounded-full bg-primary/10 backdrop-blur-sm">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Loading your notifications...</p>
                 </div>
               </div>
             ) : status === 'error' ? (
               <div className="flex h-[300px] items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="p-3 rounded-full bg-destructive/10">
-                    <AlertCircle className="h-8 w-8 text-destructive/70" />
+                <div className="flex flex-col items-center gap-4 max-w-[250px] text-center">
+                  <div className="p-4 rounded-full bg-destructive/10 ring-1 ring-destructive/20">
+                    <AlertCircle className="h-6 w-6 text-destructive" />
                   </div>
-                  <p className="text-sm font-medium">Failed to load notifications</p>
+                  <div>
+                    <p className="text-sm font-medium mb-1">Failed to load notifications</p>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      There was a problem connecting to the notification service
+                    </p>
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="mt-2 rounded-full hover:bg-primary/10 hover:text-primary transition-all duration-300"
-                    onClick={() => window.location.reload()}
+                    className="rounded-md hover:bg-primary/10 hover:text-primary transition-all duration-200 border-primary/20"
+                    onClick={handleRefreshNotifications}
                   >
-                    Try again
+                    <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                    Refresh
                   </Button>
                 </div>
               </div>
             ) : allNotifications.length > 0 ? (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-border/30">
                 <AnimatePresence>
                   {allNotifications.map((notification, index) => (
                     <motion.div
@@ -256,27 +348,47 @@ export function NotificationsPopover() {
                         href={notification.link || '/dashboard/notifications'}
                         onClick={() => handleNotificationClick(notification._id)}
                         className={cn(
-                          'flex items-start gap-4 p-6 hover:bg-muted/50 transition-all duration-300',
-                          !notification.read && 'bg-primary/5'
+                          'flex items-start gap-3 px-5 py-4 hover:bg-muted/40 transition-all duration-200 relative group',
+                          !notification.read ? 'bg-primary/5' : 'hover:bg-muted/30'
                         )}
                       >
-                        <div className="shrink-0">{getNotificationIcon(notification.type)}</div>
+                        {!notification.read && (
+                          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/80 to-primary/40" />
+                        )}
+
+                        <div className="shrink-0 mt-0.5">
+                          {getNotificationIcon(notification.type)}
+                        </div>
+
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <p className="text-sm font-semibold leading-none truncate">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <p
+                              className={cn(
+                                'text-sm leading-tight truncate',
+                                !notification.read
+                                  ? 'font-semibold'
+                                  : 'font-medium text-foreground/90'
+                              )}
+                            >
                               {notification.title}
                             </p>
-                            <p className="text-xs text-muted-foreground whitespace-nowrap">
+                            <p className="text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1.5">
+                              {!notification.read && (
+                                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                              )}
                               {formatTimestamp(notification.createdAt)}
                             </p>
                           </div>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
+                          <p className="text-sm text-muted-foreground line-clamp-2 mt-0.5 group-hover:text-foreground/80 transition-colors duration-200">
                             {notification.description}
                           </p>
                         </div>
-                        {!notification.read && (
-                          <div className="shrink-0 h-2 w-2 rounded-full bg-gradient-to-r from-primary to-primary-foreground animate-pulse shadow-lg" />
-                        )}
+
+                        <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 self-center">
+                          <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                            <CheckCheck className="h-3 w-3 text-primary" />
+                          </div>
+                        </div>
                       </Link>
                     </motion.div>
                   ))}
@@ -289,23 +401,34 @@ export function NotificationsPopover() {
               </div>
             ) : (
               <div className="flex h-[300px] items-center justify-center px-6">
-                <div className="flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="p-4 rounded-full bg-muted/50 backdrop-blur-sm">
-                    <Bell className="h-8 w-8 text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center text-center space-y-5">
+                  <div className="relative">
+                    {/* Decorative elements */}
+                    <div className="absolute -top-6 -left-6 h-4 w-4 rounded-full bg-primary/20 animate-pulse-slow"></div>
+                    <div className="absolute -bottom-8 -right-8 h-6 w-6 rounded-full bg-primary/10 animate-pulse-slow animation-delay-700"></div>
+                    <div className="absolute top-1/2 -right-10 h-3 w-3 rounded-full bg-primary/15 animate-pulse-slow animation-delay-1000"></div>
+
+                    {/* Main icon */}
+                    <div className="p-5 rounded-full bg-gradient-to-br from-muted/80 to-muted/30 backdrop-blur-sm ring-1 ring-border/50 shadow-sm">
+                      <Bell className="h-8 w-8 text-muted-foreground" />
+                    </div>
                   </div>
-                  <h3 className="text-base font-medium">No notifications yet</h3>
-                  <p className="text-sm text-muted-foreground max-w-[260px]">
-                    When you get notifications, they&apos;ll show up here
-                  </p>
+                  <div>
+                    <h3 className="text-base font-medium mb-1.5">All caught up!</h3>
+                    <p className="text-sm text-muted-foreground max-w-[260px]">
+                      You don&apos;t have any notifications right now. We&apos;ll notify you when
+                      something arrives.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
           </ScrollArea>
-          <div className="p-4 border-t bg-gradient-to-r from-background/80 via-background to-background/80">
-            <Link href="/notifications" onClick={() => setOpen(false)}>
+          <div className="p-4 border-t border-border/50 bg-gradient-to-b from-muted/30 to-background/80">
+            <Link href="/home/notifications" onClick={() => setOpen(false)}>
               <Button
                 size="sm"
-                className="w-full font-medium rounded-full bg-gradient-to-r from-primary/80 to-primary hover:from-primary hover:to-primary/90 text-primary-foreground transition-all duration-300"
+                className="w-full font-medium rounded-md bg-gradient-to-br from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground transition-all duration-200 shadow-sm"
               >
                 View all notifications
               </Button>
