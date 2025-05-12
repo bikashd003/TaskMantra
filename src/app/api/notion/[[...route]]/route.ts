@@ -77,29 +77,8 @@ interface NotionPage {
   properties?: Record<string, any>;
 }
 
-interface NotionDatabase {
-  id: string;
-  object: string;
-  created_time: string;
-  last_edited_time: string;
-  url: string;
-  title?: Array<{
-    type: string;
-    plain_text: string;
-    annotations?: any;
-  }>;
-  icon?: {
-    type?: string;
-    emoji?: string;
-    external?: {
-      url: string;
-    };
-  };
-  properties?: Record<string, any>;
-}
-
 interface NotionSearchResponse {
-  results: Array<NotionPage | NotionDatabase>;
+  results: Array<NotionPage>;
   next_cursor: string | null;
   has_more: boolean;
 }
@@ -126,45 +105,43 @@ app.get('/pages', async c => {
     })) as NotionSearchResponse;
 
     const pages = await Promise.all(
-      response.results
-        .filter((result): result is NotionPage => result.object === 'page')
-        .map(async (page: NotionPage) => {
-          let title = 'Untitled';
+      response.results.map(async (page: NotionPage) => {
+        let title = 'Untitled';
 
-          // Try to extract title from page properties
-          if (page.properties && page.properties.title) {
-            const titleProperty = page.properties.title;
-            if (titleProperty.title && titleProperty.title.length > 0) {
-              title = titleProperty.title.map((t: any) => t.plain_text).join('');
-            }
+        // Try to extract title from page properties
+        if (page.properties && page.properties.title) {
+          const titleProperty = page.properties.title;
+          if (titleProperty.title && titleProperty.title.length > 0) {
+            title = titleProperty.title.map((t: any) => t.plain_text).join('');
           }
+        }
 
-          // If title is still "Untitled", try to retrieve the page to get more details
-          if (title === 'Untitled' && page.id) {
-            try {
-              const pageContent = await notion.pages.retrieve({ page_id: page.id });
-              if ('properties' in pageContent && pageContent.properties) {
-                // Look for a title property
-                for (const [_key, value] of Object.entries(pageContent.properties)) {
-                  if (value.type === 'title' && value.title && value.title.length > 0) {
-                    title = value.title.map((t: any) => t.plain_text).join('');
-                    break;
-                  }
+        // If title is still "Untitled", try to retrieve the page to get more details
+        if (title === 'Untitled' && page.id) {
+          try {
+            const pageContent = await notion.pages.retrieve({ page_id: page.id });
+            if ('properties' in pageContent && pageContent.properties) {
+              // Look for a title property
+              for (const [_key, value] of Object.entries(pageContent.properties)) {
+                if (value.type === 'title' && value.title && value.title.length > 0) {
+                  title = value.title.map((t: any) => t.plain_text).join('');
+                  break;
                 }
               }
-            } catch (_error) {
-              // Ignore errors when retrieving page content
             }
+          } catch (_error) {
+            // Ignore errors when retrieving page content
           }
+        }
 
-          return {
-            id: page.id,
-            title,
-            icon: page.icon?.emoji || page.icon?.external?.url || null,
-            lastUpdated: page.last_edited_time,
-            url: page.url,
-          };
-        })
+        return {
+          id: page.id,
+          title,
+          icon: page.icon?.emoji || page.icon?.external?.url || null,
+          lastUpdated: page.last_edited_time,
+          url: page.url,
+        };
+      })
     );
 
     return c.json({ success: true, pages });
