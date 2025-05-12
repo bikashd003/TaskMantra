@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "functions": {
+    "src/app/api/notifications/sse/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/notifications/sse",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-transform"
+        },
+        {
+          "key": "Connection",
+          "value": "keep-alive"
+        },
+        {
+          "key": "Content-Type",
+          "value": "text/event-stream"
+        },
+        {
+          "key": "X-Accel-Buffering",
+          "value": "no"
+        }
+      ]
+    }
+  ]
+}

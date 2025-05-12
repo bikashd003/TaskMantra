@@ -10,10 +10,22 @@ const clients = new Map<string, ReadableStreamDefaultController>();
 // Store heartbeat intervals for each client
 const heartbeatIntervals = new Map<string, ReturnType<typeof setInterval>>();
 
-// Heartbeat interval in milliseconds (15 seconds)
-const HEARTBEAT_INTERVAL = 15000;
+// Heartbeat interval in milliseconds (30 seconds)
+const HEARTBEAT_INTERVAL = 30000;
 
-export async function GET(_req: NextRequest) {
+// Set to true to enable debug logging
+const DEBUG = process.env.NODE_ENV === 'development';
+
+// Use force-dynamic to ensure the route is not statically optimized
+export const dynamic = 'force-dynamic';
+
+export async function GET(req: NextRequest) {
+  // Check for Last-Event-ID header or query parameter which indicates a reconnection
+  const lastEventIdHeader = req.headers.get('Last-Event-ID') || '';
+  const url = new URL(req.url);
+  const lastEventIdParam = url.searchParams.get('lastEventId') || '';
+  const lastEventId = lastEventIdHeader || lastEventIdParam;
+
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -22,6 +34,10 @@ export async function GET(_req: NextRequest) {
 
   // Ensure userId is a string
   const userId = session.user.id.toString();
+
+  if (DEBUG) {
+    console.log(`SSE connection request from user: ${userId}, lastEventId: ${lastEventId}`);
+  }
 
   // Clear any existing heartbeat interval for this user
   if (heartbeatIntervals.has(userId)) {
@@ -35,8 +51,9 @@ export async function GET(_req: NextRequest) {
       // Store the controller for this user
       clients.set(userId, controller);
 
-      // Send initial message
-      const data = `data: ${JSON.stringify({ type: 'connection', message: 'Connected to notification stream' })}\n\n`;
+      // Send initial message with an ID that can be used for reconnection
+      const connectionId = Date.now().toString();
+      const data = `id: ${connectionId}\ndata: ${JSON.stringify({ type: 'connection', message: 'Connected to notification stream' })}\n\n`;
       controller.enqueue(new TextEncoder().encode(data));
 
       // Send any existing unread notifications
@@ -45,11 +62,19 @@ export async function GET(_req: NextRequest) {
       // Set up heartbeat to keep connection alive
       const heartbeatInterval = setInterval(() => {
         try {
-          // Send a ping event to keep the connection alive
-          const heartbeat = `data: ${JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() })}\n\n`;
+          // Send a ping event to keep the connection alive with an incrementing ID
+          const heartbeatId = Date.now().toString();
+          const heartbeat = `id: ${heartbeatId}\ndata: ${JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() })}\n\n`;
           controller.enqueue(new TextEncoder().encode(heartbeat));
+
+          if (DEBUG) {
+            console.log(`Heartbeat sent to user: ${userId}, id: ${heartbeatId}`);
+          }
         } catch (error) {
           // If there's an error sending the heartbeat, clear the interval and remove the client
+          if (DEBUG) {
+            console.error(`Error sending heartbeat to user: ${userId}`, error);
+          }
           clearInterval(heartbeatInterval);
           heartbeatIntervals.delete(userId);
           clients.delete(userId);
@@ -63,6 +88,10 @@ export async function GET(_req: NextRequest) {
       // Remove the client when the connection is closed
       clients.delete(userId);
 
+      if (DEBUG) {
+        console.log(`SSE connection closed for user: ${userId}`);
+      }
+
       // Clear the heartbeat interval
       if (heartbeatIntervals.has(userId)) {
         clearInterval(heartbeatIntervals.get(userId));
@@ -75,8 +104,9 @@ export async function GET(_req: NextRequest) {
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-store, no-transform',
       Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no', // Disable buffering for Nginx
     },
   });
 }
@@ -98,18 +128,24 @@ async function sendUnreadNotifications(
       .limit(10);
 
     if (notifications.length > 0) {
-      // console.log(`Sending ${notifications.length} unread notifications to user:`, userId);
+      if (DEBUG) {
+        console.log(`Sending ${notifications.length} unread notifications to user: ${userId}`);
+      }
 
-      const data = `data: ${JSON.stringify({
+      // Generate a unique event ID
+      const eventId = `batch-${Date.now()}`;
+
+      const data = `id: ${eventId}\ndata: ${JSON.stringify({
         type: 'notifications',
         notifications: notifications,
       })}\n\n`;
 
       controller.enqueue(new TextEncoder().encode(data));
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (_error) {
-    // console.error('Error sending unread notifications:', error);
+  } catch (error) {
+    if (DEBUG) {
+      console.error(`Error sending unread notifications to user: ${userId}`, error);
+    }
   }
 }
 
@@ -118,30 +154,39 @@ export async function sendNotificationToUser(userId: string | any, notification:
   // Ensure userId is a string (handle MongoDB ObjectId)
   const userIdStr = userId?.toString ? userId.toString() : userId;
 
-  // console.log('Clients Map:', clients);
-  // console.log('Looking for userId:', userIdStr);
-  // console.log('Notification:', notification);
+  if (DEBUG) {
+    console.log(`Attempting to send notification to user: ${userIdStr}`);
+  }
 
   const controller = clients.get(userIdStr);
-  // console.log('Found controller:', controller ? 'Yes' : 'No');
 
   if (controller) {
     try {
-      const data = `data: ${JSON.stringify({
+      // Generate a unique event ID based on notification ID or timestamp
+      const eventId = notification._id ? notification._id.toString() : `notif-${Date.now()}`;
+
+      const data = `id: ${eventId}\ndata: ${JSON.stringify({
         type: 'notification',
         notification,
       })}\n\n`;
 
       controller.enqueue(new TextEncoder().encode(data));
-      // console.log('Notification sent successfully to user:', userIdStr);
+
+      if (DEBUG) {
+        console.log(`Notification sent successfully to user: ${userIdStr}, id: ${eventId}`);
+      }
+
       return true;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_error) {
-      // console.error('Error sending notification:', error);
+    } catch (error) {
+      if (DEBUG) {
+        console.error(`Error sending notification to user: ${userIdStr}`, error);
+      }
       return false;
     }
   } else {
-    // console.log('No active connection found for user:', userIdStr);
+    if (DEBUG) {
+      console.log(`No active connection found for user: ${userIdStr}`);
+    }
     return false;
   }
 }

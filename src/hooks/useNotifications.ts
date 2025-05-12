@@ -86,6 +86,17 @@ export function useNotifications() {
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let lastHeartbeat = Date.now();
     let heartbeatCheckInterval: ReturnType<typeof setInterval> | null = null;
+    let lastEventId = ''; // Track the last event ID for reconnection
+
+    // Store the connection status in localStorage to detect page reloads vs. disconnections
+    const CONNECTION_STATUS_KEY = 'sse-connection-status';
+    const setConnectionStatus = (status: string) => {
+      try {
+        localStorage.setItem(CONNECTION_STATUS_KEY, status);
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+    };
 
     // Function to calculate backoff time based on reconnect attempts
     const getReconnectDelay = () => {
@@ -105,13 +116,13 @@ export function useNotifications() {
       // Set last heartbeat to now
       lastHeartbeat = Date.now();
 
-      // Check every 30 seconds if we've received a heartbeat in the last 45 seconds
+      // Check every 45 seconds if we've received a heartbeat in the last 60 seconds
       heartbeatCheckInterval = setInterval(() => {
         const now = Date.now();
         const timeSinceLastHeartbeat = now - lastHeartbeat;
 
-        // If no heartbeat for 45 seconds, reconnect
-        if (timeSinceLastHeartbeat > 45000) {
+        // If no heartbeat for 60 seconds, reconnect
+        if (timeSinceLastHeartbeat > 60000) {
           // Close existing connection
           if (eventSource) {
             eventSource.close();
@@ -120,6 +131,7 @@ export function useNotifications() {
           // Reset connection state
           setIsConnected(false);
           setError('Connection timeout. Reconnecting...');
+          setConnectionStatus('disconnected');
 
           // Reconnect
           if (reconnectTimer) {
@@ -127,7 +139,7 @@ export function useNotifications() {
           }
           reconnectTimer = setTimeout(connectSSE, getReconnectDelay());
         }
-      }, 30000);
+      }, 45000);
     };
 
     const connectSSE = () => {
@@ -142,65 +154,98 @@ export function useNotifications() {
         eventSource.close();
       }
 
-      // Create a new EventSource connection
-      eventSource = new EventSource('/api/notifications/sse');
+      try {
+        // Create a new EventSource connection with withCredentials option
+        // and include the last event ID if available for resuming the stream
+        const url = new URL('/api/notifications/sse', window.location.origin);
 
-      // Connection opened
-      eventSource.onopen = () => {
-        setIsConnected(true);
-        setError(null);
-        reconnectAttempt = 0; // Reset reconnect attempts on successful connection
-        startHeartbeatCheck(); // Start monitoring heartbeats
-      };
+        // Add a cache-busting parameter to prevent caching
+        url.searchParams.append('_', Date.now().toString());
 
-      // Handle incoming messages
-      eventSource.onmessage = event => {
-        try {
-          const data = JSON.parse(event.data);
-
-          // Update last heartbeat timestamp for any message
-          lastHeartbeat = Date.now();
-
-          if (data.type === 'heartbeat') {
-            // Just a heartbeat, no need to process further
-            return;
-          } else if (data.type === 'connection') {
-            // Connection established message
-          } else if (data.type === 'notification') {
-            // Single new notification
-            const newNotification = data.notification;
-
-            // Show browser notification if enabled
-            showBrowserNotification(newNotification);
-
-            // Invalidate queries to refresh data
-            queryClient.invalidateQueries({ queryKey: ['notifications'] });
-            queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
-          } else if (data.type === 'notifications') {
-            // Batch of notifications - invalidate queries to refresh data
-            queryClient.invalidateQueries({ queryKey: ['notifications'] });
-            queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
-          }
-        } catch (error) {
-          setError('Failed to parse SSE data');
+        // Add last event ID if available
+        if (lastEventId) {
+          url.searchParams.append('lastEventId', lastEventId);
         }
-      };
 
-      // Handle errors
-      eventSource.onerror = _err => {
+        const options = {
+          withCredentials: true,
+        };
+
+        eventSource = new EventSource(url.toString(), options);
+
+        // Set up event listeners
+        eventSource.addEventListener('open', () => {
+          setIsConnected(true);
+          setError(null);
+          reconnectAttempt = 0; // Reset reconnect attempts on successful connection
+          setConnectionStatus('connected');
+          startHeartbeatCheck(); // Start monitoring heartbeats
+        });
+
+        // Listen for specific event types
+        eventSource.addEventListener('message', event => {
+          try {
+            // Update the last event ID if provided
+            if (event.lastEventId) {
+              lastEventId = event.lastEventId;
+            }
+
+            // Update last heartbeat timestamp for any message
+            lastHeartbeat = Date.now();
+
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'heartbeat') {
+              // Just a heartbeat, no need to process further
+              return;
+            } else if (data.type === 'connection') {
+              // Connection established message
+            } else if (data.type === 'notification') {
+              // Single new notification
+              const newNotification = data.notification;
+
+              // Show browser notification if enabled
+              showBrowserNotification(newNotification);
+
+              // Invalidate queries to refresh data
+              queryClient.invalidateQueries({ queryKey: ['notifications'] });
+              queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+            } else if (data.type === 'notifications') {
+              // Batch of notifications - invalidate queries to refresh data
+              queryClient.invalidateQueries({ queryKey: ['notifications'] });
+              queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+            }
+          } catch (error) {
+            setError('Failed to parse SSE data');
+          }
+        });
+
+        // Handle errors
+        eventSource.addEventListener('error', () => {
+          setIsConnected(false);
+          setError('Connection to notification server lost. Reconnecting...');
+          setConnectionStatus('disconnected');
+
+          // Close the connection
+          eventSource?.close();
+
+          // Increment reconnect attempt counter
+          reconnectAttempt++;
+
+          // Try to reconnect with exponential backoff
+          const delay = getReconnectDelay();
+          reconnectTimer = setTimeout(connectSSE, delay);
+        });
+      } catch (error) {
         setIsConnected(false);
-        setError('Connection to notification server lost. Reconnecting...');
-
-        // Close the connection
-        eventSource?.close();
-
-        // Increment reconnect attempt counter
-        reconnectAttempt++;
+        setError('Failed to establish SSE connection');
+        setConnectionStatus('failed');
 
         // Try to reconnect with exponential backoff
+        reconnectAttempt++;
         const delay = getReconnectDelay();
         reconnectTimer = setTimeout(connectSSE, delay);
-      };
+      }
     };
 
     // Initial connection
@@ -219,6 +264,9 @@ export function useNotifications() {
       if (heartbeatCheckInterval) {
         clearInterval(heartbeatCheckInterval);
       }
+
+      // Mark as intentionally disconnected
+      setConnectionStatus('closed');
     };
   }, [session, queryClient]);
 
