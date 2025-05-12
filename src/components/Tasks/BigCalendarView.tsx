@@ -6,20 +6,15 @@ import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './big-calendar.css';
 import { Task, TaskPriority, TaskStatus } from './types';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Clock, AlertCircle, Edit } from 'lucide-react';
-import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 import CreateTaskModal from './CreateTaskModal';
 import CalendarHeader from './CalendarHeader';
 import { toast } from 'sonner';
+import TaskDetailSidebar from './TaskDetailSidebar';
 
-// Setup the localizer
 const localizer = momentLocalizer(moment);
 
-// Define the event type for the calendar
 interface CalendarEvent {
   id: string;
   title: string;
@@ -32,7 +27,6 @@ interface CalendarEvent {
   color?: string;
 }
 
-// Define the filter type
 interface TaskFilter {
   showCompleted: boolean;
   priorityFilter: 'all' | TaskPriority;
@@ -42,20 +36,11 @@ interface TaskFilter {
 
 interface BigCalendarViewProps {
   tasks: Task[];
-  onTaskClick?: (taskId: string) => void;
-  renderPriorityBadge?: (priority: TaskPriority) => React.ReactNode;
   onAddTask?: (date: Date) => void;
   onTaskUpdate?: (taskId: string, updates: Partial<Task>) => void;
 }
 
-const BigCalendarView: React.FC<BigCalendarViewProps> = ({
-  tasks,
-  onTaskClick,
-  onAddTask,
-  onTaskUpdate,
-}) => {
-  // State for calendar view
-  const [isHovered, setIsHovered] = React.useState(false);
+const BigCalendarView: React.FC<BigCalendarViewProps> = ({ tasks, onAddTask, onTaskUpdate }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [view, setView] = useState<string>(Views.MONTH);
@@ -66,32 +51,24 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
     projectFilter: null,
   });
 
-  // State for task creation modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedDateForTask, setSelectedDateForTask] = useState<Date | null>(null);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
-  // Convert tasks to calendar events
   const events = useMemo(() => {
     return tasks
       .filter(task => {
-        // Filter by completion status
         if (!taskFilter.showCompleted && task.status === 'Completed') {
           return false;
         }
-
-        // Filter by priority
         if (taskFilter.priorityFilter !== 'all' && task.priority !== taskFilter.priorityFilter) {
           return false;
         }
-
-        // Filter by project
         if (taskFilter.projectFilter && task.projectId !== taskFilter.projectFilter) {
           return false;
         }
-
-        // Filter by overdue status
         if (taskFilter.overdueOnly) {
           const dueDate = new Date(task.dueDate);
           const today = new Date();
@@ -104,11 +81,9 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
         return true;
       })
       .map(task => {
-        // Ensure we have valid dates
         const start = new Date(task.startDate);
         const end = new Date(task.dueDate);
 
-        // Add one day to end date for proper display in calendar
         const adjustedEnd = new Date(end);
         adjustedEnd.setDate(adjustedEnd.getDate() + 1);
 
@@ -125,23 +100,21 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
       });
   }, [tasks, taskFilter]);
 
-  // Get task status color
   const getTaskStatusColor = (status: TaskStatus): string => {
     switch (status) {
       case 'To Do':
-        return '#d1d5db'; // gray-300
+        return '#d1d5db';
       case 'In Progress':
-        return '#3b82f6'; // blue-500
+        return '#3b82f6';
       case 'Review':
-        return '#f59e0b'; // amber-500
+        return '#f59e0b';
       case 'Completed':
-        return '#10b981'; // emerald-500
+        return '#10b981';
       default:
-        return '#d1d5db'; // gray-300
+        return '#d1d5db';
     }
   };
 
-  // Custom event styling
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
     const backgroundColor = event.color || getTaskStatusColor(event.status);
     const isPastDue = new Date(event.end) < new Date() && event.status !== 'Completed';
@@ -167,39 +140,30 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
     };
   }, []);
 
-  // Handle date selection
   const handleSelectSlot = useCallback(({ start }: { start: Date }) => {
     setSelectedDateForTask(start);
     setIsEditingTask(false);
     setTaskToEdit(null);
     setIsCreateModalOpen(true);
+    setIsSidebarOpen(false);
   }, []);
 
-  // Handle event selection (task click)
-  const handleSelectEvent = useCallback(
-    (event: CalendarEvent) => {
-      try {
-        if (onTaskClick) {
-          onTaskClick(event.id);
-        } else {
-          // If no click handler is provided, open the edit modal
-          const taskData = event.resource as Task;
-          if (taskData) {
-            setTaskToEdit(taskData);
-            setIsEditingTask(true);
-            setIsCreateModalOpen(true);
-          }
-        }
-      } catch (error) {
-        toast.error('Failed to handle task click', {
-          description: error instanceof Error ? error.message : 'Unknown error',
-        });
+  const handleSelectEvent = useCallback((event: CalendarEvent) => {
+    try {
+      const taskData = event.resource as Task;
+      if (taskData) {
+        setTaskToEdit(taskData);
+        setIsEditingTask(true);
+        setIsSidebarOpen(true);
+        setIsCreateModalOpen(false);
       }
-    },
-    [onTaskClick]
-  );
+    } catch (error) {
+      toast.error('Failed to handle task click', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }, []);
 
-  // Handle create or update task
   const handleCreateOrUpdateTask = (taskData: any) => {
     if (isEditingTask && taskToEdit && onTaskUpdate) {
       onTaskUpdate(taskToEdit.id, taskData);
@@ -207,21 +171,18 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
       onAddTask(selectedDateForTask);
     }
 
-    // Close the modal
     setIsCreateModalOpen(false);
+    setIsSidebarOpen(false);
   };
 
-  // Handle view change
   const handleViewChange = (newView: string) => {
     setView(newView as any);
   };
 
-  // Handle date change
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate);
   };
 
-  // Toggle task filter
   const toggleTaskFilter = (filterKey: keyof TaskFilter, value: any) => {
     setTaskFilter(prev => ({
       ...prev,
@@ -229,12 +190,10 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
     }));
   };
 
-  // Navigate to today
   const goToToday = () => {
     setCurrentDate(new Date());
   };
 
-  // Navigate to previous period
   const goToPrevious = () => {
     const newDate = new Date(currentDate);
     if (view === Views.MONTH) {
@@ -247,7 +206,6 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
     setCurrentDate(newDate);
   };
 
-  // Navigate to next period
   const goToNext = () => {
     const newDate = new Date(currentDate);
     if (view === Views.MONTH) {
@@ -268,8 +226,6 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
         onClose={() => setIsCreateModalOpen(false)}
         onCreateTask={handleCreateOrUpdateTask}
         isLoading={false}
-        initialDate={selectedDateForTask}
-        editTask={taskToEdit}
       />
 
       {/* Calendar */}
@@ -291,87 +247,6 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
           eventPropGetter={eventStyleGetter}
           popup
           components={{
-            event: props => {
-              const event = props.event as CalendarEvent;
-              const task = event.resource as Task;
-
-              return (
-                <Popover open={isHovered}>
-                  <PopoverTrigger asChild>
-                    <div
-                      className="truncate px-1 py-0.5 cursor-pointer hover:opacity-80 transition-opacity"
-                      onMouseEnter={() => setIsHovered(true)}
-                      onMouseLeave={() => setIsHovered(false)}
-                    >
-                      {event.title}
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-4 shadow-lg" align="start">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-base">{task.name}</h4>
-                        <div
-                          className={cn(
-                            'px-2 py-1 rounded-full text-xs font-medium',
-                            task.status === 'To Do' && 'bg-gray-100 text-gray-700',
-                            task.status === 'In Progress' && 'bg-blue-100 text-blue-700',
-                            task.status === 'Review' && 'bg-amber-100 text-amber-700',
-                            task.status === 'Completed' && 'bg-green-100 text-green-700'
-                          )}
-                        >
-                          {task.status}
-                        </div>
-                      </div>
-
-                      <p className="text-sm text-gray-600">{task.description}</p>
-
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-gray-500" />
-                          <span className="text-gray-700">
-                            Start: {format(new Date(task.startDate), 'MMM d, yyyy')}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-gray-500" />
-                          <span className="text-gray-700">
-                            Due: {format(new Date(task.dueDate), 'MMM d, yyyy')}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <AlertCircle
-                            className={cn(
-                              'h-3.5 w-3.5',
-                              task.priority === 'High'
-                                ? 'text-red-500'
-                                : task.priority === 'Medium'
-                                  ? 'text-amber-500'
-                                  : 'text-green-500'
-                            )}
-                          />
-                          <span className="text-gray-700">{task.priority} Priority</span>
-                        </div>
-                      </div>
-
-                      <div className="pt-2 flex justify-end">
-                        <Button
-                          size="sm"
-                          className="flex items-center gap-1"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setTaskToEdit(task);
-                            setIsEditingTask(true);
-                            setIsCreateModalOpen(true);
-                          }}
-                        >
-                          <Edit className="h-3.5 w-3.5" /> Edit Task
-                        </Button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              );
-            },
             toolbar: () => (
               <CalendarHeader
                 currentDate={currentDate}
@@ -392,6 +267,12 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({
           }}
         />
       </div>
+      <TaskDetailSidebar
+        task={taskToEdit}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onTaskUpdate={handleCreateOrUpdateTask}
+      />
     </div>
   );
 };

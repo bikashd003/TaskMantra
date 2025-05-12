@@ -5,15 +5,6 @@ import { Task } from './types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Activity, CheckCircle, Clock, Calendar, AlertCircle, BarChart3 } from 'lucide-react';
 import {
   isAfter,
@@ -26,13 +17,15 @@ import {
   endOfMonth,
 } from 'date-fns';
 import { cn } from '@/lib/utils';
+import Modal from '../Global/Modal';
+import { Button } from '../ui/button';
 
 interface TaskStatisticsProps {
   tasks: Task[];
 }
 
 const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
-  // Calculate task statistics
+  const [isOpen, setIsOpen] = React.useState(false);
   const stats = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter(task => task.status === 'Completed').length;
@@ -131,18 +124,11 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
   ];
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <BarChart3 className="h-4 w-4" /> Statistics
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Task Statistics & Reports</DialogTitle>
-          <DialogDescription>View statistics and reports for your tasks</DialogDescription>
-        </DialogHeader>
-
+    <>
+      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setIsOpen(true)}>
+        <BarChart3 className="h-4 w-4" /> Statistics
+      </Button>
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} size="xl">
         <Tabs defaultValue="overview">
           <TabsList className="grid grid-cols-3 w-[300px] mb-4">
             <TabsTrigger value="overview">
@@ -373,8 +359,8 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
             </Card>
           </TabsContent>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </Modal>
+    </>
   );
 };
 
