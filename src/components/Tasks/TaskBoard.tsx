@@ -440,8 +440,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
             <TaskList
               tasks={filteredTasks}
               searchQuery={filters.searchQuery}
-              onStatusChange={onStatusChange}
-              onDelete={onDelete}
               renderPriorityBadge={renderPriorityBadge as any}
               onCreateTask={onCreateTask || (() => {})}
               isLoading={false}
