@@ -32,27 +32,7 @@ export default function TasksPage() {
         sortField: currentSort.field as string,
         sortDirection: currentSort.direction,
       });
-
-      return apiTasks.map((apiTask: any) => ({
-        id: apiTask.id || apiTask._id,
-        name: apiTask.name,
-        description: apiTask.description || '',
-        status: apiTask.status || 'To Do',
-        priority: apiTask.priority || 'Medium',
-        dueDate: apiTask.dueDate ? new Date(apiTask.dueDate) : new Date(),
-        startDate: apiTask.startDate ? new Date(apiTask.startDate) : new Date(),
-        estimatedTime: apiTask.estimatedTime || 0,
-        loggedTime: apiTask.loggedTime || 0,
-        createdBy: apiTask.createdBy || '',
-        projectId: apiTask.projectId || null,
-        dependencies: apiTask.dependencies || [],
-        subtasks: apiTask.subtasks || [],
-        comments: apiTask.comments || [],
-        assignedTo: apiTask.assignedTo || [],
-        completed: apiTask.completed || false,
-        createdAt: apiTask.createdAt ? new Date(apiTask.createdAt) : undefined,
-        updatedAt: apiTask.updatedAt ? new Date(apiTask.updatedAt) : undefined,
-      }));
+      return apiTasks;
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: true,
@@ -72,21 +52,6 @@ export default function TasksPage() {
     },
   });
 
-  const updateTaskStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => {
-      const apiStatus = status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ');
-      return TaskService.updateTask(id, {
-        status: apiStatus as any,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    },
-    onError: (_error: Error) => {
-      toast.error('Failed to update task');
-    },
-  });
-
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, ...updates }: { id: string; [key: string]: any }) => {
       return TaskService.updateTask(id, updates);
@@ -100,35 +65,10 @@ export default function TasksPage() {
     },
   });
 
-  const deleteTaskMutation = useMutation({
-    mutationFn: TaskService.deleteTask,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Task deleted successfully');
-    },
-    onError: (_error: Error) => {
-      toast.error('Failed to delete task');
-    },
-  });
-
   const filteredTasks = React.useMemo(() => {
     if (!tasksData) return [];
     return tasksData;
   }, [tasksData]);
-
-  const handleStatusChange = useCallback(
-    (taskId: string, newStatus: TaskStatus) => {
-      updateTaskStatusMutation.mutate({ id: taskId, status: newStatus });
-    },
-    [updateTaskStatusMutation]
-  );
-
-  const handleDeleteTask = useCallback(
-    (taskId: string) => {
-      deleteTaskMutation.mutate(taskId);
-    },
-    [deleteTaskMutation]
-  );
 
   const handleCreateTask = useCallback(
     (taskData: any) => {
@@ -183,10 +123,7 @@ export default function TasksPage() {
     >
       <TaskBoard
         tasks={filteredTasks}
-        onStatusChange={handleStatusChange}
-        onDelete={handleDeleteTask}
         onAddTask={handleCreateTask}
-        loadingAddTask={createTaskMutation.isPending}
         renderPriorityBadge={renderPriorityBadge}
         isLoading={isLoading}
         onCreateTask={() => setIsCreateModalOpen(true)}

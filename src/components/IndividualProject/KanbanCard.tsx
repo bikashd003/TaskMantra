@@ -15,9 +15,15 @@ interface CardProps {
   card: CardType;
   isDragging?: boolean;
   isOverlay?: boolean;
+  compactView?: boolean;
 }
 
-export function Card({ card, isDragging = false, isOverlay = false }: CardProps) {
+export function Card({
+  card,
+  isDragging = false,
+  isOverlay = false,
+  compactView = false,
+}: CardProps) {
   const {
     attributes,
     listeners,
@@ -94,17 +100,19 @@ export function Card({ card, isDragging = false, isOverlay = false }: CardProps)
                 : ''
           } ${card.status === 'Completed' ? 'bg-gray-50' : ''}`}
         >
-          <CardHeader className="p-3 pb-0">
+          <CardHeader className={`${compactView ? 'p-2 pb-0' : 'p-3 pb-0'}`}>
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
                 <TooltipProvider delayDuration={300}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <CardTitle
-                        className={`text-sm font-medium ${card.status === 'Completed' ? 'text-gray-500' : ''} truncate max-w-[160px] cursor-default`}
+                        className={`${compactView ? 'text-xs' : 'text-sm'} font-medium ${card.status === 'Completed' ? 'text-gray-500' : ''} truncate max-w-[160px] cursor-default`}
                       >
                         {card.status === 'Completed' && (
-                          <CheckCircle2 className="h-4 w-4 text-green-500 inline mr-1" />
+                          <CheckCircle2
+                            className={`${compactView ? 'h-3 w-3' : 'h-4 w-4'} text-green-500 inline mr-1`}
+                          />
                         )}
                         {card.title}
                       </CardTitle>
@@ -117,7 +125,7 @@ export function Card({ card, isDragging = false, isOverlay = false }: CardProps)
               </div>
               <div onClick={preventDragHandling} className="cursor-default">
                 <span
-                  className={`text-xs px-2 py-1 rounded-full hover:scale-105 transition-transform ${
+                  className={`${compactView ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'} rounded-full hover:scale-105 transition-transform ${
                     card.priority === 'high'
                       ? 'bg-red-100 text-red-800'
                       : card.priority === 'medium'
@@ -131,29 +139,33 @@ export function Card({ card, isDragging = false, isOverlay = false }: CardProps)
             </div>
           </CardHeader>
 
-          <CardContent className="p-3 pt-2">
-            {/* Description if available */}
-            {card.description && <p className="text-sm text-gray-600 mb-2">{card.description}</p>}
+          <CardContent className={`${compactView ? 'p-2 pt-1' : 'p-3 pt-2'}`}>
+            {/* Description if available - only show in non-compact view */}
+            {!compactView && card.description && (
+              <p className="text-sm text-gray-600 mb-2">{card.description}</p>
+            )}
 
             {/* Due date and priority */}
-            <div className="flex justify-between items-center mb-2">
-              {dueDate && (
-                <div className="flex items-center cursor-default" onClick={preventDragHandling}>
-                  <Calendar
-                    className={`h-3 w-3 mr-1 ${isOverdue() ? 'text-red-500' : 'text-muted-foreground'}`}
-                  />
-                  <span
-                    className={`text-xs ${isOverdue() ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}
-                  >
-                    {isOverdue() ? 'Overdue: ' : ''}
-                    {dueDate}
-                  </span>
-                </div>
-              )}
-            </div>
+            {(!compactView || dueDate) && (
+              <div className="flex justify-between items-center mb-2">
+                {dueDate && (
+                  <div className="flex items-center cursor-default" onClick={preventDragHandling}>
+                    <Calendar
+                      className={`h-3 w-3 mr-1 ${isOverdue() ? 'text-red-500' : 'text-muted-foreground'}`}
+                    />
+                    <span
+                      className={`text-xs ${isOverdue() ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}
+                    >
+                      {isOverdue() ? 'Overdue: ' : ''}
+                      {dueDate}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
-            {/* Progress bar if available */}
-            {progress !== null && (
+            {/* Progress bar if available - only in non-compact view */}
+            {!compactView && progress !== null && (
               <div className="mb-2 cursor-default" onClick={preventDragHandling}>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-muted-foreground">Progress</span>
@@ -165,20 +177,25 @@ export function Card({ card, isDragging = false, isOverlay = false }: CardProps)
               </div>
             )}
 
-            {/* Assigned users */}
+            {/* Assigned users - show in both views but with different styling */}
             {card.assignedTo && card.assignedTo.length > 0 && (
               <div className="flex items-center justify-between">
                 <div className="flex -space-x-2 cursor-default" onClick={preventDragHandling}>
-                  {card.assignedTo.slice(0, 3).map((user, index) => (
-                    <Avatar key={index} className="h-6 w-6 border-2 border-background">
+                  {card.assignedTo.slice(0, compactView ? 2 : 3).map((user, index) => (
+                    <Avatar
+                      key={index}
+                      className={`${compactView ? 'h-5 w-5' : 'h-6 w-6'} border-2 border-background`}
+                    >
                       <AvatarImage src={user.image} alt={user.name} />
                       <AvatarFallback className="text-xs">{user.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                   ))}
-                  {card.assignedTo.length > 3 && (
-                    <Avatar className="h-6 w-6 border-2 border-background">
+                  {card.assignedTo.length > (compactView ? 2 : 3) && (
+                    <Avatar
+                      className={`${compactView ? 'h-5 w-5' : 'h-6 w-6'} border-2 border-background`}
+                    >
                       <AvatarFallback className="text-xs">
-                        +{card.assignedTo.length - 3}
+                        +{card.assignedTo.length - (compactView ? 2 : 3)}
                       </AvatarFallback>
                     </Avatar>
                   )}

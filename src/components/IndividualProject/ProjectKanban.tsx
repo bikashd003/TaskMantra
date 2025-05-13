@@ -42,6 +42,7 @@ export type CardType = {
   estimatedTime?: number;
   loggedTime?: number;
   assignedTo?: any[];
+  subtasks?: any[];
 };
 
 export type ColumnType = {
@@ -61,9 +62,9 @@ export default function ProjectKanban({ project }: ProjectProps) {
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
   const [openColumnCreateModal, setOpenColumnCreateModal] = useState(false);
   const [lastDroppedId, setLastDroppedId] = useState<string | null>(null);
+  const [compactView, setCompactView] = useState<boolean>(false);
+  const [columnWidth, setColumnWidth] = useState<number>(300);
   const queryClient = useQueryClient();
-
-  // Store the previous state for rollback in case of API failure
   const previousColumnsRef = useRef<ColumnType[]>([]);
   const dragSourceColumnRef = useRef<string | null>(null);
 
@@ -84,7 +85,6 @@ export default function ProjectKanban({ project }: ProjectProps) {
       toast.success('Task status updated');
     },
     onError: _error => {
-      // Restore the previous state on error
       setColumns(previousColumnsRef.current);
       toast.error('Failed to update task status. Changes reverted.');
     },
@@ -104,6 +104,12 @@ export default function ProjectKanban({ project }: ProjectProps) {
           ? kanbanSetting.columns
           : defaultKanbanColumns;
 
+      // Update compactView and columnWidth from kanban settings
+      if (kanbanSetting) {
+        setCompactView(kanbanSetting.compactView || false);
+        setColumnWidth(kanbanSetting.columnWidth || 300);
+      }
+
       const initialColumns: ColumnType[] = columnsToUse
         .sort((a: KanbanColumnType, b: KanbanColumnType) => a.order - b.order)
         .map((column: KanbanColumnType) => ({
@@ -115,19 +121,33 @@ export default function ProjectKanban({ project }: ProjectProps) {
 
       if (project.tasks && project.tasks.length > 0) {
         project.tasks.forEach((task: any) => {
-          // Create a more flexible mapping for task status to column ID
-          let columnId = task.status.toLowerCase().replace(/\s+/g, '');
+          let columnIndex = initialColumns.findIndex(
+            col => col.title.toLowerCase() === task.status.toLowerCase()
+          );
+          if (columnIndex === -1) {
+            const normalizedTaskStatus = task.status
+              .toLowerCase()
+              .replace(/\s+/g, '')
+              .replace(/[^a-z0-9]/gi, '');
+            columnIndex = initialColumns.findIndex(
+              col => col.id.toLowerCase() === normalizedTaskStatus
+            );
+            if (columnIndex === -1) {
+              const similarityScores = initialColumns.map(col => {
+                const normalizedColId = col.id.toLowerCase();
+                if (
+                  normalizedColId.includes(normalizedTaskStatus) ||
+                  normalizedTaskStatus.includes(normalizedColId)
+                ) {
+                  return true;
+                }
+                return false;
+              });
 
-          // Handle common status variations
-          if (columnId === 'inprogress') columnId = 'inProgress';
-          if (columnId === 'done' || columnId === 'finished') columnId = 'completed';
-          if (columnId === 'needsreview') columnId = 'review';
-          if (columnId === 'discussion' || columnId === 'discussing') columnId = 'discussion';
+              columnIndex = similarityScores.findIndex(score => score === true);
+            }
+          }
 
-          // Find the column for this task
-          let columnIndex = initialColumns.findIndex(col => col.id === columnId);
-
-          // If no matching column found, default to first column (usually "To Do")
           if (columnIndex === -1 && initialColumns.length > 0) {
             columnIndex = 0;
           }
@@ -143,6 +163,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
               estimatedTime: task.estimatedTime,
               loggedTime: task.loggedTime,
               assignedTo: task.assignedTo,
+              subtasks: task.subtasks,
             };
 
             initialColumns[columnIndex].cards.push(card);
@@ -284,7 +305,6 @@ export default function ProjectKanban({ project }: ProjectProps) {
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
-    // Visual feedback for the user
     if (active && active.id) {
       const activeId = active.id as string;
       setLastDroppedId(activeId);
@@ -293,23 +313,17 @@ export default function ProjectKanban({ project }: ProjectProps) {
       }, 1000);
     }
 
-    // Reset refs and state
     setActiveColumn(null);
     setActiveCard(null);
 
     if (!over) {
-      // Reset source column ref if drag is cancelled
       dragSourceColumnRef.current = null;
       return;
     }
 
     const activeId = active.id as string;
     const overId = over.id as string;
-
-    // If the item is dropped on itself, we still need to check if it's a card
-    // that might have been moved to a different column during dragOver
     if (activeId === overId && !activeId.includes('column')) {
-      // For cards dropped on themselves, we need to check if the column changed
       const currentColumn = findColumnByCardId(activeId);
 
       if (
@@ -334,7 +348,6 @@ export default function ProjectKanban({ project }: ProjectProps) {
 
     // If the item is dropped on a different item
     if (activeId.includes('column') && overId.includes('column')) {
-      // Handle column reordering
       const activeColumnId = activeId.replace('column-', '');
       const overColumnId = overId.replace('column-', '');
 
@@ -354,7 +367,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
         setColumns(reorderedColumns);
 
         if (kanbanSetting) {
-          const updatedKanbanColumns = kanbanSetting.columns.map(col => {
+          const updatedKanbanColumns = kanbanSetting.columns.map((col: KanbanColumnType) => {
             const newIndex = reorderedColumns.findIndex(c => c.id === col.id);
             return {
               ...col,
@@ -366,14 +379,11 @@ export default function ProjectKanban({ project }: ProjectProps) {
         }
       }
     } else if (!activeId.includes('column')) {
-      // Handle card drag
       let targetColumnId: string | null = null;
 
       if (overId.includes('column')) {
-        // Card dropped on a column
         targetColumnId = overId.replace('column-', '');
       } else {
-        // Card dropped on another card
         const targetColumn = findColumnByCardId(overId);
         if (targetColumn) {
           targetColumnId = targetColumn.id;
@@ -426,9 +436,11 @@ export default function ProjectKanban({ project }: ProjectProps) {
     const updatedColumns = columns.filter(col => col.id !== columnId);
     setColumns(updatedColumns);
     if (kanbanSetting) {
-      const updatedKanbanColumns = kanbanSetting.columns.filter(col => col.id !== columnId);
+      const updatedKanbanColumns = kanbanSetting.columns.filter(
+        (col: KanbanColumnType) => col.id !== columnId
+      );
 
-      const reorderedColumns = updatedKanbanColumns.map((col, index) => ({
+      const reorderedColumns = updatedKanbanColumns.map((col: KanbanColumnType, index: number) => ({
         ...col,
         order: index,
       }));
@@ -439,7 +451,10 @@ export default function ProjectKanban({ project }: ProjectProps) {
   }
 
   function addNewColumn(newColumnTitle: string) {
-    const columnId = newColumnTitle.toLowerCase().replace(/\s+/g, '-');
+    const columnId = newColumnTitle
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/[^a-z0-9]/gi, '');
     if (columns.some(col => col.id === columnId)) {
       toast.error('A column with this name already exists');
       return;
@@ -479,9 +494,45 @@ export default function ProjectKanban({ project }: ProjectProps) {
     onSuccess: task => {
       setColumns(prevColumns => {
         const newColumns = [...prevColumns];
-        const columnIndex = newColumns.findIndex(
+
+        // First try to find a column by exact title match (case-insensitive)
+        let columnIndex = newColumns.findIndex(
           col => col.title.toLowerCase() === task.status.toLowerCase()
         );
+
+        // If no match by title, try to match by normalized ID
+        if (columnIndex === -1) {
+          const normalizedTaskStatus = task.status
+            .toLowerCase()
+            .replace(/\s+/g, '')
+            .replace(/[^a-z0-9]/gi, '');
+
+          // Try to find a column with a matching normalized ID (case-insensitive)
+          columnIndex = newColumns.findIndex(col => col.id.toLowerCase() === normalizedTaskStatus);
+
+          // If still no match, try to find a column with a similar ID
+          if (columnIndex === -1) {
+            // Find the most similar column by comparing normalized IDs
+            const similarityScores = newColumns.map(col => {
+              const normalizedColId = col.id.toLowerCase();
+              // Simple similarity check - if one contains the other
+              if (
+                normalizedColId.includes(normalizedTaskStatus) ||
+                normalizedTaskStatus.includes(normalizedColId)
+              ) {
+                return true;
+              }
+              return false;
+            });
+
+            columnIndex = similarityScores.findIndex(score => score === true);
+          }
+        }
+
+        // If still no match, default to the first column
+        if (columnIndex === -1 && newColumns.length > 0) {
+          columnIndex = 0;
+        }
 
         if (columnIndex !== -1) {
           const card: CardType = {
@@ -494,6 +545,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
             estimatedTime: task.estimatedTime,
             loggedTime: task.loggedTime,
             assignedTo: task.assignedTo,
+            subtasks: task.subtasks,
           };
           newColumns[columnIndex].cards.push(card);
         }
@@ -511,7 +563,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
         ...newTask,
         projectId: project._id,
         name: newTask.name || '',
-        title: newTask.name || '', // Ensure both name and title are set to the same value
+        title: newTask.name || '',
       };
       const task = await addTaskMutation.mutateAsync(taskWithProject as any);
 
@@ -552,7 +604,11 @@ export default function ProjectKanban({ project }: ProjectProps) {
             <SortableContext items={columns.map(col => `column-${col.id}`)}>
               <div className="flex gap-2 min-w-max pb-6">
                 {columns.map(column => (
-                  <div key={column.id} className="flex-shrink-0 w-[300px]">
+                  <div
+                    key={column.id}
+                    className={`flex-shrink-0`}
+                    style={{ width: `${columnWidth}px` }}
+                  >
                     <Column
                       column={column}
                       cards={column.cards}
@@ -560,6 +616,8 @@ export default function ProjectKanban({ project }: ProjectProps) {
                       onDeleteColumn={handleDeleteColumn}
                       onAddTask={handleAddTask}
                       loadingAddTask={addTaskMutation.isPending}
+                      compactView={compactView}
+                      columnWidth={columnWidth}
                     />
                   </div>
                 ))}
@@ -589,13 +647,22 @@ export default function ProjectKanban({ project }: ProjectProps) {
         {typeof document !== 'undefined' &&
           createPortal(
             <DragOverlay adjustScale={true} zIndex={100}>
-              {activeCard && <Card card={activeCard} isDragging={true} isOverlay={true} />}
+              {activeCard && (
+                <Card
+                  card={activeCard}
+                  isDragging={true}
+                  isOverlay={true}
+                  compactView={compactView}
+                />
+              )}
               {activeColumn && (
                 <Column
                   column={activeColumn}
                   cards={activeColumn.cards}
                   isDragging={true}
                   onDeleteColumn={handleDeleteColumn}
+                  compactView={compactView}
+                  columnWidth={columnWidth}
                 />
               )}
             </DragOverlay>,
