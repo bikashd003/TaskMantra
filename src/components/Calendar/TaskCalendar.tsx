@@ -157,8 +157,9 @@ const TaskCalendar = () => {
     const groupedTasks: Record<string, any[]> = {};
 
     tasks.forEach(task => {
-      const taskStartDate = parseISO(task.startDate);
-      const taskEndDate = parseISO(task.endDate);
+      const taskStartDate =
+        task.startDate instanceof Date ? task.startDate : parseISO(task.startDate);
+      const taskEndDate = task.endDate instanceof Date ? task.endDate : parseISO(task.endDate);
 
       if (
         (!dateRange?.from || taskStartDate >= dateRange.from) &&

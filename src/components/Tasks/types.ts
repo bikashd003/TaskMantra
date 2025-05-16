@@ -37,6 +37,7 @@ export interface CalendarMetadata {
 }
 
 export interface Task {
+  _id: string;
   id: string;
   name: string;
   title: string;

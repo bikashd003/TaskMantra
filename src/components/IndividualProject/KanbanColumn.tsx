@@ -79,8 +79,8 @@ export function Column({
     const newTask: Partial<Task> = {
       name: newTaskName.trim(),
       status: column.title as any,
-      priority: 'medium',
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      priority: 'Medium',
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       subtasks: [],
       assignedTo: assignedTo.map((user: any) => user.value),
       comments: [],

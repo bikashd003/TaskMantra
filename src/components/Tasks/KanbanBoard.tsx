@@ -132,11 +132,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
           if (columnIndex !== -1) {
             const card: Task = {
+              _id: task._id,
               id: task._id,
               name: task.name,
               title: task.name,
               description: task.description || '',
-              priority: task.priority.toLowerCase() as 'low' | 'medium' | 'high',
+              priority: task.priority,
               status: task.status,
               dueDate: task.dueDate,
               estimatedTime: task.estimatedTime,
@@ -519,13 +520,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
         if (columnIndex !== -1) {
           const card: Task = {
+            _id: task._id,
             id: task._id,
             name: task.name,
             title: task.name,
             description: task.description || '',
-            priority: task.priority.toLowerCase() as 'low' | 'medium' | 'high',
+            priority: task.priority,
             status: task.status,
-            dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : undefined,
+            dueDate: task.dueDate,
             estimatedTime: task.estimatedTime,
             loggedTime: task.loggedTime,
             assignedTo: task.assignedTo,
