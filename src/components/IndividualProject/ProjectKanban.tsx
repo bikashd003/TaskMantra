@@ -36,7 +36,7 @@ export type CardType = {
   id: string;
   title: string;
   description: string;
-  priority: 'low' | 'medium' | 'high';
+  priority: 'Low' | 'Medium' | 'High';
   status: string;
   dueDate?: string;
   estimatedTime?: number;
@@ -157,7 +157,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
               id: task._id,
               title: task.name,
               description: task.description || '',
-              priority: task.priority.toLowerCase() as 'low' | 'medium' | 'high',
+              priority: task.priority.charAt(0) + task.priority.slice(1),
               status: task.status,
               dueDate: task.dueDate,
               estimatedTime: task.estimatedTime,
@@ -539,7 +539,7 @@ export default function ProjectKanban({ project }: ProjectProps) {
             id: task._id,
             title: task.name,
             description: task.description || '',
-            priority: task.priority.toLowerCase() as 'low' | 'medium' | 'high',
+            priority: task.priority as 'Low' | 'Medium' | 'High',
             status: task.status,
             dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : undefined,
             estimatedTime: task.estimatedTime,

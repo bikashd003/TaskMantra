@@ -99,7 +99,10 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
   const handleAddSubtask = () => {
     if (!newSubtask.trim()) return;
 
-    const updatedSubtasks = [...task.subtasks, { name: newSubtask.trim(), completed: false }];
+    const updatedSubtasks = [
+      ...(task.subtasks || []),
+      { name: newSubtask.trim(), completed: false },
+    ];
 
     // Update locally through the parent component
     onTaskUpdate(task.id, { subtasks: updatedSubtasks });
