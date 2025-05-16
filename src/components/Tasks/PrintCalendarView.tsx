@@ -339,10 +339,20 @@ const PrintCalendarView: React.FC<PrintCalendarViewProps> = ({ tasks, currentDat
                                       <div className="flex items-center gap-1">
                                         <CalendarIcon className="h-3 w-3" />
                                         <span>
-                                          {format(new Date(task.startDate), 'MMM d')}
-                                          {task.startDate !== task.dueDate && (
-                                            <> - {format(new Date(task.dueDate), 'MMM d')}</>
-                                          )}
+                                          {task.startDate
+                                            ? format(new Date(task.startDate), 'MMM d')
+                                            : 'Not set'}
+                                          {task.startDate &&
+                                            task.dueDate &&
+                                            task.startDate !== task.dueDate && (
+                                              <>
+                                                {' '}
+                                                -{' '}
+                                                {task.dueDate
+                                                  ? format(new Date(task.dueDate), 'MMM d')
+                                                  : 'Not set'}
+                                              </>
+                                            )}
                                         </span>
                                       </div>
                                       <div className="flex items-center gap-1">

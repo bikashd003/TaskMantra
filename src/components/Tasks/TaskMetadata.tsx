@@ -10,7 +10,7 @@ const TaskMetadata: React.FC<TaskMetadataProps> = ({ task, renderPriorityBadge }
       <div className="flex flex-wrap items-center gap-4 text-sm">
         <div className="flex items-center text-muted-foreground">
           <Calendar className="h-4 w-4 mr-1" />
-          <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+          <span>Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set'}</span>
         </div>
         <div>{renderPriorityBadge(task.priority)}</div>
         {task.projectId && (

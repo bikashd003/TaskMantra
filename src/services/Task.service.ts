@@ -1,4 +1,4 @@
-import { Task } from '@/types/task';
+import { Task } from '@/components/Tasks/types';
 import axios from 'axios';
 
 export class TaskService {

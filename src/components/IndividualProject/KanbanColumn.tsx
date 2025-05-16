@@ -26,6 +26,8 @@ interface ColumnProps {
   onDeleteColumn?: (columnId: string) => void;
   onAddTask?: (task: Partial<Task>) => void;
   loadingAddTask?: boolean;
+  compactView?: boolean;
+  columnWidth?: number;
 }
 type ColumnDefinition = KanbanColumnType;
 
@@ -44,6 +46,8 @@ export function Column({
   onDeleteColumn,
   onAddTask,
   loadingAddTask = false,
+  compactView = false,
+  columnWidth = 300,
 }: ColumnProps) {
   const {
     attributes,
@@ -76,7 +80,7 @@ export function Column({
       name: newTaskName.trim(),
       status: column.title as any,
       priority: 'Medium',
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default due date (1 week from now)
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       subtasks: [],
       assignedTo: assignedTo.map((user: any) => user.value),
       comments: [],
@@ -103,14 +107,14 @@ export function Column({
         ease-out border border-gray-200`}
       style={{
         ...style,
-        width: '280px',
-        minWidth: '220px',
+        width: `${columnWidth}px`,
+        minWidth: compactView ? '180px' : '220px',
         flex: '0 0 auto',
-        height: 'calc(100vh - 14rem)',
+        height: compactView ? 'calc(100vh - 16rem)' : 'calc(100vh - 14rem)',
         borderTop: `4px solid ${
           column.id === 'todo'
             ? '#94a3b8'
-            : column.id === 'inprogress'
+            : column.id === 'inprogress' || column.id === 'inProgress'
               ? '#3b82f6'
               : column.id === 'review'
                 ? '#f59e0b'

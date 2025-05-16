@@ -1,60 +1,68 @@
+'use client';
+
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, CheckCircle2 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TaskCardProps } from './types';
-import TaskActions from './TaskActions';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { motion } from 'framer-motion';
+import { Calendar, CheckCircle2 } from 'lucide-react';
+import { Card as UICard, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { CardType } from '../IndividualProject/ProjectKanban';
+import { TaskPriority } from './types';
 
-interface ExtendedTaskCardProps extends TaskCardProps {
-  onClick?: () => void;
-  compactView?: boolean;
+interface KanbanCardProps {
+  card: CardType;
+  isDragging?: boolean;
   isOverlay?: boolean;
+  compactView?: boolean;
+  renderPriorityBadge: (priority: TaskPriority) => React.ReactNode;
 }
 
-const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
-  task,
-  onStatusChange,
-  onDelete,
-  renderPriorityBadge,
-  onClick,
-  compactView = false,
+export function KanbanCard({
+  card,
+  isDragging = false,
   isOverlay = false,
-}) => {
-  // Create a stable ID for the task that includes its status to prevent duplicate keys
-  const taskDragId = `task-${task.id}-${task.status.replace(/\s+/g, '-').toLowerCase()}`;
-
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: taskDragId,
+  compactView = false,
+  renderPriorityBadge,
+}: KanbanCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging: isSortableDragging,
+  } = useSortable({
+    id: card.id,
     data: {
-      type: 'task',
-      task,
-      originalId: task.id,
+      type: 'card',
+      card,
     },
   });
-
-  const totalSubtasks = task.subtasks.length;
-  const completedSubtasks = task.subtasks.filter(subtask => subtask.completed).length;
-  const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
-
-  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date();
-
-  const formatDate = (date: Date | string) => {
-    if (!date) return '';
-    const d = new Date(date);
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
-  // Define non-draggable selectors
+  const currentlyDragging = isDragging || isSortableDragging;
+  const isOverdue = card.dueDate && new Date(card.dueDate) < new Date();
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+  const calculateProgress = () => {
+    if (!card.estimatedTime || card.estimatedTime <= 0) return null;
+    const progress = Math.min(Math.round(((card.loggedTime || 0) / card.estimatedTime) * 100), 100);
+    return progress;
+  };
+
+  const progress = calculateProgress();
+  const dueDate = formatDate(card.dueDate);
+  // Prevent drag handling for certain elements
   const preventDragHandling = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -65,29 +73,23 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
       style={style}
       {...attributes}
       {...listeners}
-      className={`${isDragging ? 'z-50' : ''}`}
+      className={`${currentlyDragging ? 'z-50' : ''}`}
     >
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.2 }}
-        className={isDragging ? 'opacity-50' : ''}
+        className={currentlyDragging ? 'opacity-50' : ''}
       >
-        <Card
+        <UICard
           className={`shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing ${
             isOverlay
               ? 'border-primary border-2 ring-2 ring-primary shadow-xl'
-              : isDragging
+              : currentlyDragging
                 ? 'border-primary border-2 opacity-70'
                 : ''
-          } ${task.status === 'Completed' ? 'bg-gray-50' : ''}`}
-          onClick={e => {
-            if (!isDragging && onClick) {
-              e.stopPropagation();
-              onClick();
-            }
-          }}
+          } ${card.status === 'Completed' ? 'bg-gray-50' : ''}`}
         >
           <CardHeader className="p-3 pb-0">
             <div className="flex justify-between items-start">
@@ -96,109 +98,118 @@ const KanbanCard: React.FC<ExtendedTaskCardProps> = ({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <CardTitle
-                        className={`text-sm font-medium ${task.status === 'Completed' ? 'text-gray-500' : ''} truncate max-w-[160px] cursor-default`}
-                        onClick={onClick}
+                        className={`text-sm font-medium ${card.status === 'Completed' ? 'text-gray-500' : ''} truncate max-w-[160px] cursor-default`}
                       >
-                        {task.status === 'Completed' && (
+                        {card.status === 'Completed' && (
                           <CheckCircle2 className="h-4 w-4 text-green-500 inline mr-1" />
                         )}
-                        {task.name}
+                        {card.title}
                       </CardTitle>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                      <p>{task.name}</p>
+                      <p>{card.title}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
               <div onClick={preventDragHandling} className="cursor-default">
-                <TaskActions task={task} onStatusChange={onStatusChange} onDelete={onDelete} />
+                <span
+                  className={`text-xs px-2 py-1 rounded-full hover:scale-105 transition-transform ${
+                    card.priority === 'High'
+                      ? 'bg-red-100 text-red-800'
+                      : card.priority === 'Medium'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800'
+                  }`}
+                >
+                  {card.priority}
+                </span>
               </div>
             </div>
           </CardHeader>
 
           {!compactView ? (
             <CardContent className="p-3 pt-2">
+              {card.description && <p className="text-sm text-gray-600 mb-2">{card.description}</p>}
+
               {/* Due date and priority */}
               <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center cursor-default" onClick={preventDragHandling}>
-                  <Calendar
-                    className={`h-3 w-3 mr-1 ${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`}
-                  />
-                  <span
-                    className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}
-                  >
-                    {isOverdue ? 'Overdue: ' : ''}
-                    {formatDate(task.dueDate)}
-                  </span>
-                </div>
-                <div onClick={preventDragHandling} className="cursor-default">
-                  {renderPriorityBadge(task.priority)}
-                </div>
+                {dueDate && (
+                  <div className="flex items-center cursor-default" onClick={preventDragHandling}>
+                    <Calendar
+                      className={`h-3 w-3 mr-1 ${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`}
+                    />
+                    <span
+                      className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}
+                    >
+                      {isOverdue ? 'Overdue: ' : ''}
+                      {dueDate}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Progress bar for subtasks */}
-              {totalSubtasks > 0 && (
+              {/* Progress bar if available */}
+              {progress !== null && (
                 <div className="mb-2 cursor-default" onClick={preventDragHandling}>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-muted-foreground">Progress</span>
                     <span className="font-medium">
-                      {completedSubtasks}/{totalSubtasks}
+                      {card.loggedTime}h/{card.estimatedTime}h
                     </span>
                   </div>
                   <Progress value={progress} className="h-1" />
                 </div>
               )}
 
-              {/* Assigned users and tags */}
-              <div className="flex items-center justify-between">
-                <div className="flex -space-x-2 cursor-default" onClick={preventDragHandling}>
-                  {task?.assignedTo && task?.assignedTo?.length > 0 ? (
-                    task.assignedTo?.slice(0, 3).map((user, index) => (
+              {/* Assigned users */}
+              {card.assignedTo && card.assignedTo.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <div className="flex -space-x-2 cursor-default" onClick={preventDragHandling}>
+                    {card.assignedTo.slice(0, 3).map((user, index) => (
                       <Avatar key={index} className="h-6 w-6 border-2 border-background">
-                        <AvatarImage src={user?.image} alt={user?.name} />
-                        <AvatarFallback className="text-xs">{user?.name?.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={user.image} alt={user.name} />
+                        <AvatarFallback className="text-xs">{user.name?.charAt(0)}</AvatarFallback>
                       </Avatar>
-                    ))
-                  ) : (
-                    <Avatar className="h-6 w-6 border-2 border-background">
-                      <AvatarFallback className="text-xs">UA</AvatarFallback>
-                    </Avatar>
-                  )}
-                  {task?.assignedTo && task?.assignedTo?.length > 3 && (
-                    <Avatar className="h-6 w-6 border-2 border-background">
-                      <AvatarFallback className="text-xs">
-                        +{task?.assignedTo?.length - 3}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+                    ))}
+                    {card.assignedTo.length > 3 && (
+                      <Avatar className="h-6 w-6 border-2 border-background">
+                        <AvatarFallback className="text-xs">
+                          +{card.assignedTo.length - 3}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           ) : (
             <CardContent className="p-3 pt-2">
               <div className="flex justify-between items-center">
-                {task.dueDate && (
+                {card.dueDate && (
                   <div
                     className="flex items-center text-xs text-muted-foreground cursor-default"
                     onClick={preventDragHandling}
                   >
                     <Calendar className={`h-3 w-3 mr-1 ${isOverdue ? 'text-red-500' : ''}`} />
                     <span className={isOverdue ? 'text-red-500 font-medium' : ''}>
-                      {formatDate(task.dueDate)}
+                      {formatDate(card.dueDate)}
                     </span>
                   </div>
                 )}
                 <div onClick={preventDragHandling} className="cursor-default">
-                  {renderPriorityBadge(task.priority)}
+                  {renderPriorityBadge(
+                    (card.priority.charAt(0).toUpperCase() + card.priority.slice(1)) as TaskPriority
+                  )}
                 </div>
               </div>
             </CardContent>
           )}
-        </Card>
+        </UICard>
       </motion.div>
     </div>
   );
-};
+}
 
+// Also export as default for backward compatibility
 export default KanbanCard;

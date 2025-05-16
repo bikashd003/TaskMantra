@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Task,
-  TaskPriority,
-  TaskStatus,
-  TaskFilterState,
-  TaskSortOption,
-  sortOptions,
-} from './types';
+import { Task, TaskPriority, TaskFilterState, TaskSortOption, sortOptions } from './types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Plus, List, LayoutGrid, Calendar, Network, Settings } from 'lucide-react';
@@ -15,15 +8,6 @@ import KanbanBoard from './KanbanBoard';
 import BigCalendarView from './BigCalendarView';
 import TaskFilters from './TaskFilters';
 import TaskDependencyGraph from './TaskDependencyGraph';
-import KanbanBoardSkeleton from './KanbanBoardSkeleton';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -32,39 +16,31 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { KanbanSettingsService } from '@/services/KanbanSettings.service';
 import { TaskService } from '@/services/Task.service';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { KanbanSkeleton } from '../IndividualProject/KanbanSkeleton';
 
 interface TaskBoardProps {
   tasks: Task[];
-  onStatusChange: (taskId: string, newStatus: TaskStatus) => void;
-  onDelete: (taskId: string) => void;
   onAddTask?: (task: Partial<Task>) => void;
   renderPriorityBadge: (priority: TaskPriority) => React.ReactNode;
   isLoading?: boolean;
   onCreateTask?: () => void;
   onUpdateTask?: (taskId: string, updates: Partial<Task>) => void;
-  loadingAddTask?: boolean;
 }
 
 const TaskBoard: React.FC<TaskBoardProps> = ({
   tasks,
-  onStatusChange,
-  onDelete,
   onAddTask,
   renderPriorityBadge,
   isLoading,
   onCreateTask,
   onUpdateTask,
-  loadingAddTask,
 }) => {
   const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'calendar' | 'dependencies'>('list');
 
   // Kanban settings
   const [columnWidth, setColumnWidth] = useState(280);
   const [compactView, setCompactView] = useState(false);
-  const [showCompletedTasks, setShowCompletedTasks] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isAddColumnDialogOpen, setIsAddColumnDialogOpen] = useState(false);
-  const [newColumnTitle, setNewColumnTitle] = useState('');
 
   const [filters, setFilters] = useState<TaskFilterState>({
     searchQuery: '',
@@ -91,9 +67,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       if (kanbanSettings.compactView !== undefined) {
         setCompactView(kanbanSettings.compactView);
       }
-      if (kanbanSettings.showCompletedTasks !== undefined) {
-        setShowCompletedTasks(kanbanSettings.showCompletedTasks);
-      }
     }
   }, [kanbanSettings]);
 
@@ -116,7 +89,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       filters.status,
       filters.priority,
       currentSort,
-      tasks.length, // Add tasks.length to re-run when parent tasks change
+      tasks.length,
     ],
     queryFn: async () => {
       if (isLoading) return [];
@@ -153,76 +126,11 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
           sortField: currentSort.field as string,
           sortDirection: currentSort.direction,
         });
-
-        // Map API tasks to our Task type if needed
-        return apiTasks.map((apiTask: any) => ({
-          id: apiTask.id || apiTask._id,
-          name: apiTask.name,
-          description: apiTask.description || '',
-          status: apiTask.status || 'To Do',
-          priority: apiTask.priority || 'Medium',
-          dueDate: apiTask.dueDate ? new Date(apiTask.dueDate) : new Date(),
-          startDate: apiTask.startDate ? new Date(apiTask.startDate) : new Date(),
-          estimatedTime: apiTask.estimatedTime || 0,
-          loggedTime: apiTask.loggedTime || 0,
-          createdBy: apiTask.createdBy || '',
-          projectId: apiTask.projectId || null,
-          dependencies: apiTask.dependencies || [],
-          subtasks: apiTask.subtasks || [],
-          comments: apiTask.comments || [],
-          assignedTo: apiTask.assignedTo || [],
-          completed: apiTask.completed || false,
-          tags: apiTask.tags || [],
-          createdAt: apiTask.createdAt ? new Date(apiTask.createdAt) : undefined,
-          updatedAt: apiTask.updatedAt ? new Date(apiTask.updatedAt) : undefined,
-        }));
+        return apiTasks;
       }
     },
     enabled: !isLoading,
   });
-
-  // Group tasks by status for Kanban view
-  const groupedTasks = React.useMemo(() => {
-    const grouped: {
-      todo: Task[];
-      inProgress: Task[];
-      review: Task[];
-      completed: Task[];
-      [key: string]: Task[];
-    } = {
-      todo: [],
-      inProgress: [],
-      review: [],
-      completed: [],
-    };
-
-    filteredTasks.forEach((task: Task) => {
-      switch (task.status) {
-        case 'To Do':
-          grouped.todo.push(task);
-          break;
-        case 'In Progress':
-          grouped.inProgress.push(task);
-          break;
-        case 'Review':
-          grouped.review.push(task);
-          break;
-        case 'Completed':
-          grouped.completed.push(task);
-          break;
-        default:
-          // Handle custom statuses
-          // eslint-disable-next-line no-case-declarations
-          const key = String(task.status).toLowerCase().replace(/\s+/g, '');
-          if (!grouped[key]) {
-            grouped[key] = [];
-          }
-          grouped[key].push(task);
-      }
-    });
-
-    return grouped;
-  }, [filteredTasks]);
 
   // Handle filter change
   const handleFilterChange = (newFilters: Partial<TaskFilterState>) => {
@@ -253,31 +161,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
     updateSettingsMutation.mutate({ compactView: checked });
   };
 
-  // Handle show completed tasks toggle
-  const handleShowCompletedTasksToggle = (checked: boolean) => {
-    setShowCompletedTasks(checked);
-    updateSettingsMutation.mutate({ showCompletedTasks: checked });
-  };
-
-  // Add a new column
-  const handleAddColumn = () => {
-    if (!newColumnTitle.trim()) return;
-
-    // Check if column with this ID already exists
-    const newColumnId = newColumnTitle.toLowerCase().replace(/\s+/g, '');
-
-    // Add the new column to settings
-    updateSettingsMutation.mutate({
-      newColumn: {
-        id: newColumnId,
-        title: newColumnTitle.trim(),
-      },
-    });
-
-    setNewColumnTitle('');
-    setIsAddColumnDialogOpen(false);
-  };
-
   // Handle add task from calendar
   const handleAddTaskFromCalendar = (date: Date) => {
     if (onAddTask) {
@@ -301,8 +184,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
 
   return (
     <div className="flex flex-col h-full w-full">
-      {/* Header with New Task Button */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-bold">Task Board</h2>
         <TooltipProvider>
           <Tooltip>
@@ -356,7 +238,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         </div>
 
         {/* Search and Filters */}
-        <div className="flex-grow w-full md:w-auto">
+        <div className="flex-grow w-full md:w-auto mb-2">
           <TaskFilters
             filters={filters}
             onFilterChange={handleFilterChange}
@@ -366,10 +248,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         </div>
         {viewMode === 'kanban' && (
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" onClick={() => setIsAddColumnDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" /> Add Column
-            </Button>
-
             <Popover open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -410,22 +288,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
                       onCheckedChange={handleCompactViewToggle}
                     />
                   </div>
-
-                  <div className="flex items-center justify-between space-y-0">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="show-completed" className="text-sm">
-                        Show Completed Tasks
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        Display tasks marked as completed
-                      </p>
-                    </div>
-                    <Switch
-                      id="show-completed"
-                      checked={showCompletedTasks}
-                      onCheckedChange={handleShowCompletedTasksToggle}
-                    />
-                  </div>
                 </div>
               </PopoverContent>
             </Popover>
@@ -449,23 +311,14 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         {viewMode === 'kanban' && (
           <>
             {showLoading ? (
-              <KanbanBoardSkeleton />
+              <KanbanSkeleton />
             ) : (
               <KanbanBoard
-                tasks={groupedTasks}
-                allTasks={filteredTasks}
-                onStatusChange={onStatusChange}
-                onDelete={onDelete}
-                onAddTask={onAddTask}
-                renderPriorityBadge={renderPriorityBadge}
-                isLoading={false}
-                loadingAddTask={loadingAddTask}
-                onCreateTask={onCreateTask}
-                viewMode="kanban"
+                tasks={filteredTasks}
+                kanbanSettings={kanbanSettings}
                 columnWidth={columnWidth}
                 compactView={compactView}
-                showCompletedTasks={showCompletedTasks}
-                onAddColumn={handleAddColumn}
+                renderPriorityBadge={renderPriorityBadge}
               />
             )}
           </>
@@ -495,37 +348,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
           </ScrollArea>
         )}
       </div>
-
-      {/* Add Column Dialog */}
-      <Dialog open={isAddColumnDialogOpen} onOpenChange={setIsAddColumnDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Column</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Column name"
-              value={newColumnTitle}
-              onChange={e => setNewColumnTitle(e.target.value)}
-              className="mb-2"
-              autoFocus
-              onKeyDown={e => {
-                if (e.key === 'Enter' && newColumnTitle.trim()) {
-                  handleAddColumn();
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddColumnDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddColumn} disabled={!newColumnTitle.trim()}>
-              Add Column
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

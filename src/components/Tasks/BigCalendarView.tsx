@@ -70,6 +70,7 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({ tasks, onAddTask, onT
           return false;
         }
         if (taskFilter.overdueOnly) {
+          if (!task.dueDate) return false;
           const dueDate = new Date(task.dueDate);
           const today = new Date();
           today.setHours(0, 0, 0, 0);
@@ -81,8 +82,9 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({ tasks, onAddTask, onT
         return true;
       })
       .map(task => {
-        const start = new Date(task.startDate);
-        const end = new Date(task.dueDate);
+        // Use default dates if startDate or dueDate is undefined
+        const start = task.startDate ? new Date(task.startDate) : new Date();
+        const end = task.dueDate ? new Date(task.dueDate) : new Date();
 
         const adjustedEnd = new Date(end);
         adjustedEnd.setDate(adjustedEnd.getDate() + 1);

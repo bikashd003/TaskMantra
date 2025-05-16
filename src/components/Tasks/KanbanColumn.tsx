@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { KanbanColumnProps, Task } from './types';
+
 import KanbanCard from './KanbanCard';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -33,10 +34,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   id,
   title,
   tasks,
-  onStatusChange,
-  onDelete,
   renderPriorityBadge,
-  onTaskClick,
   onAddTask,
   onDeleteColumn,
   columnWidth = 280,
@@ -245,11 +243,19 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
                     <React.Fragment key={task.id}>
                       <div className="mb-3">
                         <KanbanCard
-                          task={task}
-                          onStatusChange={onStatusChange}
-                          onDelete={onDelete}
+                          card={{
+                            id: task.id,
+                            title: task.name,
+                            description: task.description,
+                            priority: task.priority.toLowerCase() as any,
+                            status: task.status,
+                            dueDate: task.dueDate ? task.dueDate.toString() : undefined,
+                            estimatedTime: task.estimatedTime,
+                            loggedTime: task.loggedTime,
+                            assignedTo: task.assignedTo,
+                            subtasks: task.subtasks,
+                          }}
                           renderPriorityBadge={renderPriorityBadge}
-                          onClick={() => onTaskClick?.(task.id)}
                           compactView={compactView}
                         />
                       </div>

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useFieldArray, Controller } from 'react-hook-form';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,9 +16,12 @@ import ReusableSelect from '../Global/ReactSelect';
 import { useQuery } from '@tanstack/react-query';
 import { OrganizationService } from '@/services/Organization.service';
 import { toast } from 'sonner';
+import Image from 'next/image';
 
 const TasksStep: React.FC = () => {
-  const { control, errors, trigger } = useProject()!;
+  const { formik } = useProject()!;
+  const { values, errors, setFieldValue } = formik;
+
   const { data: organizations } = useQuery({
     queryKey: ['organizations'],
     queryFn: async () => {
@@ -35,68 +37,66 @@ const TasksStep: React.FC = () => {
   });
   const users = organizations?.members?.map((member: any) => member.userId);
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'tasks',
-    keyName: 'id',
-  });
+  const handleAddTask = () => {
+    const updatedTasks = [
+      ...values.tasks,
+      {
+        name: '',
+        description: '',
+        assignedTo: [],
+        status: 'To Do',
+        priority: 'Medium',
+        dueDate: '',
+        startDate: '',
+        estimatedTime: 0,
+        loggedTime: 0,
+        subtasks: [],
+        comments: [],
+      },
+    ];
 
-  const handleAddTask = async () => {
-    const isValid = await trigger(['tasks']);
-    if (!isValid) {
-      return;
-    }
-    append({
-      name: '',
-      description: '',
-      assignedTo: [],
-      status: 'To Do',
-      priority: 'Medium',
-      dueDate: '',
-      startDate: '',
-      estimatedTime: 0,
-      loggedTime: 0,
-      subtasks: [],
-      comments: [],
-    });
+    setFieldValue('tasks', updatedTasks);
   };
-  const handleAddSubtask = (taskIndex: number) => {
-    const currentTasks = [...fields];
-    const currentTask = currentTasks[taskIndex];
 
-    if (!currentTask.subtasks) {
-      currentTask.subtasks = [];
+  const handleRemoveTask = (taskIndex: number) => {
+    const updatedTasks = values.tasks.filter((_, index) => index !== taskIndex);
+    setFieldValue('tasks', updatedTasks);
+  };
+
+  const handleAddSubtask = (taskIndex: number) => {
+    const updatedTasks = [...values.tasks];
+
+    if (!updatedTasks[taskIndex].subtasks) {
+      updatedTasks[taskIndex].subtasks = [];
     }
 
-    currentTask.subtasks.push({
+    updatedTasks[taskIndex].subtasks.push({
       name: '',
       completed: false,
     });
 
-    // Update the entire tasks array
-    remove(taskIndex);
-    append(currentTask);
+    setFieldValue('tasks', updatedTasks);
   };
+
   const handleRemoveSubtask = (taskIndex: number, subtaskIndex: number) => {
-    const currentTasks = [...fields];
-    const currentTask = currentTasks[taskIndex];
+    const updatedTasks = [...values.tasks];
 
-    if (currentTask.subtasks) {
-      currentTask.subtasks = currentTask.subtasks.filter((_, index) => index !== subtaskIndex);
+    if (updatedTasks[taskIndex].subtasks) {
+      updatedTasks[taskIndex].subtasks = updatedTasks[taskIndex].subtasks.filter(
+        (_, index) => index !== subtaskIndex
+      );
 
-      // Update the entire tasks array
-      remove(taskIndex);
-      append(currentTask);
+      setFieldValue('tasks', updatedTasks);
     }
   };
   return (
     <div className="p-6 max-h-[75vh] overflow-y-auto">
       <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center gap-2">Add Tasks</h2>
       <div className="space-y-6">
-        {fields.map((task, taskIndex) => {
+        {values.tasks.map((task, taskIndex) => {
           return (
             <div
-              key={task.id}
+              key={taskIndex}
               className="p-4 border border-gray-200 rounded-lg shadow-sm relative bg-white"
             >
               {taskIndex > 0 && (
@@ -104,7 +104,7 @@ const TasksStep: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="absolute top-2 right-2 text-red-500"
-                  onClick={() => remove(taskIndex)}
+                  onClick={() => handleRemoveTask(taskIndex)}
                 >
                   <Trash2 className="w-5 h-5" />
                 </Button>
@@ -112,217 +112,297 @@ const TasksStep: React.FC = () => {
               <div className="mb-4">
                 <label className="text-sm font-medium text-blue-700">Task Name</label>
                 <Input
-                  {...control.register(`tasks.${taskIndex}.name`)}
+                  name={`tasks[${taskIndex}].name`}
+                  value={task.name}
+                  onChange={e => {
+                    const updatedTasks = [...values.tasks];
+                    updatedTasks[taskIndex].name = e.target.value;
+                    setFieldValue('tasks', updatedTasks);
+                  }}
                   placeholder="Enter task name"
-                  className={`mt-1 ${errors.tasks?.[taskIndex]?.name ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`mt-1 ${
+                    errors.tasks &&
+                    typeof errors.tasks !== 'string' &&
+                    errors.tasks[taskIndex] &&
+                    typeof errors.tasks[taskIndex] !== 'string' &&
+                    errors.tasks[taskIndex].name
+                      ? 'border-red-500'
+                      : 'border-gray-300'
+                  }`}
                 />
-                {errors.tasks?.[taskIndex]?.name && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.tasks[taskIndex].name.message}
-                  </p>
-                )}
+                {errors.tasks &&
+                  typeof errors.tasks !== 'string' &&
+                  errors.tasks[taskIndex] &&
+                  typeof errors.tasks[taskIndex] !== 'string' &&
+                  errors.tasks[taskIndex].name && (
+                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].name}</p>
+                  )}
               </div>
               <div className="mb-4">
                 <label className="text-sm font-medium text-blue-700">Description</label>
                 <Textarea
-                  {...control.register(`tasks.${taskIndex}.description`)}
+                  name={`tasks[${taskIndex}].description`}
+                  value={task.description}
+                  onChange={e => {
+                    const updatedTasks = [...values.tasks];
+                    updatedTasks[taskIndex].description = e.target.value;
+                    setFieldValue('tasks', updatedTasks);
+                  }}
                   placeholder="Enter task description"
                   rows={3}
-                  className={`mt-1 ${errors.tasks?.[taskIndex]?.description ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`mt-1 ${
+                    errors.tasks &&
+                    typeof errors.tasks !== 'string' &&
+                    errors.tasks[taskIndex] &&
+                    typeof errors.tasks[taskIndex] !== 'string' &&
+                    errors.tasks[taskIndex].description
+                      ? 'border-red-500'
+                      : 'border-gray-300'
+                  }`}
                 />
-                {errors.tasks?.[taskIndex]?.description && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.tasks[taskIndex].description.message}
-                  </p>
-                )}
+                {errors.tasks &&
+                  typeof errors.tasks !== 'string' &&
+                  errors.tasks[taskIndex] &&
+                  typeof errors.tasks[taskIndex] !== 'string' &&
+                  errors.tasks[taskIndex].description && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.tasks[taskIndex].description}
+                    </p>
+                  )}
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="text-sm font-medium text-blue-700">Priority</label>
-                  <Controller
-                    name={`tasks.${taskIndex}.priority`}
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="High">High</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Low">Low</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+                  <Select
+                    value={task.priority}
+                    onValueChange={value => {
+                      const updatedTasks = [...values.tasks];
+                      updatedTasks[taskIndex].priority = value as 'High' | 'Medium' | 'Low';
+                      setFieldValue('tasks', updatedTasks);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="High">High</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Low">Low</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {errors.tasks &&
+                    typeof errors.tasks !== 'string' &&
+                    errors.tasks[taskIndex] &&
+                    typeof errors.tasks[taskIndex] !== 'string' &&
+                    errors.tasks[taskIndex].priority && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.tasks[taskIndex].priority}
+                      </p>
                     )}
-                  />
-                  {errors.tasks?.[taskIndex]?.priority && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.tasks[taskIndex].priority.message}
-                    </p>
-                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-blue-700">Status</label>
-                  <Controller
-                    name={`tasks.${taskIndex}.status`}
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="To Do">To Do</SelectItem>
-                            <SelectItem value="In Progress">In Progress</SelectItem>
-                            <SelectItem value="Review">Review</SelectItem>
-                            <SelectItem value="Completed">Completed</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+                  <Select
+                    value={task.status}
+                    onValueChange={value => {
+                      const updatedTasks = [...values.tasks];
+                      updatedTasks[taskIndex].status = value as
+                        | 'To Do'
+                        | 'In Progress'
+                        | 'Review'
+                        | 'Completed';
+                      setFieldValue('tasks', updatedTasks);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="To Do">To Do</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Review">Review</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {errors.tasks &&
+                    typeof errors.tasks !== 'string' &&
+                    errors.tasks[taskIndex] &&
+                    typeof errors.tasks[taskIndex] !== 'string' &&
+                    errors.tasks[taskIndex].status && (
+                      <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].status}</p>
                     )}
-                  />
-                  {errors.tasks?.[taskIndex]?.status && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.tasks[taskIndex].status.message}
-                    </p>
-                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="text-sm font-medium text-blue-700">Due Date</label>
-                  <Controller
-                    name={`tasks.${taskIndex}.dueDate`}
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="Enter due date"
-                        type="date"
-                        className={`mt-1 ${
-                          errors.tasks?.[taskIndex]?.dueDate ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                    )}
+                  <Input
+                    type="date"
+                    value={task.dueDate}
+                    onChange={e => {
+                      const updatedTasks = [...values.tasks];
+                      updatedTasks[taskIndex].dueDate = e.target.value;
+                      setFieldValue('tasks', updatedTasks);
+                    }}
+                    placeholder="Enter due date"
+                    className={`mt-1 ${
+                      errors.tasks &&
+                      typeof errors.tasks !== 'string' &&
+                      errors.tasks[taskIndex] &&
+                      typeof errors.tasks[taskIndex] !== 'string' &&
+                      errors.tasks[taskIndex].dueDate
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                    }`}
                   />
-                  {errors.tasks?.[taskIndex]?.dueDate && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.tasks[taskIndex].dueDate.message}
-                    </p>
-                  )}
+                  {errors.tasks &&
+                    typeof errors.tasks !== 'string' &&
+                    errors.tasks[taskIndex] &&
+                    typeof errors.tasks[taskIndex] !== 'string' &&
+                    errors.tasks[taskIndex].dueDate && (
+                      <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].dueDate}</p>
+                    )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-blue-700">Start Date</label>
-                  <Controller
-                    name={`tasks.${taskIndex}.startDate`}
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="Enter start date"
-                        type="date"
-                        className={`mt-1 ${
-                          errors.tasks?.[taskIndex]?.startDate
-                            ? 'border-red-500'
-                            : 'border-gray-300'
-                        }`}
-                      />
-                    )}
+                  <Input
+                    type="date"
+                    value={task.startDate}
+                    onChange={e => {
+                      const updatedTasks = [...values.tasks];
+                      updatedTasks[taskIndex].startDate = e.target.value;
+                      setFieldValue('tasks', updatedTasks);
+                    }}
+                    placeholder="Enter start date"
+                    className={`mt-1 ${
+                      errors.tasks &&
+                      typeof errors.tasks !== 'string' &&
+                      errors.tasks[taskIndex] &&
+                      typeof errors.tasks[taskIndex] !== 'string' &&
+                      errors.tasks[taskIndex].startDate
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                    }`}
                   />
-                  {errors.tasks?.[taskIndex]?.startDate && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.tasks[taskIndex].startDate.message}
-                    </p>
-                  )}
+                  {errors.tasks &&
+                    typeof errors.tasks !== 'string' &&
+                    errors.tasks[taskIndex] &&
+                    typeof errors.tasks[taskIndex] !== 'string' &&
+                    errors.tasks[taskIndex].startDate && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.tasks[taskIndex].startDate}
+                      </p>
+                    )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="mb-4">
                   <label className="text-sm font-medium text-blue-700">Assigned To</label>
-                  <Controller
-                    name={`tasks.${taskIndex}.assignedTo`}
-                    control={control}
-                    render={({ field }) => {
-                      const options = users.map(user => ({
+                  {users && (
+                    <ReusableSelect
+                      options={users.map(user => ({
                         value: user._id,
                         label: (
                           <div className="flex items-center">
-                            <img
-                              src={user.image}
-                              alt={user.name}
+                            <Image
+                              src={user?.image}
+                              alt={user?.name}
                               className="w-6 h-6 rounded-full mr-2"
+                              width={24}
+                              height={24}
                             />
-                            <span>{user.name}</span>
+                            <span>{user?.name}</span>
                           </div>
                         ),
-                      }));
-                      const selectedValues = options.filter(option =>
-                        Array.isArray(field.value)
-                          ? field.value.some((user: User) => user._id === option.value)
-                          : (field.value as User | undefined)?.id === option.value
-                      );
-
-                      const handleChange = (newValue: any) => {
+                      }))}
+                      value={users
+                        .filter(user =>
+                          task.assignedTo.some(
+                            (assignedUser: User) => assignedUser._id === user._id
+                          )
+                        )
+                        .map(user => ({
+                          value: user._id,
+                          label: (
+                            <div className="flex items-center">
+                              <Image
+                                src={user?.image}
+                                alt={user?.name}
+                                className="w-6 h-6 rounded-full mr-2"
+                              />
+                              <span>{user?.name}</span>
+                            </div>
+                          ),
+                        }))}
+                      onChange={(newValue: any) => {
+                        const updatedTasks = [...values.tasks];
                         if (Array.isArray(newValue)) {
-                          field.onChange(
-                            newValue.map(opt => users.find(user => user._id === opt.value))
+                          updatedTasks[taskIndex].assignedTo = newValue.map(opt =>
+                            users.find(user => user._id === opt.value)
                           );
                         } else if (newValue) {
-                          field.onChange(users.find(user => user._id === newValue.value) || null);
+                          updatedTasks[taskIndex].assignedTo = [
+                            users.find(user => user._id === newValue.value) || null,
+                          ];
                         } else {
-                          field.onChange([]);
+                          updatedTasks[taskIndex].assignedTo = [];
                         }
-                      };
-
-                      return (
-                        <ReusableSelect
-                          options={options}
-                          value={selectedValues}
-                          onChange={handleChange}
-                          placeholder="Select team members"
-                          isMulti={true}
-                        />
-                      );
-                    }}
-                  />
-                  {errors.tasks?.[taskIndex]?.assignedTo && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.tasks[taskIndex].assignedTo.message}
-                    </p>
+                        setFieldValue('tasks', updatedTasks);
+                      }}
+                      placeholder="Select team members"
+                      isMulti={true}
+                    />
                   )}
+                  {errors.tasks &&
+                    typeof errors.tasks !== 'string' &&
+                    errors.tasks[taskIndex] &&
+                    typeof errors.tasks[taskIndex] !== 'string' &&
+                    errors.tasks[taskIndex].assignedTo && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {String(errors.tasks[taskIndex].assignedTo)}
+                      </p>
+                    )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-blue-700">Estimated Time</label>
-                  <Controller
-                    name={`tasks.${taskIndex}.estimatedTime`}
-                    control={control}
-                    defaultValue={0}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="Enter estimated time"
-                        className={`mt-1 ${
-                          errors.tasks?.[taskIndex]?.estimatedTime
-                            ? 'border-red-500'
-                            : 'border-gray-300'
-                        }`}
-                      />
-                    )}
+                  <Input
+                    type="number"
+                    value={task.estimatedTime}
+                    onChange={e => {
+                      const updatedTasks = [...values.tasks];
+                      updatedTasks[taskIndex].estimatedTime = Number(e.target.value);
+                      setFieldValue('tasks', updatedTasks);
+                    }}
+                    placeholder="Enter estimated time"
+                    className={`mt-1 ${
+                      errors.tasks &&
+                      typeof errors.tasks !== 'string' &&
+                      errors.tasks[taskIndex] &&
+                      typeof errors.tasks[taskIndex] !== 'string' &&
+                      errors.tasks[taskIndex].estimatedTime
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                    }`}
                   />
-                  {errors.tasks?.[taskIndex]?.estimatedTime && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.tasks[taskIndex].estimatedTime.message}
-                    </p>
-                  )}
+                  {errors.tasks &&
+                    typeof errors.tasks !== 'string' &&
+                    errors.tasks[taskIndex] &&
+                    typeof errors.tasks[taskIndex] !== 'string' &&
+                    errors.tasks[taskIndex].estimatedTime && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.tasks[taskIndex].estimatedTime}
+                      </p>
+                    )}
                 </div>
               </div>
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-blue-700 mb-2">Subtasks</h3>
                 <div className="space-y-4">
-                  {(task.subtasks || []).map((_, subtaskIndex) => (
+                  {(task.subtasks || []).map((subtask, subtaskIndex) => (
                     <div
                       key={subtaskIndex}
                       className="p-3 border border-gray-300 rounded-md bg-gray-50"
@@ -340,34 +420,28 @@ const TasksStep: React.FC = () => {
                       <div className="mb-2">
                         <label className="text-sm font-medium text-blue-700">Subtask Name</label>
                         <Input
-                          {...control.register(`tasks.${taskIndex}.subtasks.${subtaskIndex}.name`)}
+                          value={subtask.name}
+                          onChange={e => {
+                            const updatedTasks = [...values.tasks];
+                            updatedTasks[taskIndex].subtasks[subtaskIndex].name = e.target.value;
+                            setFieldValue('tasks', updatedTasks);
+                          }}
                           placeholder="Enter subtask name"
-                          className={`mt-1 ${
-                            errors.tasks?.[taskIndex]?.subtasks?.[subtaskIndex]?.name
-                              ? 'border-red-500'
-                              : 'border-gray-300'
-                          }`}
+                          className="mt-1"
                         />
-                        {errors.tasks?.[taskIndex]?.subtasks?.[subtaskIndex]?.name && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {errors.tasks[taskIndex].subtasks[subtaskIndex].name.message}
-                          </p>
-                        )}
                       </div>
                       <div className="mb-2">
                         <label className="text-sm font-medium text-blue-700">Completed</label>
-                        <Controller
-                          name={`tasks.${taskIndex}.subtasks.${subtaskIndex}.completed`}
-                          control={control}
-                          defaultValue={false}
-                          render={({ field }) => (
-                            <input
-                              type="checkbox"
-                              checked={field.value}
-                              onChange={field.onChange}
-                              className="ml-2"
-                            />
-                          )}
+                        <input
+                          type="checkbox"
+                          checked={subtask.completed}
+                          onChange={e => {
+                            const updatedTasks = [...values.tasks];
+                            updatedTasks[taskIndex].subtasks[subtaskIndex].completed =
+                              e.target.checked;
+                            setFieldValue('tasks', updatedTasks);
+                          }}
+                          className="ml-2"
                         />
                       </div>
                     </div>

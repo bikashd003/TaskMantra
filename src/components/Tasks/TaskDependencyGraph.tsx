@@ -65,7 +65,6 @@ const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({ tasks, onTask
     tasks.forEach(task => {
       if (task.dependencies && task.dependencies.length > 0) {
         task.dependencies.forEach(dependencyId => {
-          // Check if the dependency exists in our filtered tasks
           if (tasks.some(t => t.id === dependencyId)) {
             const sourceNode = nodes.find(n => n.id === dependencyId);
             const targetNode = nodes.find(n => n.id === task.id);

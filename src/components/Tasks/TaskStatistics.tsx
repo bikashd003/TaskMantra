@@ -41,17 +41,20 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
     today.setHours(0, 0, 0, 0);
 
     const overdue = tasks.filter(task => {
+      if (!task.dueDate) return false;
       const dueDate = new Date(task.dueDate);
       dueDate.setHours(0, 0, 0, 0);
       return isBefore(dueDate, today) && task.status !== 'Completed';
     }).length;
 
     const dueToday = tasks.filter(task => {
+      if (!task.dueDate) return false;
       const dueDate = new Date(task.dueDate);
       return isToday(dueDate) && task.status !== 'Completed';
     }).length;
 
     const dueSoon = tasks.filter(task => {
+      if (!task.dueDate) return false;
       const dueDate = new Date(task.dueDate);
       dueDate.setHours(0, 0, 0, 0);
       const threeDaysFromNow = addDays(today, 3);
@@ -78,6 +81,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
     const thisWeekStart = startOfWeek(today);
     const thisWeekEnd = endOfWeek(today);
     const tasksThisWeek = tasks.filter(task => {
+      if (!task.dueDate) return false;
       const dueDate = new Date(task.dueDate);
       return !isBefore(dueDate, thisWeekStart) && !isAfter(dueDate, thisWeekEnd);
     }).length;
@@ -86,6 +90,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
     const thisMonthStart = startOfMonth(today);
     const thisMonthEnd = endOfMonth(today);
     const tasksThisMonth = tasks.filter(task => {
+      if (!task.dueDate) return false;
       const dueDate = new Date(task.dueDate);
       return !isBefore(dueDate, thisMonthStart) && !isAfter(dueDate, thisMonthEnd);
     }).length;

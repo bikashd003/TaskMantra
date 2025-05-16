@@ -37,21 +37,23 @@ export interface CalendarMetadata {
 }
 
 export interface Task {
+  _id: string;
   id: string;
   name: string;
+  title: string;
   description: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  dueDate?: Date;
+  startDate?: Date;
+  estimatedTime?: number;
+  loggedTime?: number;
+  assignedTo?: any[];
+  subtasks?: any[];
   createdBy: string;
   projectId?: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  dueDate: Date;
-  startDate: Date;
-  estimatedTime: number;
-  loggedTime: number;
   dependencies: string[];
-  subtasks: Subtask[];
   comments: Comment[];
-  assignedTo: User[];
   completed: boolean;
   createdAt?: Date;
   updatedAt?: Date;

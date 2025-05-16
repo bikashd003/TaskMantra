@@ -1,16 +1,16 @@
 import { create } from 'zustand';
-import { addDays, format } from 'date-fns';
+import { addDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { Task, Subtask, Comment } from '@/types/task';
+import { Task, Subtask, Comment } from '../components/Tasks/types';
 
 interface CalendarTask {
   _id: string;
   title: string;
   name: string;
   description: string;
-  startDate: string;
-  endDate: string;
-  dueDate: string;
+  startDate: Date;
+  endDate: Date;
+  dueDate: Date;
   completed: boolean;
   status: string;
   priority: string;
@@ -47,19 +47,13 @@ interface CalendarState {
 // Helper function to convert API task to calendar task format
 const convertApiTaskToCalendarTask = (apiTask: Task): CalendarTask => {
   return {
-    _id: apiTask._id,
+    _id: apiTask.id,
     title: apiTask.name,
     name: apiTask.name,
     description: apiTask.description,
-    startDate: apiTask.startDate
-      ? format(new Date(apiTask.startDate), 'yyyy-MM-dd')
-      : format(new Date(), 'yyyy-MM-dd'),
-    endDate: apiTask.dueDate
-      ? format(new Date(apiTask.dueDate), 'yyyy-MM-dd')
-      : format(addDays(new Date(), 1), 'yyyy-MM-dd'),
-    dueDate: apiTask.dueDate
-      ? format(new Date(apiTask.dueDate), 'yyyy-MM-dd')
-      : format(addDays(new Date(), 1), 'yyyy-MM-dd'),
+    startDate: apiTask.startDate ? new Date(apiTask.startDate) : new Date(),
+    endDate: apiTask.dueDate ? new Date(apiTask.dueDate) : addDays(new Date(), 1),
+    dueDate: apiTask.dueDate ? new Date(apiTask.dueDate) : addDays(new Date(), 1),
     completed: apiTask.completed,
     status: apiTask.status,
     priority: apiTask.priority,

@@ -79,6 +79,10 @@ const TaskList: React.FC<TaskListProps> = ({
         case 'name':
           return multiplier * a.name.localeCompare(b.name);
         case 'dueDate':
+          // Handle undefined dueDate values
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return multiplier;
+          if (!b.dueDate) return -multiplier;
           return multiplier * (new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
         case 'priority': {
           const priorityOrder = { High: 3, Medium: 2, Low: 1 };
@@ -328,7 +332,7 @@ const TaskList: React.FC<TaskListProps> = ({
                   <td className="p-3">{renderPriorityBadge(task.priority)}</td>
                   <td className="p-3">
                     <Badge variant="outline" className="text-xs">
-                      {new Date(task.dueDate).toLocaleDateString()}
+                      {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set'}
                     </Badge>
                   </td>
                 </tr>
