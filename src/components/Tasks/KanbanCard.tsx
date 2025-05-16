@@ -198,7 +198,9 @@ export function KanbanCard({
                   </div>
                 )}
                 <div onClick={preventDragHandling} className="cursor-default">
-                  {renderPriorityBadge(card.priority)}
+                  {renderPriorityBadge(
+                    (card.priority.charAt(0).toUpperCase() + card.priority.slice(1)) as TaskPriority
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -208,3 +210,6 @@ export function KanbanCard({
     </div>
   );
 }
+
+// Also export as default for backward compatibility
+export default KanbanCard;

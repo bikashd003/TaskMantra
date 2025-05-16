@@ -65,19 +65,19 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
   if (!task) return null;
 
   // Calculate task progress based on completed subtasks
-  const totalSubtasks = task?.subtasks?.length;
-  const completedSubtasks = task?.subtasks?.filter(subtask => subtask.completed).length;
+  const totalSubtasks = task?.subtasks?.length || 0;
+  const completedSubtasks = task?.subtasks?.filter(subtask => subtask.completed)?.length || 0;
   const progress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
 
   // Format dates
-  const formatDate = (date: Date) => {
+  const formatDate = (date?: Date) => {
     if (!date) return 'Not set';
     return format(new Date(date), 'MMM dd, yyyy');
   };
 
   // Handle subtask toggle
   const handleSubtaskToggle = (index: number, completed: boolean) => {
-    const updatedSubtasks = [...task.subtasks];
+    const updatedSubtasks = task.subtasks ? [...task.subtasks] : [];
     updatedSubtasks[index] = { ...updatedSubtasks[index], completed };
 
     // Update locally through the parent component

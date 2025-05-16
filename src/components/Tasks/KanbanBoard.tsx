@@ -585,8 +585,21 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     style={{ width: `${columnWidth}px` }}
                   >
                     <Column
-                      column={column}
-                      cards={column.cards}
+                      column={{
+                        ...column,
+                        cards: column.cards.map(card => ({
+                          ...card,
+                          priority: card.priority.toLowerCase() as any,
+                          dueDate: card.dueDate ? card.dueDate.toString() : undefined,
+                          // Omit startDate as it's not in CardType
+                        })),
+                      }}
+                      cards={column.cards.map(card => ({
+                        ...card,
+                        priority: card.priority.toLowerCase() as any,
+                        dueDate: card.dueDate ? card.dueDate.toString() : undefined,
+                        // Omit startDate as it's not in CardType
+                      }))}
                       isHighlighted={lastDroppedId === `column-${column.id}`}
                       onDeleteColumn={handleDeleteColumn}
                       onAddTask={handleAddTask}
@@ -624,7 +637,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             <DragOverlay adjustScale={true} zIndex={100}>
               {activeCard && (
                 <KanbanCard
-                  card={activeCard}
+                  card={{
+                    ...activeCard,
+                    priority: activeCard.priority.toLowerCase() as any,
+                    dueDate: activeCard.dueDate ? activeCard.dueDate.toString() : undefined,
+                    // Omit startDate as it's not in CardType
+                  }}
                   isDragging={true}
                   isOverlay={true}
                   renderPriorityBadge={renderPriorityBadge}
@@ -633,8 +651,21 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               )}
               {activeColumn && (
                 <Column
-                  column={activeColumn}
-                  cards={activeColumn.cards}
+                  column={{
+                    ...activeColumn,
+                    cards: activeColumn.cards.map(card => ({
+                      ...card,
+                      priority: card.priority.toLowerCase() as any,
+                      dueDate: card.dueDate ? card.dueDate.toString() : undefined,
+                      // Omit startDate as it's not in CardType
+                    })),
+                  }}
+                  cards={activeColumn.cards.map(card => ({
+                    ...card,
+                    priority: card.priority.toLowerCase() as any,
+                    dueDate: card.dueDate ? card.dueDate.toString() : undefined,
+                    // Omit startDate as it's not in CardType
+                  }))}
                   isDragging={true}
                   onDeleteColumn={handleDeleteColumn}
                 />
