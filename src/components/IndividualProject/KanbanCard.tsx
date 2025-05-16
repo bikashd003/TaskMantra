@@ -126,9 +126,9 @@ export function Card({
               <div onClick={preventDragHandling} className="cursor-default">
                 <span
                   className={`${compactView ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'} rounded-full hover:scale-105 transition-transform ${
-                    card.priority === 'high'
+                    card.priority === 'High'
                       ? 'bg-red-100 text-red-800'
-                      : card.priority === 'medium'
+                      : card.priority === 'Medium'
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-green-100 text-green-800'
                   }`}
