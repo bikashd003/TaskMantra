@@ -440,8 +440,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
             <TaskList
               tasks={filteredTasks}
               searchQuery={filters.searchQuery}
-              onStatusChange={onStatusChange}
-              onDelete={onDelete}
               renderPriorityBadge={renderPriorityBadge as any}
               onCreateTask={onCreateTask || (() => {})}
               isLoading={false}
@@ -477,13 +475,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
           <ScrollArea className="h-full">
             <BigCalendarView
               tasks={filteredTasks}
-              onTaskClick={(taskId: string) => {
-                const task = filteredTasks.find(t => (t as any)._id === taskId || t.id === taskId);
-                if (task && onCreateTask) {
-                  // Open task details
-                }
-              }}
-              renderPriorityBadge={renderPriorityBadge}
               onAddTask={handleAddTaskFromCalendar}
               onTaskUpdate={onUpdateTask}
             />
