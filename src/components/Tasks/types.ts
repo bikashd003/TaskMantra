@@ -41,8 +41,8 @@ export interface Task {
   name: string;
   title: string;
   description: string;
-  priority: 'low' | 'medium' | 'high';
-  status: string;
+  priority: TaskPriority;
+  status: TaskStatus;
   dueDate?: Date;
   startDate?: Date;
   estimatedTime?: number;

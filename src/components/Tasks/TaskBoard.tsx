@@ -167,7 +167,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       const newTask: Partial<Task> = {
         name: '',
         status: 'To Do',
-        priority: 'medium',
+        priority: 'Medium',
         dueDate: date,
         subtasks: [],
         assignedTo: [],
