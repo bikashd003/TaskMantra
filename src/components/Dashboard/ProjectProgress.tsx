@@ -14,7 +14,7 @@ import {
 import { ChartTooltip } from '@/components/ui/chart';
 import { useQuery } from '@tanstack/react-query';
 import { TaskService } from '@/services/Task.service';
-import { TaskStatus } from '@/types/task';
+import { TaskStatus } from '../Tasks/types';
 
 // Status color mapping
 const statusColors = {

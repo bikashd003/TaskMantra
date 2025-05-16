@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { addDays, format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { Task, Subtask, Comment } from '@/types/task';
+import { Task, Subtask, Comment } from '../components/Tasks/types';
 
 interface CalendarTask {
   _id: string;
@@ -47,7 +47,7 @@ interface CalendarState {
 // Helper function to convert API task to calendar task format
 const convertApiTaskToCalendarTask = (apiTask: Task): CalendarTask => {
   return {
-    _id: apiTask._id,
+    _id: apiTask.id,
     title: apiTask.name,
     name: apiTask.name,
     description: apiTask.description,

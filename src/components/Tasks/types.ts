@@ -1,6 +1,6 @@
 // Task-related type definitions
 export type TaskStatus = 'To Do' | 'In Progress' | 'Review' | 'Completed';
-export type TaskPriority = 'high' | 'medium' | 'low';
+export type TaskPriority = 'High' | 'Medium' | 'Low';
 
 export interface Attachment {
   filename: string;
@@ -43,7 +43,8 @@ export interface Task {
   description: string;
   priority: 'low' | 'medium' | 'high';
   status: string;
-  dueDate?: string;
+  dueDate?: Date;
+  startDate?: Date;
   estimatedTime?: number;
   loggedTime?: number;
   assignedTo?: any[];
