@@ -168,7 +168,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         name: '',
         status: 'To Do',
         priority: 'medium',
-        dueDate: date.toISOString(),
+        dueDate: date,
         subtasks: [],
         assignedTo: [],
         comments: [],
