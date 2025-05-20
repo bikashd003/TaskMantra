@@ -148,24 +148,6 @@ const getProjectById = async (projectId: string, _userId: string) => {
   }
 };
 
-const getTaskById = async (taskId: string, userId: string) => {
-  try {
-    await connectDB();
-    const task = await Task.findById(taskId).populate({
-      path: 'assignedTo',
-    });
-    if (task.createdBy.toString() !== userId) {
-      throw new Error('You are not authorized to view this task');
-    }
-    if (!task) {
-      throw new Error('Task not found');
-    }
-    return task;
-  } catch (error: any) {
-    return error;
-  }
-};
-
 const updateTask = async (taskId: string, data: any) => {
   try {
     await connectDB();
@@ -221,4 +203,4 @@ const updateTask = async (taskId: string, data: any) => {
   }
 };
 
-export { createProject, getAllProjects, getProjectById, getTaskById, updateTask };
+export { createProject, getAllProjects, getProjectById, updateTask };

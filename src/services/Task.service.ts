@@ -86,7 +86,7 @@ export class TaskService {
   static async getTaskById(taskId: string): Promise<Task> {
     try {
       const response = await axios.get(`/api/tasks/${taskId}`);
-      return response.data;
+      return response.data.task;
     } catch (error) {
       throw new Error('Failed to fetch task');
     }
@@ -94,7 +94,7 @@ export class TaskService {
 
   static async getTasksByTimePeriod(period: 'today' | 'week' | 'month'): Promise<Task[]> {
     try {
-      const response = await axios.get(`/api/tasks/${period}`);
+      const response = await axios.get(`/api/tasks/period/${period}`);
       return response.data?.tasks || [];
     } catch (error) {
       throw new Error(`Failed to fetch ${period}'s tasks`);

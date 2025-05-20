@@ -30,6 +30,7 @@ import { TaskService } from '@/services/Task.service';
 import { KanbanSkeleton } from './KanbanSkeleton';
 import CreateColumnModal from './CreateColumnModal';
 import { Task } from '../Tasks/types';
+import { TaskSidebar } from './TaskSidebar';
 
 // Types
 export type CardType = {
@@ -67,6 +68,8 @@ export default function ProjectKanban({ project }: ProjectProps) {
   const queryClient = useQueryClient();
   const previousColumnsRef = useRef<ColumnType[]>([]);
   const dragSourceColumnRef = useRef<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string>('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const { data: kanbanSetting, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['kanban-settings'],
@@ -618,6 +621,10 @@ export default function ProjectKanban({ project }: ProjectProps) {
                       loadingAddTask={addTaskMutation.isPending}
                       compactView={compactView}
                       columnWidth={columnWidth}
+                      onTaskClick={taskId => {
+                        setSelectedTaskId(taskId);
+                        setIsSidebarOpen(true);
+                      }}
                     />
                   </div>
                 ))}
@@ -669,6 +676,11 @@ export default function ProjectKanban({ project }: ProjectProps) {
             document.body
           )}
       </DndContext>
+      <TaskSidebar
+        taskId={selectedTaskId}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
     </div>
   );
 }

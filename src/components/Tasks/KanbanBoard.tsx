@@ -43,6 +43,7 @@ interface KanbanBoardProps {
   columnWidth: number;
   compactView: boolean;
   renderPriorityBadge: (priority: TaskPriority) => React.ReactNode;
+  onTaskClick?: (taskId: string) => void;
 }
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({
@@ -51,6 +52,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   columnWidth,
   compactView,
   renderPriorityBadge,
+  onTaskClick,
 }) => {
   const [columns, setColumns] = useState<ColumnType[]>([]);
   const [activeColumn, setActiveColumn] = useState<ColumnType | null>(null);
@@ -606,6 +608,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       loadingAddTask={addTaskMutation.isPending}
                       compactView={compactView}
                       columnWidth={columnWidth}
+                      onTaskClick={onTaskClick}
                     />
                   </div>
                 ))}

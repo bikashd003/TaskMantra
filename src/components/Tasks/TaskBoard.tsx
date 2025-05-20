@@ -25,6 +25,7 @@ interface TaskBoardProps {
   isLoading?: boolean;
   onCreateTask?: () => void;
   onUpdateTask?: (taskId: string, updates: Partial<Task>) => void;
+  onTaskClick?: (taskId: string) => void;
 }
 
 const TaskBoard: React.FC<TaskBoardProps> = ({
@@ -34,6 +35,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   isLoading,
   onCreateTask,
   onUpdateTask,
+  onTaskClick,
 }) => {
   const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'calendar' | 'dependencies'>('list');
 
@@ -305,6 +307,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
               renderPriorityBadge={renderPriorityBadge as any}
               onCreateTask={onCreateTask || (() => {})}
               isLoading={false}
+              onTaskClick={onTaskClick}
             />
           </ScrollArea>
         )}
@@ -319,6 +322,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
                 columnWidth={columnWidth}
                 compactView={compactView}
                 renderPriorityBadge={renderPriorityBadge}
+                onTaskClick={onTaskClick}
               />
             )}
           </>

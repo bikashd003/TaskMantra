@@ -29,6 +29,7 @@ interface TaskListProps {
   renderPriorityBadge: (priority: TaskPriority) => JSX.Element;
   onCreateTask: () => void;
   isLoading?: boolean;
+  onTaskClick?: (taskId: string) => void;
 }
 
 type SortField = 'name' | 'dueDate' | 'priority' | 'status' | 'createdAt';
@@ -44,6 +45,7 @@ const TaskList: React.FC<TaskListProps> = ({
   renderPriorityBadge,
   onCreateTask,
   isLoading,
+  onTaskClick,
 }) => {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'dueDate', direction: 'asc' });
   const [showCompleted, setShowCompleted] = useState<boolean>(true);
@@ -129,7 +131,6 @@ const TaskList: React.FC<TaskListProps> = ({
       </div>
     );
   }
-
   return (
     <div className="space-y-4">
       {/* View Controls */}
@@ -293,12 +294,13 @@ const TaskList: React.FC<TaskListProps> = ({
             <tbody>
               {sortedAndFilteredTasks.map(task => (
                 <tr
-                  key={task.id}
+                  key={task._id}
                   className={cn(
-                    'border-b transition-colors',
+                    'border-b transition-colors cursor-pointer',
                     'hover:bg-muted/50',
                     task.status === 'Completed' && 'bg-muted/30'
                   )}
+                  onClick={() => onTaskClick?.(task._id)}
                 >
                   <td className="p-3">
                     <div className="flex items-center space-x-2">

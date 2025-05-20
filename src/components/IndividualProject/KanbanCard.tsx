@@ -16,6 +16,7 @@ interface CardProps {
   isDragging?: boolean;
   isOverlay?: boolean;
   compactView?: boolean;
+  onClick?: (taskId: string) => void;
 }
 
 export function Card({
@@ -23,6 +24,7 @@ export function Card({
   isDragging = false,
   isOverlay = false,
   compactView = false,
+  onClick,
 }: CardProps) {
   const {
     attributes,
@@ -108,12 +110,14 @@ export function Card({
                     <TooltipTrigger asChild>
                       <CardTitle
                         className={`${compactView ? 'text-xs' : 'text-sm'} font-medium ${card.status === 'Completed' ? 'text-gray-500' : ''} truncate max-w-[160px] cursor-default`}
+                        onClick={() => onClick?.(card.id)}
                       >
                         {card.status === 'Completed' && (
                           <CheckCircle2
                             className={`${compactView ? 'h-3 w-3' : 'h-4 w-4'} text-green-500 inline mr-1`}
                           />
                         )}
+
                         {card.title}
                       </CardTitle>
                     </TooltipTrigger>
