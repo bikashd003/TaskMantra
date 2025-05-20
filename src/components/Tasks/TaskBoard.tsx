@@ -303,9 +303,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
           <ScrollArea className="h-full">
             <TaskList
               tasks={filteredTasks}
-              searchQuery={filters.searchQuery}
               renderPriorityBadge={renderPriorityBadge as any}
-              onCreateTask={onCreateTask || (() => {})}
               isLoading={false}
               onTaskClick={onTaskClick}
             />

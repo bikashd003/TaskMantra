@@ -1,103 +1,48 @@
-import React, { JSX, useState } from 'react';
+import React from 'react';
 import { Task, TaskPriority, TaskStatus } from './types';
-import EmptyState from './EmptyState';
 import { Skeleton } from '@heroui/skeleton';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowUpDown, Filter, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { CheckCircle2, Circle, AlertCircle, Clock, Calendar, User, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface TaskListProps {
   tasks: Task[];
-  searchQuery: string;
-  renderPriorityBadge: (priority: TaskPriority) => JSX.Element;
-  onCreateTask: () => void;
+  renderPriorityBadge: (priority: TaskPriority) => React.ReactNode;
   isLoading?: boolean;
   onTaskClick?: (taskId: string) => void;
 }
 
-type SortField = 'name' | 'dueDate' | 'priority' | 'status' | 'createdAt';
-
-type SortConfig = {
-  field: SortField;
-  direction: 'asc' | 'desc';
-};
-
 const TaskList: React.FC<TaskListProps> = ({
   tasks,
-  searchQuery,
   renderPriorityBadge,
-  onCreateTask,
   isLoading,
   onTaskClick,
 }) => {
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'dueDate', direction: 'asc' });
-  const [showCompleted, setShowCompleted] = useState<boolean>(true);
-  const [selectedPriority, setSelectedPriority] = useState<string>('all');
-
-  const handleSort = (field: SortField) => {
-    setSortConfig(prevConfig => ({
-      field,
-      direction: prevConfig.field === field && prevConfig.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  };
-
-  // Sort and filter tasks
-  const sortedAndFilteredTasks = tasks
-    .filter(task => {
-      // Filter by completion status
-      if (!showCompleted && task.status === 'Completed') {
-        return false;
-      }
-
-      // Filter by priority
-      if (selectedPriority !== 'all' && task.priority !== selectedPriority) {
-        return false;
-      }
-
-      return true;
-    })
-    .sort((a, b) => {
-      const { field, direction } = sortConfig;
-      const multiplier = direction === 'asc' ? 1 : -1;
-
-      switch (field) {
-        case 'name':
-          return multiplier * a.name.localeCompare(b.name);
-        case 'dueDate':
-          // Handle undefined dueDate values
-          if (!a.dueDate && !b.dueDate) return 0;
-          if (!a.dueDate) return multiplier;
-          if (!b.dueDate) return -multiplier;
-          return multiplier * (new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-        case 'priority': {
-          const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-          return multiplier * ((priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0));
-        }
-        case 'status': {
-          const statusOrder = { 'To Do': 1, 'In Progress': 2, Review: 3, Completed: 4 };
-          return multiplier * ((statusOrder[a.status] || 0) - (statusOrder[b.status] || 0));
-        }
-        default:
-          return 0;
-      }
-    });
+  // Group tasks by status
+  const groupedTasks = tasks.reduce<Record<string, Task[]>>(
+    (acc, task) => {
+      if (!acc[task.status]) acc[task.status] = [];
+      acc[task.status].push(task);
+      return acc;
+    },
+    {
+      'To Do': [],
+      'In Progress': [],
+      Review: [],
+      Completed: [],
+    }
+  );
 
   // Get status icon
   const getStatusIcon = (status: TaskStatus) => {
@@ -115,234 +60,221 @@ const TaskList: React.FC<TaskListProps> = ({
     }
   };
 
-  if (tasks.length === 0) {
-    return <EmptyState searchQuery={searchQuery} onCreateTask={onCreateTask} />;
-  }
+  // Format time (hours)
+  const formatTime = (time?: number) => {
+    if (time === undefined || time === null) return 'Not set';
+
+    const hours = Math.floor(time);
+    const minutes = Math.round((time - hours) * 60);
+
+    if (hours === 0) {
+      return `${minutes}m`;
+    } else if (minutes === 0) {
+      return `${hours}h`;
+    } else {
+      return `${hours}h ${minutes}m`;
+    }
+  };
+
+  // Render assignees
+  const renderAssignees = (assignedTo?: any[]) => {
+    if (!assignedTo || assignedTo.length === 0) {
+      return <span className="text-muted-foreground text-xs">Unassigned</span>;
+    }
+
+    return (
+      <div className="flex -space-x-2 overflow-hidden">
+        {assignedTo.slice(0, 3).map((user, index) => (
+          <Avatar key={index} className="h-6 w-6 border-2 border-background">
+            {user.image ? (
+              <AvatarImage src={user.image} alt={user.name || 'User'} />
+            ) : (
+              <AvatarFallback className="text-xs">
+                {(user.name || 'U').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            )}
+          </Avatar>
+        ))}
+        {assignedTo.length > 3 && (
+          <Avatar className="h-6 w-6 border-2 border-background">
+            <AvatarFallback className="text-xs bg-muted">+{assignedTo.length - 3}</AvatarFallback>
+          </Avatar>
+        )}
+      </div>
+    );
+  };
+
+  // Render subtasks progress
+  const renderSubtasksProgress = (subtasks?: any[]) => {
+    if (!subtasks || subtasks.length === 0) {
+      return null;
+    }
+
+    const completed = subtasks.filter(subtask => subtask.completed).length;
+    const total = subtasks.length;
+    const percentage = Math.round((completed / total) * 100);
+
+    return (
+      <div className="flex items-center gap-2">
+        <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
+          <div className="h-full bg-primary" style={{ width: `${percentage}%` }} />
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {completed}/{total}
+        </span>
+      </div>
+    );
+  };
 
   if (isLoading) {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, index) => (
-          <div key={index} className="space-y-2">
-            <Skeleton className="h-6 w-24" />
-            <Skeleton className="h-32 w-full" />
-          </div>
+          <Card key={index} className="border shadow-sm overflow-hidden">
+            <CardHeader className="py-3 px-4 bg-muted/30">
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <div className="p-4">
+              <Skeleton className="h-[300px] w-full" />
+            </div>
+          </Card>
         ))}
       </div>
     );
   }
-  return (
-    <div className="space-y-4">
-      {/* View Controls */}
-      <Card className="border-none shadow-sm bg-background">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <div className="flex items-center space-x-2"></div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-1" /> Filter
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="p-3 space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="show-completed"
-                        checked={showCompleted}
-                        onCheckedChange={checked => setShowCompleted(!!checked)}
-                      />
-                      <Label htmlFor="show-completed" className="text-sm cursor-pointer">
-                        Show Completed
-                      </Label>
-                    </div>
-
-                    <div>
-                      <Label className="text-xs text-muted-foreground mb-1 block">Priority</Label>
-                      <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Priorities</SelectItem>
-                          <SelectItem value="High">High</SelectItem>
-                          <SelectItem value="Medium">Medium</SelectItem>
-                          <SelectItem value="Low">Low</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <ArrowUpDown className="h-4 w-4 mr-1" /> Sort
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => handleSort('name')} className="justify-between">
-                    Name
-                    {sortConfig.field === 'name' && (
-                      <Badge variant="outline" className="ml-2 font-mono">
-                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                      </Badge>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleSort('dueDate')}
-                    className="justify-between"
-                  >
-                    Due Date
-                    {sortConfig.field === 'dueDate' && (
-                      <Badge variant="outline" className="ml-2 font-mono">
-                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                      </Badge>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleSort('priority')}
-                    className="justify-between"
-                  >
-                    Priority
-                    {sortConfig.field === 'priority' && (
-                      <Badge variant="outline" className="ml-2 font-mono">
-                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                      </Badge>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleSort('status')}
-                    className="justify-between"
-                  >
-                    Status
-                    {sortConfig.field === 'status' && (
-                      <Badge variant="outline" className="ml-2 font-mono">
-                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                      </Badge>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleSort('createdAt')}
-                    className="justify-between"
-                  >
-                    Created Date
-                    {sortConfig.field === 'createdAt' && (
-                      <Badge variant="outline" className="ml-2 font-mono">
-                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                      </Badge>
-                    )}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
+  if (tasks.length === 0) {
+    return (
       <Card className="border shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-muted/50 border-b">
-                <th className="p-3 text-left cursor-pointer" onClick={() => handleSort('name')}>
-                  <div className="flex items-center gap-1">
-                    Task
-                    {sortConfig.field === 'name' && (
-                      <Badge variant="outline" className="ml-1 font-mono">
-                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                      </Badge>
-                    )}
-                  </div>
-                </th>
-                <th className="p-3 text-left cursor-pointer" onClick={() => handleSort('status')}>
-                  <div className="flex items-center gap-1">
-                    Status
-                    {sortConfig.field === 'status' && (
-                      <Badge variant="outline" className="ml-1 font-mono">
-                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                      </Badge>
-                    )}
-                  </div>
-                </th>
-                <th className="p-3 text-left cursor-pointer" onClick={() => handleSort('priority')}>
-                  <div className="flex items-center gap-1">
-                    Priority
-                    {sortConfig.field === 'priority' && (
-                      <Badge variant="outline" className="ml-1 font-mono">
-                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                      </Badge>
-                    )}
-                  </div>
-                </th>
-                <th className="p-3 text-left cursor-pointer" onClick={() => handleSort('dueDate')}>
-                  <div className="flex items-center gap-1">
-                    Due Date
-                    {sortConfig.field === 'dueDate' && (
-                      <Badge variant="outline" className="ml-1 font-mono">
-                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                      </Badge>
-                    )}
-                  </div>
-                </th>
-                <th className="p-3 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedAndFilteredTasks.map(task => (
-                <tr
-                  key={task._id}
-                  className={cn(
-                    'border-b transition-colors cursor-pointer',
-                    'hover:bg-muted/50',
-                    task.status === 'Completed' && 'bg-muted/30'
-                  )}
-                  onClick={() => onTaskClick?.(task._id)}
-                >
-                  <td className="p-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(task.status)}
-                        <span
-                          className={cn(
-                            'font-medium',
-                            task.status === 'Completed' && 'line-through text-muted-foreground'
-                          )}
-                        >
-                          {task.name}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'text-xs',
-                        task.status === 'To Do' && 'border-slate-500 text-slate-700',
-                        task.status === 'In Progress' && 'border-blue-500 text-blue-700',
-                        task.status === 'Review' && 'border-amber-500 text-amber-700',
-                        task.status === 'Completed' && 'border-green-500 text-green-700'
-                      )}
-                    >
-                      {task.status}
-                    </Badge>
-                  </td>
-                  <td className="p-3">{renderPriorityBadge(task.priority)}</td>
-                  <td className="p-3">
-                    <Badge variant="outline" className="text-xs">
-                      {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set'}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex items-center justify-center p-8 text-center">
+          <div>
+            <h3 className="text-lg font-medium mb-2">No tasks available</h3>
+            <p className="text-muted-foreground">There are no tasks to display.</p>
+          </div>
         </div>
       </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Task Tables Grouped by Status */}
+      {Object.entries(groupedTasks).map(([status, statusTasks]) =>
+        statusTasks.length > 0 ? (
+          <Card key={status} className="border shadow-sm">
+            <CardHeader className="py-3 px-4 bg-muted/30 sticky top-0 z-10">
+              <CardTitle className="text-base font-medium flex items-center gap-2">
+                {getStatusIcon(status as TaskStatus)}
+                {status}
+                <Badge variant="secondary" className="ml-1">
+                  {statusTasks.length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <ScrollArea className="max-h-[500px]">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 z-10 bg-background">
+                    <TableRow className="bg-muted/20 hover:bg-muted/20">
+                      <TableHead className="w-[250px] min-w-[180px]">Task</TableHead>
+                      <TableHead className="w-[100px]">Priority</TableHead>
+                      <TableHead className="w-[120px] hidden md:table-cell">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>Due Date</span>
+                        </div>
+                      </TableHead>
+                      <TableHead className="w-[120px] hidden lg:table-cell">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>Start Date</span>
+                        </div>
+                      </TableHead>
+                      <TableHead className="w-[120px]">
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="hidden sm:inline">Assignees</span>
+                        </div>
+                      </TableHead>
+                      <TableHead className="w-[100px] hidden sm:table-cell">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span>Est. Time</span>
+                        </div>
+                      </TableHead>
+                      <TableHead className="w-[100px] hidden md:table-cell">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span>Logged</span>
+                        </div>
+                      </TableHead>
+                      <TableHead className="w-[120px] hidden sm:table-cell">
+                        <div className="flex items-center gap-1">
+                          <ListChecks className="h-4 w-4 text-muted-foreground" />
+                          <span>Subtasks</span>
+                        </div>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {statusTasks.map(task => (
+                      <TableRow
+                        key={task._id}
+                        className={cn(
+                          'cursor-pointer',
+                          task.status === 'Completed' && 'bg-muted/20'
+                        )}
+                        onClick={() => onTaskClick?.(task._id)}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(task.status)}
+                            <span
+                              className={cn(
+                                'font-medium',
+                                task.status === 'Completed' && 'line-through text-muted-foreground'
+                              )}
+                            >
+                              {task.name}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{renderPriorityBadge(task.priority)}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge variant="outline" className="text-xs">
+                            {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <Badge variant="outline" className="text-xs">
+                            {task.startDate
+                              ? new Date(task.startDate).toLocaleDateString()
+                              : 'Not set'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{renderAssignees(task.assignedTo)}</TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <span className="text-xs text-muted-foreground">
+                            {formatTime(task.estimatedTime)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <span className="text-xs text-muted-foreground">
+                            {formatTime(task.loggedTime)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          {renderSubtasksProgress(task.subtasks)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollArea>
+          </Card>
+        ) : null
+      )}
     </div>
   );
 };
