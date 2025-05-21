@@ -28,6 +28,7 @@ interface ColumnProps {
   loadingAddTask?: boolean;
   compactView?: boolean;
   columnWidth?: number;
+  onTaskClick?: (taskId: string) => void;
 }
 type ColumnDefinition = KanbanColumnType;
 
@@ -48,6 +49,7 @@ export function Column({
   loadingAddTask = false,
   compactView = false,
   columnWidth = 300,
+  onTaskClick,
 }: ColumnProps) {
   const {
     attributes,
@@ -204,7 +206,7 @@ export function Column({
           {cards.length > 0 ? (
             <div className="flex flex-col gap-2">
               {cards.map(card => (
-                <Card key={card.id} card={card} />
+                <Card key={card.id} card={card} onClick={onTaskClick} />
               ))}
             </div>
           ) : (

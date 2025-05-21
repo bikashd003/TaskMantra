@@ -9,6 +9,7 @@ import CreateTaskModal from '@/components/Tasks/CreateTaskModal';
 import TaskBoard from '@/components/Tasks/TaskBoard';
 import { TaskStatus, TaskPriority, TaskFilterState, sortOptions } from '@/components/Tasks/types';
 import { TaskService } from '@/services/Task.service';
+import { TaskSidebar } from '@/components/IndividualProject/TaskSidebar';
 
 export default function TasksPage() {
   const queryClient = useQueryClient();
@@ -19,6 +20,8 @@ export default function TasksPage() {
   } as TaskFilterState;
   const currentSort = sortOptions[0];
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string>('');
 
   const debouncedSearchQuery = '';
 
@@ -128,6 +131,10 @@ export default function TasksPage() {
         isLoading={isLoading}
         onCreateTask={() => setIsCreateModalOpen(true)}
         onUpdateTask={handleUpdateTask}
+        onTaskClick={taskId => {
+          setSelectedTaskId(taskId);
+          setIsSidebarOpen(true);
+        }}
       />
 
       <CreateTaskModal
@@ -143,6 +150,11 @@ export default function TasksPage() {
           })
         }
         isLoading={createTaskMutation.isPending}
+      />
+      <TaskSidebar
+        taskId={selectedTaskId}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
     </motion.div>
   );

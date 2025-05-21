@@ -141,21 +141,6 @@ app.get('/', async c => {
   }
 });
 
-app.get('/get-task/:taskId', async c => {
-  const taskId = c.req.param('taskId');
-  const user = c.get('user');
-
-  if (!user) {
-    return c.json({ error: 'User not authenticated' }, 401);
-  }
-
-  try {
-    const task = await Task.findById(taskId).populate('assignedTo');
-    return c.json({ task });
-  } catch (error: any) {
-    return c.json({ error: error.message }, 500);
-  }
-});
 app.get('/my-tasks', async c => {
   const user = c.get('user');
 
@@ -250,7 +235,7 @@ const getDateRange = (period: string) => {
 };
 
 // Get tasks by time period (today, week, month)
-app.get('/:period', async c => {
+app.get('/period/:period', async c => {
   const user = c.get('user');
   const period = c.req.param('period');
 
@@ -316,6 +301,31 @@ app.patch('/:taskId/status', async c => {
   try {
     const taskData = await c.req.json();
     const task = await Task.findByIdAndUpdate(taskId, taskData, { new: true });
+    return c.json({ task });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// This route should be last as it's a catch-all for taskId
+app.get('/:taskId', async c => {
+  const taskId = c.req.param('taskId');
+  const user = c.get('user');
+
+  if (!user) {
+    return c.json({ error: 'User not authenticated' }, 401);
+  }
+
+  try {
+    // Check if taskId is a valid MongoDB ObjectId
+    if (!/^[0-9a-fA-F]{24}$/.test(taskId)) {
+      return c.json({ error: 'Invalid task ID format' }, 400);
+    }
+
+    const task = await Task.findById(taskId).populate('assignedTo');
+    if (!task) {
+      return c.json({ error: 'Task not found' }, 404);
+    }
     return c.json({ task });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
