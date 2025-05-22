@@ -205,7 +205,7 @@ export function NotificationsPopover() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative bg-gray-100 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm overflow-visible"
+          className="relative theme-button-secondary theme-shadow-sm overflow-visible"
         >
           <span className="relative inline-flex">
             <Bell className="h-6 w-6 group-hover:text-primary transition-colors duration-300" />
@@ -225,7 +225,7 @@ export function NotificationsPopover() {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[420px] p-0 shadow-xl border border-border/30 backdrop-blur-xl bg-gradient-to-b from-background/95 to-background/80 rounded-xl overflow-hidden"
+        className="w-[420px] p-0 theme-shadow-lg theme-border backdrop-blur-xl theme-surface-elevated rounded-xl overflow-hidden"
         align="end"
         sideOffset={10}
         asChild
@@ -235,10 +235,10 @@ export function NotificationsPopover() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="flex flex-col border-b border-border/50">
+          <div className="flex flex-col theme-divider">
             <div className="flex items-center justify-between px-5 py-3.5">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold">Notifications</h3>
+                <h3 className="text-base font-semibold theme-text-primary">Notifications</h3>
                 {unreadCount > 0 && (
                   <Badge
                     variant="destructive"
@@ -251,7 +251,7 @@ export function NotificationsPopover() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-full hover:bg-muted/80 transition-all duration-200"
+                className="h-8 w-8 rounded-full theme-button-ghost"
                 onClick={handleRefreshNotifications}
                 title="Refresh notifications"
               >
@@ -260,8 +260,8 @@ export function NotificationsPopover() {
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center justify-between px-5 py-2.5 bg-muted/30">
-              <div className="text-xs text-muted-foreground">
+            <div className="flex items-center justify-between px-5 py-2.5 theme-surface">
+              <div className="text-xs theme-text-secondary">
                 {allNotifications.length > 0
                   ? `${allNotifications.length} notification${allNotifications.length !== 1 ? 's' : ''}`
                   : 'No notifications'}
@@ -270,7 +270,7 @@ export function NotificationsPopover() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs hover:bg-primary/10 hover:text-primary transition-all duration-200 h-7 rounded-md"
+                  className="text-xs theme-hover-primary h-7 rounded-md"
                   onClick={handleMarkAllAsRead}
                   disabled={allNotifications.length === 0 || allNotifications.every(n => n.read)}
                 >
@@ -280,7 +280,7 @@ export function NotificationsPopover() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs hover:bg-destructive/10 hover:text-destructive transition-all duration-200 h-7 rounded-md"
+                  className="text-xs hover:bg-destructive/10 hover:text-destructive theme-transition h-7 rounded-md"
                   onClick={handleClearNotifications}
                   disabled={allNotifications.length === 0}
                 >
@@ -308,7 +308,7 @@ export function NotificationsPopover() {
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">Loading your notifications...</p>
+                  <p className="text-sm theme-text-secondary">Loading your notifications...</p>
                 </div>
               </div>
             ) : status === 'error' ? (
@@ -318,15 +318,17 @@ export function NotificationsPopover() {
                     <AlertCircle className="h-6 w-6 text-destructive" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium mb-1">Failed to load notifications</p>
-                    <p className="text-xs text-muted-foreground mb-4">
+                    <p className="text-sm font-medium mb-1 theme-text-primary">
+                      Failed to load notifications
+                    </p>
+                    <p className="text-xs theme-text-secondary mb-4">
                       There was a problem connecting to the notification service
                     </p>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="rounded-md hover:bg-primary/10 hover:text-primary transition-all duration-200 border-primary/20"
+                    className="rounded-md theme-hover-primary theme-border"
                     onClick={handleRefreshNotifications}
                   >
                     <RefreshCw className="h-3.5 w-3.5 mr-2" />
@@ -348,8 +350,8 @@ export function NotificationsPopover() {
                         href={notification.link || '/dashboard/notifications'}
                         onClick={() => handleNotificationClick(notification._id)}
                         className={cn(
-                          'flex items-start gap-3 px-5 py-4 hover:bg-muted/40 transition-all duration-200 relative group',
-                          !notification.read ? 'bg-primary/5' : 'hover:bg-muted/30'
+                          'flex items-start gap-3 px-5 py-4 theme-hover-surface relative group',
+                          !notification.read ? 'bg-primary/5' : ''
                         )}
                       >
                         {!notification.read && (
@@ -366,20 +368,20 @@ export function NotificationsPopover() {
                               className={cn(
                                 'text-sm leading-tight truncate',
                                 !notification.read
-                                  ? 'font-semibold'
-                                  : 'font-medium text-foreground/90'
+                                  ? 'font-semibold theme-text-primary'
+                                  : 'font-medium theme-text-primary'
                               )}
                             >
                               {notification.title}
                             </p>
-                            <p className="text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1.5">
+                            <p className="text-xs theme-text-secondary whitespace-nowrap flex items-center gap-1.5">
                               {!notification.read && (
                                 <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                               )}
                               {formatTimestamp(notification.createdAt)}
                             </p>
                           </div>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-0.5 group-hover:text-foreground/80 transition-colors duration-200">
+                          <p className="text-sm theme-text-secondary line-clamp-2 mt-0.5 group-hover:text-foreground/80 theme-transition">
                             {notification.description}
                           </p>
                         </div>
@@ -414,8 +416,10 @@ export function NotificationsPopover() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-base font-medium mb-1.5">All caught up!</h3>
-                    <p className="text-sm text-muted-foreground max-w-[260px]">
+                    <h3 className="text-base font-medium mb-1.5 theme-text-primary">
+                      All caught up!
+                    </h3>
+                    <p className="text-sm theme-text-secondary max-w-[260px]">
                       You don&apos;t have any notifications right now. We&apos;ll notify you when
                       something arrives.
                     </p>
@@ -424,11 +428,11 @@ export function NotificationsPopover() {
               </div>
             )}
           </ScrollArea>
-          <div className="p-4 border-t border-border/50 bg-gradient-to-b from-muted/30 to-background/80">
+          <div className="p-4 theme-divider theme-surface">
             <Link href="/home/notifications" onClick={() => setOpen(false)}>
               <Button
                 size="sm"
-                className="w-full font-medium rounded-md bg-gradient-to-br from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground transition-all duration-200 shadow-sm"
+                className="w-full font-medium rounded-md theme-button-primary theme-shadow-sm"
               >
                 View all notifications
               </Button>

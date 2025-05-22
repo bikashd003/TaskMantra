@@ -190,19 +190,19 @@ export function TeamLoggerPopover() {
       <PopoverTrigger asChild>
         <Button
           variant={isCheckedIn ? 'destructive' : 'outline'}
-          className={`flex items-center gap-2 transition-all duration-300 ${
-            isCheckedIn ? 'bg-green-600 hover:bg-green-700' : ''
+          className={`flex items-center gap-2 theme-transition ${
+            isCheckedIn ? 'bg-success hover:bg-success/90' : 'theme-button-secondary'
           }`}
         >
           <Clock className="h-4 w-4" />
           {isCheckedIn ? 'Checked In' : 'Check In'}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0 shadow-xl">
-        <div className="p-4 bg-white space-y-4">
+      <PopoverContent className="w-72 p-0 theme-shadow-lg">
+        <div className="p-4 theme-surface-elevated space-y-4">
           <div className="text-center space-y-2">
-            <h3 className="font-semibold text-xl">Daily Attendance</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="font-semibold text-xl theme-text-primary">Daily Attendance</h3>
+            <p className="text-sm theme-text-secondary">
               {new Date().toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
@@ -212,9 +212,9 @@ export function TeamLoggerPopover() {
             </p>
           </div>
 
-          <Card className="p-6 bg-card/50 backdrop-blur">
+          <Card className="p-6 theme-surface backdrop-blur">
             <div className="text-center">
-              <h2 className="text-4xl font-bold font-mono tracking-tight">
+              <h2 className="text-4xl font-bold font-mono tracking-tight theme-text-primary">
                 {currentTime || '00:00'}
               </h2>
             </div>
@@ -230,7 +230,7 @@ export function TeamLoggerPopover() {
           />
           <div className="flex gap-2">
             <Button
-              className="flex-1 min-w-0"
+              className="flex-1 min-w-0 theme-button-primary"
               onClick={handleCheckIn}
               disabled={isCheckedIn || !selectedTasks || selectedTasks.length === 0 || isLoading}
             >
@@ -307,13 +307,13 @@ export function TeamLoggerPopover() {
 
         <Separator />
 
-        <div className="p-4 max-h-64 overflow-y-auto">
+        <div className="p-4 max-h-64 overflow-y-auto theme-scrollbar">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <History className="h-4 w-4" />
-              <h4 className="font-medium">Today&apos;s Timeline</h4>
+              <History className="h-4 w-4 theme-text-primary" />
+              <h4 className="font-medium theme-text-primary">Today&apos;s Timeline</h4>
             </div>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs theme-text-secondary">
               {timeLogs.length} {timeLogs.length === 1 ? 'entry' : 'entries'}
             </span>
           </div>
@@ -344,7 +344,7 @@ export function TeamLoggerPopover() {
           )}
 
           {!isLoading && timeLogs.length === 0 && (
-            <div className="text-center py-6 text-muted-foreground">
+            <div className="text-center py-6 theme-text-secondary">
               <p>No time logs for today</p>
               <p className="text-xs mt-1">Check in to a task to start tracking time</p>
             </div>
@@ -406,45 +406,35 @@ export function TeamLoggerPopover() {
                         : log.id || `log-${checkInDate.getTime()}`;
 
                   return (
-                    <Card
-                      key={cardKey}
-                      className="p-3 bg-card/50 hover:bg-card/70 transition-colors"
-                    >
+                    <Card key={cardKey} className="p-3 theme-surface theme-hover-surface">
                       <div className="flex justify-between items-center">
                         <div>
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1.5">
                               {!log.checkOut && (
-                                <span className="text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full">
-                                  Active
-                                </span>
+                                <span className="text-xs theme-badge-success">Active</span>
                               )}
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs theme-text-secondary">
                                 {taskIds.length} {taskIds.length === 1 ? 'task' : 'tasks'}
                               </span>
                             </div>
                             <div className="flex flex-wrap gap-1">
                               {taskIds.map(id => (
-                                <span
-                                  key={id}
-                                  className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full"
-                                >
+                                <span key={id} className="text-xs theme-badge-primary">
                                   {getTaskTitle(id)}
                                 </span>
                               ))}
                             </div>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm theme-text-secondary">
                               {checkInTime} - {checkOutTime}
                             </p>
-                            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
-                              {duration}
-                            </span>
+                            <span className="text-xs theme-badge-primary">{duration}</span>
                           </div>
                         </div>
                         <div
-                          className={`h-3 w-3 rounded-full ${log.checkOut ? 'bg-muted' : 'bg-green-500 animate-pulse'}`}
+                          className={`h-3 w-3 rounded-full ${log.checkOut ? 'bg-muted' : 'bg-success animate-pulse'}`}
                         />
                       </div>
                     </Card>

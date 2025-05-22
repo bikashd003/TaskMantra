@@ -89,37 +89,36 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
     <>
       {/* Mobile Backdrop */}
       {isMobileOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onMobileClose} />
+        <div
+          className="fixed inset-0 bg-black/50 dark:bg-black/80 z-40 md:hidden"
+          onClick={onMobileClose}
+        />
       )}
       {/* Sidebar */}
       <aside
         className={`
-                    sidebar
-                    top-0 left-0 z-50 h-full bg-white text-gray-800
-                    flex flex-col shadow-md border-r border-gray-100
+                    sidebar sidebar-container
+                    top-0 left-0 z-50 h-full
+                    flex flex-col theme-shadow-md border-r
                     ${isExpanded ? '' : 'collapsed'}
                     ${isMobileOpen ? 'mobile-open' : ''}
                 `}
       >
         {/* Mobile Close Button */}
         <button
-          className="absolute top-4 right-4 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 md:hidden"
+          className="absolute top-4 right-4 p-1.5 rounded-full theme-button-ghost md:hidden"
           onClick={onMobileClose}
           aria-label="Close sidebar"
         >
-          <X className="h-5 w-5 text-gray-700" />
+          <X className="h-5 w-5 theme-text-secondary" />
         </button>
         <Logo isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
 
         {/* Navigation Items */}
-        <div className="flex-1 px-3 py-4 space-y-5 overflow-y-auto scrollbar-custom">
+        <div className="flex-1 px-3 py-4 space-y-5 overflow-y-auto theme-scrollbar">
           {menuItems.map(group => (
             <div key={group.label}>
-              {isExpanded && (
-                <div className="text-gray-500 text-xs uppercase font-semibold px-2 mb-2.5 tracking-wider">
-                  {group.label}
-                </div>
-              )}
+              {isExpanded && <div className="sidebar-section-label px-2 mb-2.5">{group.label}</div>}
               <div className="space-y-1">
                 {group.items.map((item: any) => (
                   <SidebarItem

@@ -16,10 +16,10 @@ export function UserProfile({ isExpanded }: UserProfileProps) {
   const session = useAuth().session;
   const { isConnected } = useNotifications();
   return (
-    <div className="border-t border-gray-100 shadow-sm relative">
+    <div className="user-profile-container border-t relative">
       <div
         className={`
-      px-4 py-3 border-b border-gray-100
+      px-4 py-3 user-profile-section border-b
       flex items-center gap-4
       ${isExpanded ? '' : 'justify-center'}
     `}
@@ -32,7 +32,7 @@ export function UserProfile({ isExpanded }: UserProfileProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-white shadow-sm border border-gray-100">
+                <div className="absolute -bottom-1 -right-1 p-1 rounded-full user-profile-status-indicator">
                   {isConnected ? (
                     <Wifi className="h-3 w-3 text-green-500" />
                   ) : (
@@ -50,18 +50,16 @@ export function UserProfile({ isExpanded }: UserProfileProps) {
         {isExpanded && (
           <>
             <div className="flex-1 min-w-0">
-              <h2 className="text-base font-semibold text-gray-800 truncate">
-                {session?.user?.name}
-              </h2>
-              <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
+              <h2 className="text-base user-profile-name truncate">{session?.user?.name}</h2>
+              <p className="text-xs user-profile-email truncate">{session?.user?.email}</p>
             </div>
             <Popover>
               <PopoverTrigger>
-                <ChevronRight className="h-5 w-5 text-gray-400 hover:text-primary transition-colors duration-200" />
+                <ChevronRight className="h-5 w-5 user-profile-chevron" />
               </PopoverTrigger>
               <PopoverContent className="w-fit h-fit p-0">
                 <button
-                  className="flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:text-red-600 bg-white hover:bg-red-50 rounded-md transition-colors duration-200 border border-gray-100"
+                  className="flex items-center gap-3 px-5 py-3 text-sm font-medium user-profile-signout-btn rounded-md"
                   onClick={() => signOut({ callbackUrl: '/' })}
                 >
                   <LogOut className="h-4 w-4" />

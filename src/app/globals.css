@@ -51,41 +51,42 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+      --background: 0 0% 1.5%;
+        --foreground: 0 0% 95%;
+        --card: 0 0% 2%;
+        --card-foreground: 0 0% 95%;
+        --popover: 0 0% 2.5%;
+        --popover-foreground: 0 0% 95%;
+        --primary: 0 0% 95%;
+        --primary-foreground: 0 0% 5%;
+        --secondary: 0 0% 6%;
+        --secondary-foreground: 0 0% 90%;
+        --muted: 0 0% 8%;
+        --muted-foreground: 0 0% 55%;
+        --accent: 0 0% 10%;
+        --accent-foreground: 0 0% 90%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --success: 142 30% 58%;
     --success-foreground: 0 0% 98%;
     --warning: 40 74% 58%;
     --warning-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
+    --border: 0 0% 12%;
+      --input: 0 0% 8%;
     --ring: 0 0% 83.1%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
+    /* Much darker sidebar colors */
+      --sidebar-background: 0 0% 2%;
+      --sidebar-foreground: 0 0% 85%;
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-accent: 0 0% 6%;
+      --sidebar-accent-foreground: 0 0% 85%;
+      --sidebar-border: 0 0% 8%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
@@ -566,4 +567,342 @@ body {
 
 .animation-delay-2000 {
   animation-delay: 2000ms;
+}
+/* ===== GLOBAL DARK THEME UTILITY CLASSES ===== */
+
+/* Sidebar Component Classes */
+.sidebar-container {
+  @apply bg-sidebar text-sidebar-foreground border-sidebar-border;
+}
+
+.sidebar-item {
+  @apply text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-200;
+}
+
+.sidebar-item-active {
+  @apply bg-sidebar-primary/10 text-sidebar-primary font-medium shadow-sm;
+}
+
+.sidebar-section-label {
+  @apply text-sidebar-foreground/60 text-xs uppercase font-semibold tracking-wider;
+}
+
+.sidebar-badge-primary {
+  @apply bg-sidebar-primary/15 text-sidebar-primary;
+}
+
+.sidebar-badge-secondary {
+  @apply bg-destructive/20 text-destructive;
+}
+
+.sidebar-tooltip {
+  @apply bg-popover text-popover-foreground shadow-lg border border-border;
+}
+
+.sidebar-chevron {
+  @apply text-sidebar-foreground/50;
+}
+
+.sidebar-sub-item {
+  @apply text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border-sidebar-border;
+}
+
+.sidebar-sub-item-active {
+  @apply bg-sidebar-primary/5 text-sidebar-primary font-medium;
+}
+
+/* User Profile Classes */
+.user-profile-container {
+  @apply border-sidebar-border shadow-sm;
+}
+
+.user-profile-section {
+  @apply border-sidebar-border;
+}
+
+.user-profile-name {
+  @apply text-sidebar-foreground font-semibold;
+}
+
+.user-profile-email {
+  @apply text-sidebar-foreground/60;
+}
+
+.user-profile-status-indicator {
+  @apply bg-sidebar shadow-sm border border-sidebar-border;
+}
+
+.user-profile-chevron {
+  @apply text-sidebar-foreground/50 hover:text-sidebar-primary transition-colors duration-200;
+}
+
+.user-profile-signout-btn {
+  @apply text-sidebar-foreground/80 hover:text-destructive bg-popover hover:bg-destructive/10 border border-border transition-colors duration-200;
+}
+
+/* Logo Classes */
+.logo-container {
+  @apply border-sidebar-border;
+}
+
+.logo-text {
+  @apply text-sidebar-foreground font-bold;
+}
+
+.logo-toggle-btn {
+  @apply bg-sidebar-accent hover:bg-sidebar-accent/80 transition-all duration-200 shadow-sm;
+}
+
+.logo-toggle-icon {
+  @apply text-sidebar-foreground/70;
+}
+
+/* General Component Classes */
+.theme-surface {
+  @apply bg-card text-card-foreground border border-border;
+}
+
+.theme-surface-elevated {
+  @apply bg-popover text-popover-foreground border border-border shadow-lg;
+}
+
+.theme-button-primary {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-200;
+}
+
+.theme-button-secondary {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors duration-200;
+}
+
+.theme-button-ghost {
+  @apply hover:bg-accent hover:text-accent-foreground transition-colors duration-200;
+}
+
+.theme-input {
+  @apply bg-input border border-border text-foreground placeholder:text-muted-foreground;
+}
+
+.theme-text-primary {
+  @apply text-foreground;
+}
+
+.theme-text-secondary {
+  @apply text-muted-foreground;
+}
+
+.theme-text-accent {
+  @apply text-accent-foreground;
+}
+
+.theme-border {
+  @apply border-border;
+}
+
+.theme-divider {
+  @apply border-t border-border;
+}
+
+/* Interactive States */
+.theme-hover-surface {
+  @apply hover:bg-accent/50 transition-colors duration-200;
+}
+
+.theme-hover-primary {
+  @apply hover:bg-primary/10 hover:text-primary transition-colors duration-200;
+}
+
+.theme-active-primary {
+  @apply bg-primary/10 text-primary;
+}
+
+/* Badge Classes */
+.theme-badge-primary {
+  @apply bg-primary/15 text-primary px-2 py-0.5 text-xs font-medium rounded-full;
+}
+
+.theme-badge-secondary {
+  @apply bg-secondary/50 text-secondary-foreground px-2 py-0.5 text-xs font-medium rounded-full;
+}
+
+.theme-badge-destructive {
+  @apply bg-destructive/20 text-destructive px-2 py-0.5 text-xs font-medium rounded-full;
+}
+
+.theme-badge-success {
+  @apply bg-success/20 text-success px-2 py-0.5 text-xs font-medium rounded-full;
+}
+
+.theme-badge-warning {
+  @apply bg-warning/20 text-warning px-2 py-0.5 text-xs font-medium rounded-full;
+}
+
+/* Scrollbar Classes */
+.theme-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted)) hsl(var(--background));
+}
+
+.theme-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.theme-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+  border-radius: 10px;
+}
+
+.theme-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 10px;
+}
+
+.theme-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Shadow Classes */
+.theme-shadow-sm {
+  box-shadow: 0 1px 2px 0 hsl(var(--foreground) / 0.05);
+}
+
+.theme-shadow {
+  box-shadow: 0 1px 3px 0 hsl(var(--foreground) / 0.1), 0 1px 2px -1px hsl(var(--foreground) / 0.1);
+}
+
+.theme-shadow-md {
+  box-shadow: 0 4px 6px -1px hsl(var(--foreground) / 0.1), 0 2px 4px -2px hsl(var(--foreground) / 0.1);
+}
+
+.theme-shadow-lg {
+  box-shadow: 0 10px 15px -3px hsl(var(--foreground) / 0.1), 0 4px 6px -4px hsl(var(--foreground) / 0.1);
+}
+
+/* Focus States */
+.theme-focus {
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+}
+
+/* Transition Classes */
+.theme-transition {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.theme-transition-fast {
+  @apply transition-all duration-150 ease-in-out;
+}
+
+.theme-transition-slow {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Chart and Data Visualization Classes */
+.chart-tooltip {
+  @apply bg-popover text-popover-foreground border border-border shadow-lg rounded-md;
+}
+
+.chart-legend {
+  @apply text-muted-foreground;
+}
+
+.chart-grid {
+  stroke: hsl(var(--border));
+  stroke-opacity: 0.5;
+}
+
+.chart-axis {
+  @apply text-muted-foreground;
+}
+
+/* Loading and Empty State Classes */
+.loading-skeleton {
+  @apply bg-muted animate-pulse rounded;
+}
+
+.empty-state-container {
+  @apply flex flex-col items-center justify-center py-16 theme-text-secondary;
+}
+
+.empty-state-icon {
+  @apply w-16 h-16 rounded-full theme-surface flex items-center justify-center mb-4;
+}
+
+.empty-state-title {
+  @apply text-lg font-medium theme-text-primary mb-1;
+}
+
+.empty-state-description {
+  @apply text-sm theme-text-secondary max-w-md text-center;
+}
+
+/* Status and Priority Indicator Classes */
+.status-indicator-todo {
+  @apply bg-muted/50 text-muted-foreground;
+}
+
+.status-indicator-in-progress {
+  @apply bg-primary/20 text-primary;
+}
+
+.status-indicator-completed {
+  @apply bg-success/20 text-success;
+}
+
+.priority-indicator-low {
+  @apply bg-success/20 text-success;
+}
+
+.priority-indicator-medium {
+  @apply bg-warning/20 text-warning;
+}
+
+.priority-indicator-high {
+  @apply bg-destructive/20 text-destructive;
+}
+
+/* Card and Panel Variants */
+.dashboard-card {
+  @apply theme-surface-elevated rounded-lg p-4 theme-shadow-sm;
+}
+
+.dashboard-card-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.dashboard-card-title {
+  @apply text-lg font-semibold theme-text-primary;
+}
+
+.dashboard-card-description {
+  @apply text-sm theme-text-secondary;
+}
+
+/* Interactive Element States */
+.interactive-hover {
+  @apply hover:bg-accent/50 hover:text-accent-foreground theme-transition cursor-pointer;
+}
+
+.interactive-active {
+  @apply bg-accent text-accent-foreground;
+}
+
+.interactive-disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Form and Input Variants */
+.form-input {
+  @apply theme-input rounded-md px-3 py-2 theme-focus;
+}
+
+.form-label {
+  @apply text-sm font-medium theme-text-primary;
+}
+
+.form-error {
+  @apply text-sm text-destructive;
+}
+
+.form-helper {
+  @apply text-sm theme-text-secondary;
 }

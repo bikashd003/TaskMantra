@@ -83,11 +83,11 @@ const TaskList: React.FC<TaskListProps> = ({
 
   const getPriorityColor = (priority: Task['priority']) => {
     const colors: Record<string, string> = {
-      Low: 'bg-emerald-100/30 text-emerald-600 border-emerald-200',
-      Medium: 'bg-amber-100/30 text-amber-600 border-amber-200',
-      High: 'bg-rose-100/30 text-rose-600 border-rose-200',
+      Low: 'theme-badge-success',
+      Medium: 'theme-badge-warning',
+      High: 'theme-badge-destructive',
     };
-    return colors[priority] || colors.medium;
+    return colors[priority] || colors.Medium;
   };
 
   const priorityIcon = (priority: Task['priority']) => {
@@ -117,8 +117,7 @@ const TaskList: React.FC<TaskListProps> = ({
         transition={{ duration: 0.3 }}
         className={cn(
           'group flex flex-col sm:flex-row items-start justify-between p-3 sm:p-4 rounded-xl gap-2 sm:gap-4',
-          'bg-white dark:bg-gray-900/60 shadow-sm hover:shadow-md transition-all duration-200',
-          'border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700',
+          'theme-surface theme-shadow-sm theme-hover-surface theme-transition',
           'hover:-translate-y-0.5'
         )}
       >
@@ -126,16 +125,14 @@ const TaskList: React.FC<TaskListProps> = ({
           <button
             onClick={() => taskId && onTaskUpdate?.(taskId, { completed: !isCompleted })}
             className={cn(
-              'w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 mt-1',
-              isCompleted
-                ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              'w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center theme-transition flex-shrink-0 mt-1',
+              isCompleted ? 'bg-success/20 text-success' : 'theme-button-ghost theme-text-secondary'
             )}
             aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
           >
             <CheckCircle
               size={isCompleted ? 16 : 14}
-              className={isCompleted ? 'fill-emerald-600 dark:fill-emerald-400' : ''}
+              className={isCompleted ? 'fill-success' : ''}
             />
           </button>
 
@@ -144,38 +141,33 @@ const TaskList: React.FC<TaskListProps> = ({
               <h3
                 className={cn(
                   'font-medium text-sm sm:text-base line-clamp-1',
-                  isCompleted
-                    ? 'text-gray-400 dark:text-gray-500 line-through'
-                    : 'text-gray-800 dark:text-gray-100'
+                  isCompleted ? 'theme-text-secondary line-through' : 'theme-text-primary'
                 )}
               >
                 {task.title || task.name}
               </h3>
               <Badge
                 variant="outline"
-                className={cn(
-                  'w-fit text-xs px-2 py-0.5 rounded-md',
-                  getPriorityColor(task.priority)
-                )}
+                className={cn('w-fit text-xs rounded-md', getPriorityColor(task.priority))}
               >
                 {priorityIcon(task.priority)}
                 {task.priority}
               </Badge>
             </div>
 
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+            <p className="text-xs sm:text-sm theme-text-secondary line-clamp-2 mt-1">
               {task.description || 'No description'}
             </p>
 
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-xs theme-text-secondary">
               {task.dueDate && (
-                <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800/60 px-2 py-0.5 rounded-md">
+                <div className="flex items-center gap-1 theme-surface px-2 py-0.5 rounded-md">
                   <Calendar size={12} />
                   <span>{new Date(task.dueDate).toLocaleDateString()}</span>
                 </div>
               )}
               {task.category && (
-                <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800/60 px-2 py-0.5 rounded-md">
+                <div className="flex items-center gap-1 theme-surface px-2 py-0.5 rounded-md">
                   <Tag size={12} />
                   <span>{task.category}</span>
                 </div>
@@ -186,7 +178,7 @@ const TaskList: React.FC<TaskListProps> = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="sm:opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-200"
+                className="sm:opacity-0 group-hover:opacity-100 p-1.5 theme-button-ghost rounded-md theme-text-secondary theme-transition"
                 aria-label="Task options"
               >
                 <MoreHorizontal size={16} />
@@ -202,7 +194,7 @@ const TaskList: React.FC<TaskListProps> = ({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => taskId && onTaskDelete?.(taskId)}
-                className="text-sm text-rose-600 dark:text-rose-400 focus:text-rose-700"
+                className="text-sm text-destructive focus:text-destructive"
               >
                 Delete
               </DropdownMenuItem>
@@ -216,19 +208,16 @@ const TaskList: React.FC<TaskListProps> = ({
   const LoadingSkeleton = () => (
     <div className="space-y-3">
       {[1, 2, 3].map(i => (
-        <div
-          key={i}
-          className="flex items-start gap-3 p-3 animate-pulse rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/60"
-        >
-          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 mt-1" />
+        <div key={i} className="flex items-start gap-3 p-3 animate-pulse rounded-xl theme-surface">
+          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-muted flex-shrink-0 mt-1" />
           <div className="flex-1">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <div className="h-4 sm:h-5 w-full sm:w-1/3 rounded-md bg-gray-200 dark:bg-gray-700" />
-              <div className="h-4 w-16 rounded-full bg-gray-200 dark:bg-gray-700" />
+              <div className="h-4 sm:h-5 w-full sm:w-1/3 rounded-md bg-muted" />
+              <div className="h-4 w-16 rounded-full bg-muted" />
             </div>
-            <div className="h-3 sm:h-4 w-full sm:w-2/3 mt-2 rounded-md bg-gray-200 dark:bg-gray-700" />
+            <div className="h-3 sm:h-4 w-full sm:w-2/3 mt-2 rounded-md bg-muted" />
             <div className="flex items-center gap-2 mt-2">
-              <div className="h-3 w-20 rounded-md bg-gray-200 dark:bg-gray-700" />
+              <div className="h-3 w-20 rounded-md bg-muted" />
             </div>
           </div>
         </div>
@@ -237,25 +226,19 @@ const TaskList: React.FC<TaskListProps> = ({
   );
 
   return (
-    <Card
-      className={cn(
-        'bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/50',
-        'border border-gray-100 dark:border-gray-800 shadow-lg h-full',
-        className
-      )}
-    >
+    <Card className={cn('theme-surface-elevated h-full', className)}>
       <div className="max-h-[calc(100vh-55vh)] overflow-hidden">
         <CardHeader className="pb-2 pt-4 px-4 sm:px-5">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-              <Clock size={18} className="text-primary dark:text-primary-light" />
+            <CardTitle className="text-lg font-semibold theme-text-primary flex items-center gap-2">
+              <Clock size={18} className="text-primary" />
               {periodLabels[timePeriod]}
             </CardTitle>
 
             <div className="flex flex-wrap items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex-grow sm:flex-grow-0 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs sm:text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                  <button className="flex-grow sm:flex-grow-0 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs sm:text-sm theme-button-secondary theme-shadow-sm">
                     <Filter size={14} />
                     {filter === 'all' ? 'All' : filter === 'completed' ? 'Completed' : 'Pending'}
                     <ChevronDown size={14} />
@@ -276,7 +259,7 @@ const TaskList: React.FC<TaskListProps> = ({
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex-grow sm:flex-grow-0 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs sm:text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                  <button className="flex-grow sm:flex-grow-0 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs sm:text-sm theme-button-secondary theme-shadow-sm">
                     <Clock size={14} />
                     {timePeriod === 'today'
                       ? 'Today'
@@ -323,9 +306,9 @@ const TaskList: React.FC<TaskListProps> = ({
                   />
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-gray-500 dark:text-gray-400">
-                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-full mb-3">
-                    <Clock size={24} className="text-gray-400 dark:text-gray-500" />
+                <div className="flex flex-col items-center justify-center py-10 theme-text-secondary">
+                  <div className="p-3 theme-surface rounded-full mb-3">
+                    <Clock size={24} className="theme-text-secondary" />
                   </div>
                   <p className="text-center text-sm">
                     No tasks for{' '}

@@ -37,12 +37,7 @@ export function SidebarItem({
           href={path}
           className={`
             flex items-center h-10 px-3 my-1 rounded-lg
-            transition-all duration-200
-            ${
-              isActive
-                ? 'bg-primary/10 text-primary font-medium shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-            }
+            ${isActive ? 'sidebar-item-active' : 'sidebar-item'}
             ${subItems ? 'cursor-pointer' : ''}
           `}
           onClick={subItems ? toggleCollapse : undefined}
@@ -54,10 +49,10 @@ export function SidebarItem({
           ) : (
             <div
               className="
-              fixed left-14 ml-2 px-2.5 py-1.5 bg-white text-gray-800
+              fixed left-14 ml-2 px-2.5 py-1.5 sidebar-tooltip
               rounded-md text-xs font-medium whitespace-nowrap opacity-0 invisible
-              group-hover:opacity-100 group-hover:visible shadow-lg border border-gray-100
-              transition-all duration-200 z-50
+              group-hover:opacity-100 group-hover:visible
+              theme-transition z-50
             "
             >
               {label}
@@ -68,8 +63,7 @@ export function SidebarItem({
             <span
               className={`
                 ml-auto ${isExpanded ? '' : 'hidden'}
-                px-2 py-0.5 text-xs font-medium rounded-full
-                ${typeof badge === 'string' ? 'bg-primary/15 text-primary' : 'bg-red-100 text-red-600'}
+                ${typeof badge === 'string' ? 'sidebar-badge-primary px-2 rounded-md' : 'sidebar-badge-secondary px-2  rounded-md'}
               `}
             >
               {badge}
@@ -79,9 +73,9 @@ export function SidebarItem({
           {isExpanded && subItems && (
             <div className="ml-auto">
               {isOpen ? (
-                <ChevronUp className="h-4 w-4 text-gray-500" />
+                <ChevronUp className="h-4 w-4 sidebar-chevron" />
               ) : (
-                <ChevronDown className="h-4 w-4 text-gray-500" />
+                <ChevronDown className="h-4 w-4 sidebar-chevron" />
               )}
             </div>
           )}
@@ -90,12 +84,7 @@ export function SidebarItem({
         <div
           className={`
             flex items-center h-10 px-3 my-1 rounded-lg
-            transition-all duration-200
-            ${
-              isActive
-                ? 'bg-primary/10 text-primary font-medium shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-            }
+            ${isActive ? 'sidebar-item-active' : 'sidebar-item'}
             ${subItems ? 'cursor-pointer' : ''}
           `}
           onClick={subItems ? toggleCollapse : undefined}
@@ -107,10 +96,10 @@ export function SidebarItem({
           ) : (
             <div
               className="
-              fixed left-14 ml-2 px-2.5 py-1.5 bg-white text-gray-800
+              fixed left-14 ml-2 px-2.5 py-1.5 sidebar-tooltip
               rounded-md text-xs font-medium whitespace-nowrap opacity-0 invisible
-              group-hover:opacity-100 group-hover:visible shadow-lg border border-gray-100
-              transition-all duration-200 z-50
+              group-hover:opacity-100 group-hover:visible
+              theme-transition z-50
             "
             >
               {label}
@@ -121,8 +110,7 @@ export function SidebarItem({
             <span
               className={`
                 ml-auto ${isExpanded ? '' : 'hidden'}
-                px-2 py-0.5 text-xs font-medium rounded-full
-                ${typeof badge === 'string' ? 'bg-primary/15 text-primary' : 'bg-red-100 text-red-600'}
+                ${typeof badge === 'string' ? 'sidebar-badge-primary' : 'sidebar-badge-secondary'}
               `}
             >
               {badge}
@@ -132,9 +120,9 @@ export function SidebarItem({
           {isExpanded && subItems && (
             <div className="ml-auto">
               {isOpen ? (
-                <ChevronUp className="h-4 w-4 text-gray-500" />
+                <ChevronUp className="h-4 w-4 sidebar-chevron" />
               ) : (
-                <ChevronDown className="h-4 w-4 text-gray-500" />
+                <ChevronDown className="h-4 w-4 sidebar-chevron" />
               )}
             </div>
           )}
@@ -150,7 +138,7 @@ export function SidebarItem({
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="overflow-hidden group-hover:block pl-2 border-l border-gray-200 ml-4 mt-1"
+              className="overflow-hidden group-hover:block pl-2 border-l sidebar-sub-item ml-4 mt-1"
             >
               {subItems.map(subItem => (
                 <Link
@@ -158,13 +146,8 @@ export function SidebarItem({
                   href={subItem.path}
                   className={`
                     pl-8 block py-2 text-sm
-                    truncate
-                    transition-all duration-200 rounded-lg
-                    ${
-                      pathname === subItem.path
-                        ? 'bg-primary/5 text-primary font-medium'
-                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
-                    }
+                    truncate rounded-lg
+                    ${pathname === subItem.path ? 'sidebar-sub-item-active' : 'sidebar-sub-item'}
                   `}
                 >
                   {subItem.label}

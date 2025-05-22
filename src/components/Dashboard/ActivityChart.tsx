@@ -242,21 +242,18 @@ export function ActivityChart() {
   };
 
   return (
-    <Card
-      className={cn(
-        'bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/50',
-        'border border-gray-100 dark:border-gray-800 shadow-lg h-full'
-      )}
-    >
+    <Card className={cn('theme-surface-elevated h-full')}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Task Analytics</CardTitle>
-            <CardDescription>Detailed task statistics</CardDescription>
+            <CardTitle className="theme-text-primary">Task Analytics</CardTitle>
+            <CardDescription className="theme-text-secondary">
+              Detailed task statistics
+            </CardDescription>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 rounded-lg">
-            <CheckCircle className="h-4 w-4 text-success" />
-            <span className="text-sm font-medium text-success">{completionRate}% Complete</span>
+          <div className="flex items-center gap-2 theme-badge-success">
+            <CheckCircle className="h-4 w-4" />
+            <span className="text-sm font-medium">{completionRate}% Complete</span>
           </div>
         </div>
       </CardHeader>
@@ -353,8 +350,10 @@ export function ActivityChart() {
 
               <TabsContent value="status" className="mt-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <h3 className="text-sm font-medium mb-2">Status Distribution</h3>
+                  <div className="theme-surface rounded-lg p-4 theme-shadow-sm">
+                    <h3 className="text-sm font-medium mb-2 theme-text-primary">
+                      Status Distribution
+                    </h3>
                     <div className="h-[200px]">
                       <ResponsiveContainer width="100%">
                         <RechartsPieChart>
@@ -379,8 +378,10 @@ export function ActivityChart() {
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <h3 className="text-sm font-medium mb-2">Priority Distribution</h3>
+                  <div className="theme-surface rounded-lg p-4 theme-shadow-sm">
+                    <h3 className="text-sm font-medium mb-2 theme-text-primary">
+                      Priority Distribution
+                    </h3>
                     <div className="h-[200px]">
                       <ResponsiveContainer width="100%">
                         <RechartsPieChart>
@@ -409,57 +410,48 @@ export function ActivityChart() {
 
               <TabsContent value="timeline" className="mt-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <h3 className="text-sm font-medium mb-4">Due Date Status</h3>
+                  <div className="theme-surface rounded-lg p-4 theme-shadow-sm">
+                    <h3 className="text-sm font-medium mb-4 theme-text-primary">Due Date Status</h3>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center">
-                          <AlertTriangle className="h-4 w-4 text-red-500 mr-2" />
-                          <span className="text-sm">Overdue</span>
+                          <AlertTriangle className="h-4 w-4 text-destructive mr-2" />
+                          <span className="text-sm theme-text-primary">Overdue</span>
                         </div>
                         <Badge variant="destructive">{dueDateStats.overdue}</Badge>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center">
-                          <Clock className="h-4 w-4 text-amber-500 mr-2" />
-                          <span className="text-sm">Due Soon (3 days)</span>
+                          <Clock className="h-4 w-4 text-warning mr-2" />
+                          <span className="text-sm theme-text-primary">Due Soon (3 days)</span>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className="bg-amber-100 text-amber-800 hover:bg-amber-100"
-                        >
+                        <Badge variant="outline" className="theme-badge-warning">
                           {dueDateStats.dueSoon}
                         </Badge>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center">
-                          <Clock className="h-4 w-4 text-blue-500 mr-2" />
-                          <span className="text-sm">Upcoming</span>
+                          <Clock className="h-4 w-4 text-info mr-2" />
+                          <span className="text-sm theme-text-primary">Upcoming</span>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className="bg-blue-100 text-blue-800 hover:bg-blue-100"
-                        >
+                        <Badge variant="outline" className="theme-badge-primary">
                           {dueDateStats.upcoming}
                         </Badge>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-sm">Completed</span>
+                          <CheckCircle className="h-4 w-4 text-success mr-2" />
+                          <span className="text-sm theme-text-primary">Completed</span>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className="bg-green-100 text-green-800 hover:bg-green-100"
-                        >
+                        <Badge variant="outline" className="theme-badge-success">
                           {dueDateStats.completedOnTime}
                         </Badge>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-4 shadow-sm">
-                    <h3 className="text-sm font-medium mb-2">Time Tracking</h3>
+                  <div className="theme-surface rounded-lg p-4 theme-shadow-sm">
+                    <h3 className="text-sm font-medium mb-2 theme-text-primary">Time Tracking</h3>
                     <div className="h-[180px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
