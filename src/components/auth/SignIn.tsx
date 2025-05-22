@@ -148,7 +148,10 @@ const SignIn: React.FC<SignInProps> = ({ onSwitchForm }) => {
               <p className="text-white/60">
                 Don&apos;t have an account?{' '}
                 <motion.button
-                  onClick={onSwitchForm}
+                  onClick={e => {
+                    e.preventDefault();
+                    onSwitchForm();
+                  }}
                   className="text-white hover:text-indigo-400 font-medium transition-colors"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

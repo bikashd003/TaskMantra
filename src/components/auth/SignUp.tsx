@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { FcGoogle } from 'react-icons/fc';
 import axios from 'axios';
+import Link from 'next/link';
 
 interface SignUpProps {
   onSwitchForm: () => void;
@@ -196,13 +197,13 @@ const SignUp: React.FC<SignUpProps> = ({ onSwitchForm }) => {
               />
               <label htmlFor="terms" className="ml-2 text-sm text-white/60">
                 I agree to the{' '}
-                <a href="#" className="text-white hover:text-indigo-400">
+                <Link href="/terms-and-conditions" className="text-white hover:text-indigo-400">
                   Terms of Service
-                </a>{' '}
+                </Link>{' '}
                 and{' '}
-                <a href="#" className="text-white hover:text-indigo-400">
+                <Link href="/privacy-policy" className="text-white hover:text-indigo-400">
                   Privacy Policy
-                </a>
+                </Link>
               </label>
             </motion.div>
 

@@ -9,7 +9,7 @@ interface LogoProps {
 
 const Logo = ({ isExpanded, setIsExpanded }: LogoProps) => {
   return (
-    <div className={`flex items-center justify-between px-3 py-3 border-b border-gray-100 `}>
+    <div className={`flex items-center justify-between px-3 py-3 logo-container border-b `}>
       <div className="flex items-center">
         {/* Logo Icon */}
         <div className="relative group">
@@ -32,7 +32,7 @@ const Logo = ({ isExpanded, setIsExpanded }: LogoProps) => {
                         ${isExpanded ? 'w-40 opacity-100' : 'w-0 opacity-0'}
                     `}
         >
-          <h1 className="font-['Outfit'] font-bold text-lg text-gray-800">
+          <h1 className="font-['Outfit'] logo-text text-lg">
             Task<span className="text-primary">Mantra</span>
           </h1>
         </div>
@@ -40,13 +40,13 @@ const Logo = ({ isExpanded, setIsExpanded }: LogoProps) => {
 
       {/* Toggle Button */}
       <button
-        className={`hidden md:flex items-center  justify-center w-6 h-6 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-200 shadow-sm ${isExpanded ? '' : '-ml-1'}`}
+        className={`hidden md:flex items-center justify-center w-6 h-6 rounded-lg logo-toggle-btn ${isExpanded ? '' : '-ml-1'}`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {isExpanded ? (
-          <ChevronLeft className="h-4 w-4 text-gray-600" />
+          <ChevronLeft className="h-4 w-4 logo-toggle-icon" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-gray-600" />
+          <ChevronRight className="h-4 w-4 logo-toggle-icon" />
         )}
       </button>
     </div>

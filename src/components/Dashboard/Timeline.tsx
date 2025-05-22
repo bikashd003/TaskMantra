@@ -294,17 +294,14 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
   );
 
   return (
-    <Card
-      className={cn(
-        'bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/50',
-        'border border-gray-100 dark:border-gray-800 shadow-lg h-full'
-      )}
-    >
+    <Card className={cn('theme-surface-elevated h-full')}>
       <div className="max-h-[86vh] overflow-hidden">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-6">
           <div className="space-y-1">
-            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">Project Timeline</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight theme-text-primary">
+              Project Timeline
+            </h2>
+            <p className="text-sm theme-text-secondary">
               Track your project milestones and progress
             </p>
           </div>
@@ -316,7 +313,7 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
                     <Button
                       variant="default"
                       size="sm"
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto theme-button-primary"
                       onClick={onCreateItem}
                     >
                       <PlusCircle className="mr-2 h-4 w-4" />
@@ -331,7 +328,11 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto theme-button-secondary"
+                >
                   <Filter className="mr-2 h-4 w-4" />
                   Filter
                 </Button>
@@ -371,18 +372,23 @@ const Timeline: React.FC<TimelineProps> = ({ projectId, onCreateItem }) => {
 
               {!isLoading && items.length === 0 && (
                 <div className="text-center py-16 flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-4">
-                    <PlusCircle className="w-8 h-8 text-muted-foreground/50" />
+                  <div className="w-16 h-16 rounded-full theme-surface flex items-center justify-center mb-4">
+                    <PlusCircle className="w-8 h-8 theme-text-secondary" />
                   </div>
-                  <h3 className="text-lg font-medium text-foreground mb-1">
+                  <h3 className="text-lg font-medium theme-text-primary mb-1">
                     No timeline items yet
                   </h3>
-                  <p className="text-sm text-muted-foreground max-w-md">
+                  <p className="text-sm theme-text-secondary max-w-md">
                     Create your first timeline item to start tracking your project milestones and
                     progress.
                   </p>
                   {onCreateItem && (
-                    <Button variant="outline" size="sm" className="mt-4" onClick={onCreateItem}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4 theme-button-secondary"
+                      onClick={onCreateItem}
+                    >
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Add Timeline Item
                     </Button>
