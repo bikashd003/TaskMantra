@@ -1,22 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { CheckCircle, Clock, AlertTriangle, BarChart2, PieChart } from 'lucide-react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  PieChart as RechartsPieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-} from 'recharts';
-import { format, subMonths, startOfMonth, endOfMonth, isBefore, addDays } from 'date-fns';
+import { CheckCircle, TrendingUp } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartConfig,
   ChartContainer,
@@ -25,40 +15,53 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TaskService } from '@/services/Task.service';
 import { useTaskStore } from '@/stores/taskStore';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 const chartConfig = {
   completed: {
     label: 'Completed',
-    color: 'hsl(var(--success))',
+    color: 'hsl(142 76% 36%)',
   },
   inProgress: {
     label: 'In Progress',
-    color: 'hsl(var(--warning))',
+    color: 'hsl(48 96% 53%)',
   },
   review: {
     label: 'Review',
-    color: 'hsl(var(--info))',
+    color: 'hsl(213 94% 68%)',
   },
   todo: {
     label: 'To Do',
-    color: 'hsl(var(--muted-foreground))',
+    color: 'hsl(215 20% 65%)',
   },
 } satisfies ChartConfig;
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
 interface ChartDataItem {
   month: string;
+  fullMonth: string;
   completed: number;
   inProgress: number;
   review: number;
   todo: number;
+  total: number;
 }
+const ChartSkeleton = () => (
+  <div className="h-[260px] w-full">
+    <div className="flex items-end justify-between h-full gap-2">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div key={i} className="flex-1">
+          <Skeleton
+            className="w-full rounded-md bg-muted/40"
+            style={{ height: `${Math.max(50, 150 * Math.random())}px` }}
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 export function ActivityChart() {
   const { tasks, setTasks } = useTaskStore();
@@ -67,7 +70,8 @@ export function ActivityChart() {
     queryFn: async () => {
       const promises: Promise<any[]>[] = [];
 
-      for (let i = 5; i >= 0; i--) {
+      // Get data for all 12 months
+      for (let i = 11; i >= 0; i--) {
         const targetMonth = subMonths(new Date(), i);
         const monthStart = startOfMonth(targetMonth);
         const monthEnd = endOfMonth(targetMonth);
@@ -89,79 +93,15 @@ export function ActivityChart() {
     },
   });
 
-  const {
-    chartData,
-    completionRate,
-    statusDistribution,
-    priorityDistribution,
-    timeTrackingData,
-    dueDateStats,
-  } = useMemo(() => {
+  const { chartData, completionRate, trend } = useMemo(() => {
     const monthsData: ChartDataItem[] = [];
-    let totalTasks = 0;
+    let totalTasksCount = 0;
     let totalCompleted = 0;
+    let recentMonthsCompleted = 0;
+    let olderMonthsCompleted = 0;
 
-    // Status distribution data
-    const statusCounts = {
-      'To Do': 0,
-      'In Progress': 0,
-      Review: 0,
-      Completed: 0,
-    };
-
-    // Priority distribution data
-    const priorityCounts = {
-      High: 0,
-      Medium: 0,
-      Low: 0,
-    };
-
-    // Time tracking data
-    let totalEstimatedTime = 0;
-    let totalLoggedTime = 0;
-
-    // Due date analysis
-    const today = new Date();
-    let overdueCount = 0;
-    let dueSoonCount = 0;
-    let upcomingCount = 0;
-    let completedOnTimeCount = 0;
-
-    // Process all tasks for status and priority distribution
-    tasks.forEach(task => {
-      // Count by status
-      const status = task.status || 'To Do';
-      if (Object.prototype.hasOwnProperty.call(statusCounts, status)) {
-        statusCounts[status]++;
-      }
-
-      // Count by priority
-      const priority = task.priority || 'Medium';
-      if (Object.prototype.hasOwnProperty.call(priorityCounts, priority)) {
-        priorityCounts[priority]++;
-      }
-
-      // Sum time tracking
-      totalEstimatedTime += task.estimatedTime || 0;
-      totalLoggedTime += task.loggedTime || 0;
-
-      // Due date analysis
-      const dueDate = new Date(task.dueDate);
-      if (task.status === 'Completed') {
-        totalCompleted++;
-        // Assuming completed on time if it's completed
-        completedOnTimeCount++;
-      } else if (isBefore(dueDate, today)) {
-        overdueCount++;
-      } else if (isBefore(dueDate, addDays(today, 3))) {
-        dueSoonCount++;
-      } else {
-        upcomingCount++;
-      }
-    });
-
-    // Group tasks by month for the chart
-    for (let i = 5; i >= 0; i--) {
+    // Group tasks by month for the chart (12 months)
+    for (let i = 11; i >= 0; i--) {
       const targetMonth = subMonths(new Date(), i);
       const monthStart = startOfMonth(targetMonth);
       const monthEnd = endOfMonth(targetMonth);
@@ -177,298 +117,186 @@ export function ActivityChart() {
       const inProgress = monthTasks.filter(task => task.status === 'In Progress').length;
       const review = monthTasks.filter(task => task.status === 'Review').length;
       const todo = monthTasks.filter(task => task.status === 'To Do').length;
+      const total = monthTasks.length;
 
       // Add to total tasks count
-      totalTasks += monthTasks.length;
+      totalTasksCount += total;
+      totalCompleted += completed;
+
+      // Track trend (last 3 months vs previous 3 months)
+      if (i <= 2) {
+        recentMonthsCompleted += completed;
+      } else if (i >= 9) {
+        olderMonthsCompleted += completed;
+      }
 
       monthsData.push({
-        month: format(targetMonth, 'MMMM'),
+        month: format(targetMonth, 'MMM'),
+        fullMonth: format(targetMonth, 'MMMM yyyy'),
         completed,
         inProgress,
         review,
         todo,
+        total,
       });
     }
 
-    // Calculate completion rate
-    const rate = totalTasks > 0 ? ((totalCompleted / totalTasks) * 100).toFixed(1) : '0';
-
-    // Format status distribution for pie chart
-    const statusDistribution = Object.entries(statusCounts).map(([name, value]) => ({
-      name,
-      value,
-    }));
-
-    // Format priority distribution for pie chart
-    const priorityDistribution = Object.entries(priorityCounts).map(([name, value]) => ({
-      name,
-      value,
-    }));
-
-    // Format time tracking data
-    const timeTrackingData = [
-      { name: 'Estimated', value: totalEstimatedTime },
-      { name: 'Logged', value: totalLoggedTime },
-    ];
-
-    // Format due date stats
-    const dueDateStats = {
-      overdue: overdueCount,
-      dueSoon: dueSoonCount,
-      upcoming: upcomingCount,
-      completedOnTime: completedOnTimeCount,
-    };
+    // Calculate completion rate and trend
+    const rate = totalTasksCount > 0 ? ((totalCompleted / totalTasksCount) * 100).toFixed(1) : '0';
+    const trendDirection = recentMonthsCompleted >= olderMonthsCompleted ? 'up' : 'down';
 
     return {
       chartData: monthsData,
       completionRate: rate,
-      statusDistribution,
-      priorityDistribution,
-      timeTrackingData,
-      dueDateStats,
+      totalTasks: totalTasksCount,
+      trend: trendDirection,
     };
   }, [tasks]);
 
-  // Custom tooltip for pie charts
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-2 border rounded shadow text-sm">
-          <p className="font-medium">{`${payload[0].name}: ${payload[0].value}`}</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <Card className={cn('theme-surface-elevated h-full')}>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="theme-text-primary">Task Analytics</CardTitle>
-            <CardDescription className="theme-text-secondary">
-              Detailed task statistics
-            </CardDescription>
+      <CardHeader className="pb-4 px-6 pt-6">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <CardTitle className="theme-text-primary text-xl font-semibold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Task Activity Overview
+              </CardTitle>
+              {!isLoading && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
+                  <TrendingUp
+                    className={cn(
+                      'h-3.5 w-3.5',
+                      trend === 'up' ? 'text-green-600' : 'text-orange-500'
+                    )}
+                  />
+                  <span className="text-xs font-medium text-gray-700">
+                    {trend === 'up' ? 'Trending Up' : 'Mixed Trend'}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2 theme-badge-success">
-            <CheckCircle className="h-4 w-4" />
-            <span className="text-sm font-medium">{completionRate}% Complete</span>
-          </div>
+          {!isLoading && (
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-green-50 via-emerald-50 to-green-50 border border-green-200/60 shadow-sm">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-semibold text-green-700">
+                {completionRate}% Complete
+              </span>
+            </div>
+          )}
         </div>
       </CardHeader>
 
       <CardContent className="pt-1 px-4 pb-3 flex flex-col flex-1 min-h-0">
         {isLoading ? (
-          <div className="flex-1 min-h-[300px] overflow-hidden">
-            <div className="flex h-full items-center justify-center">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-            </div>
-          </div>
+          <ChartSkeleton />
         ) : (
-          <div className="flex-1 max-h-[300px] overflow-hidden">
-            <Tabs defaultValue="monthly" className="w-full">
-              <TabsList className="mb-3">
-                <TabsTrigger value="monthly">
-                  <BarChart2 className="h-4 w-4 mr-2" />
-                  Monthly Trends
-                </TabsTrigger>
-                <TabsTrigger value="status">
-                  <PieChart className="h-4 w-4 mr-2" />
-                  Status & Priority
-                </TabsTrigger>
-                <TabsTrigger value="timeline">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Timeline
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="monthly" className="mt-0">
-                <div className="h-[200px]">
-                  <ChartContainer config={chartConfig} className="h-full w-full">
-                    <BarChart
-                      data={chartData}
-                      margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
-                      height={200}
-                    >
-                      <CartesianGrid
-                        vertical={false}
-                        strokeDasharray="3 3"
-                        stroke="hsl(var(--muted))"
-                        opacity={0.4}
-                      />
-                      <XAxis
-                        dataKey="month"
-                        tickLine={false}
-                        tickMargin={10}
-                        axisLine={false}
-                        tickFormatter={value => value.slice(0, 3)}
-                        fontSize={12}
-                        fontWeight={500}
-                        stroke="hsl(var(--muted-foreground))"
-                      />
-                      <ChartTooltip
-                        cursor={{ fill: 'hsl(var(--muted)/0.1)' }}
-                        content={<ChartTooltipContent hideLabel />}
-                      />
-                      <ChartLegend
-                        content={<ChartLegendContent />}
-                        wrapperStyle={{ paddingTop: '20px' }}
-                      />
-                      <Bar
-                        dataKey="completed"
-                        stackId="a"
-                        fill="var(--color-completed)"
-                        radius={[0, 0, 0, 0]}
-                        barSize={24}
-                      />
-                      <Bar
-                        dataKey="inProgress"
-                        stackId="a"
-                        fill="var(--color-inProgress)"
-                        radius={[0, 0, 0, 0]}
-                        barSize={24}
-                      />
-                      <Bar
-                        dataKey="review"
-                        stackId="a"
-                        fill="var(--color-review)"
-                        radius={[0, 0, 0, 0]}
-                        barSize={24}
-                      />
-                      <Bar
-                        dataKey="todo"
-                        stackId="a"
-                        fill="var(--color-todo)"
-                        radius={[4, 4, 0, 0]}
-                        barSize={24}
-                      />
-                    </BarChart>
-                  </ChartContainer>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="status" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="theme-surface rounded-lg p-4 theme-shadow-sm">
-                    <h3 className="text-sm font-medium mb-2 theme-text-primary">
-                      Status Distribution
-                    </h3>
-                    <div className="h-[200px]">
-                      <ResponsiveContainer width="100%">
-                        <RechartsPieChart>
-                          <Pie
-                            data={statusDistribution}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                            labelLine={false}
-                          >
-                            {statusDistribution.map((_entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip content={<CustomTooltip />} />
-                        </RechartsPieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  <div className="theme-surface rounded-lg p-4 theme-shadow-sm">
-                    <h3 className="text-sm font-medium mb-2 theme-text-primary">
-                      Priority Distribution
-                    </h3>
-                    <div className="h-[200px]">
-                      <ResponsiveContainer width="100%">
-                        <RechartsPieChart>
-                          <Pie
-                            data={priorityDistribution}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                            labelLine={false}
-                          >
-                            {priorityDistribution.map((_entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip content={<CustomTooltip />} />
-                        </RechartsPieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="timeline" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="theme-surface rounded-lg p-4 theme-shadow-sm">
-                    <h3 className="text-sm font-medium mb-4 theme-text-primary">Due Date Status</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <AlertTriangle className="h-4 w-4 text-destructive mr-2" />
-                          <span className="text-sm theme-text-primary">Overdue</span>
-                        </div>
-                        <Badge variant="destructive">{dueDateStats.overdue}</Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 text-warning mr-2" />
-                          <span className="text-sm theme-text-primary">Due Soon (3 days)</span>
-                        </div>
-                        <Badge variant="outline" className="theme-badge-warning">
-                          {dueDateStats.dueSoon}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 text-info mr-2" />
-                          <span className="text-sm theme-text-primary">Upcoming</span>
-                        </div>
-                        <Badge variant="outline" className="theme-badge-primary">
-                          {dueDateStats.upcoming}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-success mr-2" />
-                          <span className="text-sm theme-text-primary">Completed</span>
-                        </div>
-                        <Badge variant="outline" className="theme-badge-success">
-                          {dueDateStats.completedOnTime}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="theme-surface rounded-lg p-4 theme-shadow-sm">
-                    <h3 className="text-sm font-medium mb-2 theme-text-primary">Time Tracking</h3>
-                    <div className="h-[180px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={timeTrackingData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <Tooltip />
-                          <Bar dataKey="value" fill="#8884d8" name="Hours" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
+          <div className="space-y-4">
+            <div className="h-[260px] w-full">
+              <ChartContainer config={chartConfig} className="h-full w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="completedGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(142 76% 36%)" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="hsl(142 76% 36%)" stopOpacity={0.7} />
+                      </linearGradient>
+                      <linearGradient id="inProgressGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(48 96% 53%)" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="hsl(48 96% 53%)" stopOpacity={0.7} />
+                      </linearGradient>
+                      <linearGradient id="reviewGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(213 94% 68%)" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="hsl(213 94% 68%)" stopOpacity={0.7} />
+                      </linearGradient>
+                      <linearGradient id="todoGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(215 20% 65%)" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="hsl(215 20% 65%)" stopOpacity={0.7} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      vertical={false}
+                      strokeDasharray="2 4"
+                      stroke="hsl(220 13% 91%)"
+                      opacity={0.6}
+                    />
+                    <XAxis
+                      dataKey="month"
+                      tickLine={false}
+                      tickMargin={16}
+                      axisLine={false}
+                      fontSize={11}
+                      fontWeight={500}
+                      stroke="hsl(215 25% 46%)"
+                      opacity={0.8}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      fontSize={11}
+                      fontWeight={500}
+                      stroke="hsl(215 25% 46%)"
+                      opacity={0.8}
+                      width={35}
+                    />
+                    <ChartTooltip
+                      cursor={{
+                        fill: 'hsl(220 13% 91%)',
+                        opacity: 0.1,
+                        radius: 6,
+                        stroke: 'hsl(220 13% 91%)',
+                        strokeWidth: 1,
+                      }}
+                      content={
+                        <ChartTooltipContent
+                          hideLabel={false}
+                          labelFormatter={(value, payload) => {
+                            const data = payload?.[0]?.payload;
+                            return data?.fullMonth || value;
+                          }}
+                        />
+                      }
+                    />
+                    <ChartLegend
+                      content={<ChartLegendContent />}
+                      wrapperStyle={{
+                        paddingTop: '20px',
+                        fontSize: '13px',
+                      }}
+                    />
+                    <Bar
+                      dataKey="completed"
+                      stackId="a"
+                      fill="url(#completedGradient)"
+                      radius={[0, 0, 0, 0]}
+                      barSize={28}
+                    />
+                    <Bar
+                      dataKey="inProgress"
+                      stackId="a"
+                      fill="url(#inProgressGradient)"
+                      radius={[0, 0, 0, 0]}
+                      barSize={28}
+                    />
+                    <Bar
+                      dataKey="review"
+                      stackId="a"
+                      fill="url(#reviewGradient)"
+                      radius={[0, 0, 0, 0]}
+                      barSize={28}
+                    />
+                    <Bar
+                      dataKey="todo"
+                      stackId="a"
+                      fill="url(#todoGradient)"
+                      radius={[4, 4, 0, 0]}
+                      barSize={28}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
           </div>
         )}
       </CardContent>

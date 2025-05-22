@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ArrowUpRight, Loader2 } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { Label, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import {
   Card,
@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { ChartTooltip } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { TaskService } from '@/services/Task.service';
 import { TaskStatus } from '../Tasks/types';
@@ -71,27 +72,56 @@ export function ProjectProgress() {
     return Math.round((completedTasks / totalTasks) * 100);
   }, [chartData, totalTasks]);
 
-  // Handle loading state
-  if (isLoading) {
-    return (
-      <Card className="flex flex-col theme-surface-elevated h-full">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-xl font-bold theme-text-primary">
-                Project Overview
-              </CardTitle>
-              <CardDescription className="text-sm theme-text-secondary">
-                Task Distribution
-              </CardDescription>
+  // Skeleton component for loading state
+  const ChartSkeleton = () => (
+    <Card className="flex flex-col theme-surface-elevated h-full">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-xl font-bold theme-text-primary">Project Overview</CardTitle>
+            <CardDescription className="text-sm theme-text-secondary">
+              Task Distribution
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-1">
+            <Skeleton className="h-4 w-8" />
+            <Skeleton className="h-3 w-3" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 pb-2 h-full">
+        <div className="h-full w-full flex items-center justify-center">
+          {/* Circular chart skeleton */}
+          <div className="relative">
+            <Skeleton className="h-[180px] w-[180px] rounded-full" />
+            {/* Center content skeleton */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <Skeleton className="h-8 w-12 mb-1" />
+              <Skeleton className="h-3 w-16" />
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="flex-1 pb-2 h-full flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
+        </div>
+      </CardContent>
+      <CardFooter className="pt-0">
+        <div className="flex justify-between w-full">
+          {/* Legend skeleton items */}
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="flex flex-col items-center">
+              <div className="flex items-center gap-1 mb-1">
+                <Skeleton className="h-2 w-2 rounded-full" />
+                <Skeleton className="h-3 w-12" />
+              </div>
+              <Skeleton className="h-4 w-6" />
+            </div>
+          ))}
+        </div>
+      </CardFooter>
+    </Card>
+  );
+
+  // Handle loading state
+  if (isLoading) {
+    return <ChartSkeleton />;
   }
 
   // Handle error state
