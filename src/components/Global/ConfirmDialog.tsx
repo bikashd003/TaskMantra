@@ -2,17 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  AlertTriangle,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  Info,
-  AlertCircle,
-  Shield,
-  Zap,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, Trash2, CheckCircle, Info, AlertCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -273,7 +263,7 @@ export function useConfirmDialog() {
   };
 
   const ConfirmDialogComponent = (
-    <ConfirmDialog isOpen={isOpen} onClose={closeDialog} {...config} />
+    <ConfirmDialog isOpen={isOpen} onClose={closeDialog} onConfirm={() => {}} {...config} />
   );
 
   return {

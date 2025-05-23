@@ -8,7 +8,6 @@ import {
   AlertCircle,
   AlertTriangle,
   Info,
-  Bell,
   Megaphone,
   Star,
   Zap,
@@ -180,7 +179,6 @@ const positionConfig: Record<
 };
 
 export function NotificationBanner({
-  id,
   variant = 'info',
   title,
   message,
@@ -211,6 +209,7 @@ export function NotificationBanner({
 
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoHide, persistent, autoHideDelay]);
 
   const handleDismiss = () => {

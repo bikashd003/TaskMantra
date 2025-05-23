@@ -6,7 +6,6 @@ import {
   Search,
   FileText,
   Users,
-  Calendar,
   Inbox,
   Database,
   FolderOpen,
@@ -14,9 +13,7 @@ import {
   MessageSquare,
   Bell,
   Settings,
-  Plus,
   RefreshCw,
-  Filter,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -119,6 +116,7 @@ const emptyStateConfig: Record<
   'no-images': {
     title: 'No images found',
     description: 'Upload some images to see them displayed here.',
+    // eslint-disable-next-line jsx-a11y/alt-text
     icon: <Image className="w-full h-full" />,
   },
   error: {

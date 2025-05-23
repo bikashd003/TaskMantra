@@ -7,7 +7,6 @@ import {
   ChevronDown,
   Search,
   Filter,
-  MoreHorizontal,
   ArrowUpDown,
   Eye,
   Edit,
