@@ -4,9 +4,9 @@ import { logger } from 'hono/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/options';
 import { Task } from '@/models/Task';
-import { NotificationService } from '@/services/Notification.service';
 import { User } from '@/models/User';
 import { Project } from '@/models/Project';
+import { NotificationService } from '@/services/Notifications.service';
 
 type Variables = {
   user?: {

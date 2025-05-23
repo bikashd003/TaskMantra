@@ -8,7 +8,7 @@ import { Invitation } from '@/models/Invitations';
 import { Organization } from '@/models/organization';
 import { User } from '@/models/User';
 import { Resend } from 'resend';
-import { NotificationService } from '@/services/Notification.service';
+import { NotificationService } from '@/services/Notifications.service';
 
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY);

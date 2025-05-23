@@ -7,8 +7,8 @@ import { Invitation } from '@/models/Invitations';
 import { authOptions } from '../../auth/[...nextauth]/options';
 import { Organization } from '@/models/organization';
 import { uploadToCloudinary } from '@/Utility/cloudinary';
-import { NotificationService } from '@/services/Notification.service';
 import { User } from '@/models/User';
+import { NotificationService } from '@/services/Notifications.service';
 
 const app = new Hono().basePath('/api/onboarding');
 
