@@ -29,6 +29,7 @@ import axios from 'axios';
 import { Skeleton } from '@heroui/skeleton';
 import { toast } from 'sonner';
 import { Spinner } from '@heroui/spinner';
+import { useTheme } from 'next-themes';
 
 const generalSettingsSchema = z.object({
   appearance: z.object({
@@ -72,6 +73,7 @@ const timezones = [
 ];
 
 export default function GeneralSettings() {
+  const { setTheme } = useTheme();
   const { data: generalSettings, isLoading } = useQuery({
     queryKey: ['general-settings'],
     queryFn: async () => {
@@ -89,7 +91,10 @@ export default function GeneralSettings() {
     onError: (error: any) => {
       toast.error(error.message || 'Something went wrong');
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      if (variables.appearance?.theme) {
+        setTheme(variables.appearance.theme);
+      }
       queryClient.invalidateQueries({ queryKey: ['general-settings'] });
       toast.success('Settings updated successfully');
     },

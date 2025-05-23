@@ -31,7 +31,7 @@ export interface ReactSelectProps {
 const DropdownIndicator = (props: any) => {
   return (
     <components.DropdownIndicator {...props}>
-      <ChevronDown size={18} className="text-muted-foreground" />
+      <ChevronDown size={18} className="theme-text-secondary" />
     </components.DropdownIndicator>
   );
 };
@@ -40,7 +40,7 @@ const DropdownIndicator = (props: any) => {
 const ClearIndicator = (props: any) => {
   return (
     <components.ClearIndicator {...props}>
-      <X size={16} className="text-muted-foreground hover:text-destructive transition-colors" />
+      <X size={16} className="theme-text-secondary hover:text-destructive theme-transition" />
     </components.ClearIndicator>
   );
 };
@@ -48,7 +48,7 @@ const ClearIndicator = (props: any) => {
 // Custom no options message
 const NoOptionsMessage = (props: any) => (
   <components.NoOptionsMessage {...props}>
-    <div className="flex items-center justify-center gap-2 text-muted-foreground py-2">
+    <div className="flex items-center justify-center gap-2 theme-text-secondary py-2">
       <Search size={14} />
       <span>{props.children}</span>
     </div>
@@ -71,12 +71,18 @@ const ReactSelect = ({
   label,
   helperText,
 }: ReactSelectProps) => {
-  // Basic styles
+  // Custom styles using CSS variables for theme compatibility
   const customStyles = {
-    control: (base: any) => ({
+    control: (base: any, state: any) => ({
       ...base,
-      borderColor: error ? 'hsl(var(--destructive))' : 'hsl(var(--input))',
-      boxShadow: error ? '0 0 0 1px hsl(var(--destructive))' : base.boxShadow,
+      backgroundColor: 'hsl(var(--background))',
+      borderColor: error ? 'hsl(var(--destructive))' : 'hsl(var(--border))',
+      color: 'hsl(var(--foreground))',
+      boxShadow: error
+        ? '0 0 0 1px hsl(var(--destructive))'
+        : state.isFocused
+          ? '0 0 0 2px hsl(var(--ring))'
+          : 'none',
       '&:hover': {
         borderColor: error ? 'hsl(var(--destructive))' : 'hsl(var(--primary))',
       },
@@ -89,10 +95,49 @@ const ReactSelect = ({
           ? 'hsl(var(--accent))'
           : 'transparent',
       color: state.isSelected ? 'hsl(var(--primary))' : 'hsl(var(--foreground))',
+      cursor: 'pointer',
     }),
     menu: (base: any) => ({
       ...base,
+      backgroundColor: 'hsl(var(--popover))',
+      border: '1px solid hsl(var(--border))',
+      borderRadius: 'calc(var(--radius) - 2px)',
+      boxShadow:
+        '0 4px 6px -1px hsl(var(--foreground) / 0.1), 0 2px 4px -2px hsl(var(--foreground) / 0.1)',
       zIndex: 100,
+    }),
+    menuList: (base: any) => ({
+      ...base,
+      padding: '4px',
+    }),
+    singleValue: (base: any) => ({
+      ...base,
+      color: 'hsl(var(--foreground))',
+    }),
+    multiValue: (base: any) => ({
+      ...base,
+      backgroundColor: 'hsl(var(--secondary))',
+      borderRadius: 'calc(var(--radius) - 4px)',
+    }),
+    multiValueLabel: (base: any) => ({
+      ...base,
+      color: 'hsl(var(--secondary-foreground))',
+    }),
+    multiValueRemove: (base: any) => ({
+      ...base,
+      color: 'hsl(var(--secondary-foreground))',
+      '&:hover': {
+        backgroundColor: 'hsl(var(--destructive))',
+        color: 'hsl(var(--destructive-foreground))',
+      },
+    }),
+    placeholder: (base: any) => ({
+      ...base,
+      color: 'hsl(var(--muted-foreground))',
+    }),
+    input: (base: any) => ({
+      ...base,
+      color: 'hsl(var(--foreground))',
     }),
     indicatorSeparator: () => ({
       display: 'none',
@@ -108,7 +153,7 @@ const ReactSelect = ({
 
   return (
     <div className={`space-y-2 ${className}`}>
-      {label && <label className="text-sm font-medium block">{label}</label>}
+      {label && <label className="text-sm font-medium block theme-text-primary">{label}</label>}
 
       <Select
         options={options}
@@ -122,18 +167,18 @@ const ReactSelect = ({
         isLoading={isLoading}
         styles={customStyles}
         components={customComponents}
-        className="react-select-container"
+        className="react-select-container theme-transition"
         classNamePrefix="react-select"
       />
 
       {error && (
-        <div className="flex items-center gap-1.5 text-xs text-destructive">
+        <div className="flex items-center gap-1.5 text-xs text-destructive theme-transition">
           <AlertCircle size={12} />
           <span>{error}</span>
         </div>
       )}
 
-      {helperText && !error && <div className="text-xs text-muted-foreground">{helperText}</div>}
+      {helperText && !error && <div className="text-xs theme-text-secondary">{helperText}</div>}
     </div>
   );
 };

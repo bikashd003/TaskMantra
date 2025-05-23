@@ -124,7 +124,7 @@ export default function NotificationsPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-lg shadow-sm p-6 h-full w-full"
+      className="theme-surface rounded-lg theme-shadow-sm p-6 h-full w-full"
     >
       {/* Header Section */}
       <div className="flex flex-col space-y-2">
