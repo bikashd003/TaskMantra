@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" stroke-miterlimit="10">
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4facfe"/>
+      <stop offset="100%" stop-color="#00f2fe"/>
+    </linearGradient>
+  </defs>
+  <!-- Device frame -->
+  <rect x="2" y="6" width="60" height="52" rx="6" fill="#f5f7fa" stroke="#d1d9e6" stroke-width="1.5"/>
+  <!-- Header bar -->
+  <rect x="2" y="6" width="60" height="12" rx="6" fill="url(#grad)"/>
+  <!-- Task lines -->
+  <g stroke="#90a4ae" stroke-width="2" stroke-linecap="round">
+    <line x1="22" y1="28" x2=" Fifty percent  seconds" y2=" seconds" />    
+  <ब्रेक/><!-- यात्री कोड खंड में हस्तक्षेप करने से बचें -->  
+  <!-- Checkboxes and tasks -->
+  <g>
+    <!-- Task 1 -->
+    <rect x="8" y="22" width="8" height="8" rx="2" stroke="#4facfe" fill="none"/>
+    <path d="M10 26 l2 2 l4 -4" stroke="url(#grad)" stroke-width="2" fill="none">
+      <animate attributeName="stroke-dasharray" values="0,8;8,0" dur="1s" begin="0.5s" fill="freeze"/>
+    </path>
+    <line x1="22" y1="26" x2="42" y2="26"/>
+    <!-- Task 2 -->
+    <rect x="8" y="34" width="8" height="8" rx="2" stroke="#90a4ae" fill="none"/>
+    <line x1="22" y1="38" x2="42" y2="38"/>
+    <!-- Task 3 -->
+    <rect x="8" y="46" width="8" height="8" rx="2" stroke="#90a4ae" fill="none"/>
+    <line x1="22" y1="50" x2="42" y2="50"/>
+  </g>
+  <!-- Rotating productivity circle -->
+  <circle cx="52" cy="48" r="10" fill="none" stroke="url(#grad)" stroke-width="2">
+    <animateTransform attributeName="transform" type="rotate" from="0 52 48" to="360 52 48" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Check mark in circle -->
+  <path d="M48 48 l3 3 l6 -6" fill="none" stroke="url(#grad)" stroke-width="3" stroke-linecap="round">
+    <animate attributeName="stroke-dasharray" values="0,12;12,0" dur="1.5s" begin="1s" repeatCount="indefinite"/>
+  </path>
+</svg>

@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Clock, History, CheckCircle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { TaskService } from '@/services/Task.service';
 import { useQuery } from '@tanstack/react-query';
 import { TeamLoggerService } from '@/services/TeamLogger.service';
@@ -198,8 +197,8 @@ export function TeamLoggerPopover() {
           {isCheckedIn ? 'Checked In' : 'Check In'}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0 theme-shadow-lg">
-        <div className="p-4 theme-surface-elevated space-y-4">
+      <PopoverContent className="w-72 p-0">
+        <div className="p-4 theme-surface space-y-4">
           <div className="text-center space-y-2">
             <h3 className="font-semibold text-xl theme-text-primary">Daily Attendance</h3>
             <p className="text-sm theme-text-secondary">
@@ -304,9 +303,6 @@ export function TeamLoggerPopover() {
             </Button>
           </div>
         </div>
-
-        <Separator />
-
         <div className="p-4 max-h-64 overflow-y-auto theme-scrollbar">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">

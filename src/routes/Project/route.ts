@@ -4,7 +4,7 @@ import { Project } from '@/models/Project';
 import { ProjectMembers } from '@/models/ProjectMembers';
 import { Task } from '@/models/Task';
 import { User } from '@/models/User';
-import { NotificationService } from '@/services/Notification.service';
+import { NotificationService } from '@/services/Notifications.service';
 
 const createProject = async (data: any, id: string, organizationId: string) => {
   try {

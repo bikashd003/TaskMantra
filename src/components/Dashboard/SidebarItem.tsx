@@ -62,7 +62,7 @@ export function SidebarItem({
           {badge && (
             <span
               className={`
-                ml-auto ${isExpanded ? '' : 'hidden'}
+                ml-auto text-xs ${isExpanded ? '' : 'hidden'}
                 ${typeof badge === 'string' ? 'sidebar-badge-primary px-2 rounded-md' : 'sidebar-badge-secondary px-2  rounded-md'}
               `}
             >

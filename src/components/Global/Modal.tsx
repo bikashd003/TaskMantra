@@ -85,9 +85,8 @@ const Modal: React.FC<ModalProps> = ({
                 className={cn(
                   sizeClasses[size],
                   'relative transform overflow-hidden',
-                  'bg-white dark:bg-gray-900',
-                  'rounded-lg shadow-[0_0_50px_-12px_rgb(0,0,0,0.25)]',
-                  'border border-gray-200 dark:border-gray-800',
+                  'theme-surface-elevated',
+                  'rounded-lg theme-shadow-lg',
                   className
                 )}
               >
@@ -97,10 +96,8 @@ const Modal: React.FC<ModalProps> = ({
                     className={cn(
                       'absolute right-4 top-4 z-10',
                       'p-2 rounded-full',
-                      'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
-                      'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800',
-                      'transition-colors duration-200',
-                      'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500'
+                      'theme-text-secondary theme-hover-surface',
+                      'theme-transition theme-focus'
                     )}
                     aria-label="Close modal"
                   >

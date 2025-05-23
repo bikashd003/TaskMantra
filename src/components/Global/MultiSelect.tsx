@@ -244,25 +244,25 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         role="option"
         aria-selected={isOptionSelected}
         className={`
-          flex items-center px-3 py-2 text-sm cursor-pointer transition-colors
-          ${isOptionSelected ? 'bg-blue-50 text-blue-800' : 'hover:bg-gray-100'}
-          ${isFocused ? 'bg-gray-100' : ''}
-          ${option.disabled ? 'opacity-50 cursor-not-allowed' : ''}
+          flex items-center px-3 py-2 text-sm cursor-pointer theme-transition
+          ${isOptionSelected ? 'theme-active-primary' : 'interactive-hover'}
+          ${isFocused ? 'theme-hover-surface' : ''}
+          ${option.disabled ? 'interactive-disabled' : ''}
         `}
         onClick={() => !option.disabled && toggleOption(option)}
       >
         <div className="flex-shrink-0 w-5 h-5 mr-2">
-          {isOptionSelected && <Check className="w-4 h-4 text-blue-600" />}
+          {isOptionSelected && <Check className="w-4 h-4 text-primary" />}
         </div>
 
         {itemRenderer ? (
           itemRenderer(option, { isSelected: isOptionSelected })
         ) : (
-          <span className="flex-grow truncate">{option.label}</span>
+          <span className="flex-grow truncate theme-text-primary">{option.label}</span>
         )}
 
         {option.description && (
-          <span className="ml-2 text-xs text-gray-400">{option.description}</span>
+          <span className="ml-2 text-xs theme-text-secondary">{option.description}</span>
         )}
       </div>
     );
@@ -272,7 +272,9 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   const renderGroups = () => {
     return processedOptions?.map(([groupName, groupOptions]) => (
       <div key={groupName} className="mb-2">
-        <div className="px-3 py-1 text-xs font-semibold text-gray-500 bg-gray-50">{groupName}</div>
+        <div className="px-3 py-1 text-xs font-semibold theme-text-secondary theme-surface">
+          {groupName}
+        </div>
         {groupOptions.map((option, idx) => renderOption(option, idx))}
       </div>
     ));
@@ -293,42 +295,36 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   return (
     <div className={`relative w-full ${className}`} ref={containerRef}>
       {/* Label if provided */}
-      {label && <label className="block mb-1 text-sm font-medium text-gray-700">{label}</label>}
+      {label && <label className="form-label block mb-1">{label}</label>}
 
       {/* Main input container */}
       <div
         className={`
-          flex items-center flex-wrap min-h-10 p-1 pl-3 border rounded-md transition-all
-          ${isOpen ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-300 hover:border-gray-400'}
-          ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white cursor-pointer'}
-          ${error ? 'border-red-500 ring-2 ring-red-100' : ''}
+          flex items-center flex-wrap min-h-10 p-1 pl-3 rounded-md theme-transition
+          ${isOpen ? 'theme-focus' : 'theme-input theme-border'}
+          ${disabled ? 'interactive-disabled theme-surface' : 'cursor-pointer'}
+          ${error ? 'border-destructive focus:ring-destructive' : ''}
         `}
         onClick={toggleDropdown}
         onKeyDown={handleKeyDown}
         tabIndex={0}
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        role="combobox"
       >
         {/* Selected items */}
         <div className="flex flex-wrap flex-grow gap-1">
           {selectedValues.length === 0 ? (
-            <span className="py-1 text-gray-400">{placeholder}</span>
+            <span className="py-1 theme-text-secondary">{placeholder}</span>
           ) : (
             <>
               {selectedValues.map(item => (
                 <div
                   key={item.value}
-                  className="
-                    flex items-center gap-1 px-2 py-1 m-px text-sm bg-blue-100 
-                    text-blue-800 rounded-md transition-all hover:bg-blue-200
-                  "
+                  className="theme-badge-primary flex items-center gap-1 m-px theme-transition interactive-hover"
                 >
                   <span className="truncate max-w-40">{item.label}</span>
                   {!disabled && (
                     <button
                       type="button"
-                      className="text-blue-600 hover:text-blue-800 focus:outline-none"
+                      className="theme-text-primary hover:text-destructive theme-focus theme-transition-fast"
                       onClick={e => removeItem(e, item.value)}
                       aria-label={`Remove ${item.label}`}
                     >
@@ -345,7 +341,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
             <input
               ref={searchInputRef}
               type="text"
-              className="flex-grow px-1 py-1 text-sm bg-transparent border-none outline-none"
+              className="flex-grow px-1 py-1 text-sm bg-transparent border-none outline-none theme-text-primary"
               value={searchValue}
               onChange={e => setSearchValue(e.target.value)}
               onClick={e => e.stopPropagation()}
@@ -357,12 +353,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
 
         {/* Action buttons */}
         <div className="flex items-center ml-auto">
-          {loading && <Loader2 className="w-4 h-4 mr-1 text-gray-400 animate-spin" />}
+          {loading && <Loader2 className="w-4 h-4 mr-1 theme-text-secondary animate-spin" />}
 
           {clearable && selectedValues.length > 0 && !disabled && (
             <button
               type="button"
-              className="p-1 text-gray-400 hover:text-gray-600 focus:outline-none"
+              className="p-1 theme-text-secondary hover:text-destructive theme-focus theme-transition"
               onClick={clearSelections}
               aria-label="Clear all selected items"
             >
@@ -372,21 +368,21 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
 
           <div className="w-6 h-6 flex items-center justify-center">
             <ChevronDown
-              className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'transform rotate-180' : ''}`}
+              className={`w-4 h-4 theme-text-secondary theme-transition ${isOpen ? 'transform rotate-180' : ''}`}
             />
           </div>
         </div>
       </div>
 
       {/* Error message */}
-      {error && <div className="mt-1 text-sm text-red-500">{error}</div>}
+      {error && <div className="form-error mt-1">{error}</div>}
 
       {/* Dropdown menu */}
       {isOpen && (
         <div
           className={`
-            absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg 
-            max-h-60 overflow-y-auto py-1 mt-1 animate-in fade-in duration-200
+            absolute z-10 w-full theme-surface-elevated rounded-md theme-shadow-lg
+            max-h-60 overflow-y-auto py-1 mt-1 animate-in fade-in duration-200 theme-scrollbar
             ${getDropdownPositionClasses()}
           `}
           ref={optionsRef}
@@ -395,12 +391,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         >
           {/* Search field for larger dropdown */}
           {searchable && getFilteredOptions().length > 10 && (
-            <div className="sticky top-0 px-3 py-2 bg-white border-b border-gray-100">
+            <div className="sticky top-0 px-3 py-2 theme-surface border-b theme-border">
               <div className="relative">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 theme-text-secondary" />
                 <input
                   type="text"
-                  className="w-full pl-8 pr-2 py-1 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  className="form-input w-full pl-8 pr-2 py-1 text-sm"
                   placeholder="Search options..."
                   value={searchValue}
                   onChange={e => setSearchValue(e.target.value)}
@@ -413,20 +409,20 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           {/* Options list */}
           {loading ? (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-              <span className="ml-2 text-gray-500">Loading options...</span>
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              <span className="ml-2 theme-text-secondary">Loading options...</span>
             </div>
           ) : (
             <>
               {getFilteredOptions().length === 0 ? (
-                <div className="px-3 py-2 text-sm text-gray-500">
+                <div className="px-3 py-2 text-sm theme-text-secondary">
                   {searchValue ? 'No matching options' : 'No options available'}
 
                   {/* Create option button */}
                   {creatable && searchValue && (
                     <button
                       type="button"
-                      className="flex items-center px-3 py-2 mt-1 w-full text-sm text-left text-blue-600 hover:bg-blue-50 rounded-md"
+                      className="flex items-center px-3 py-2 mt-1 w-full text-sm text-left text-primary interactive-hover rounded-md theme-transition"
                       onClick={createOption}
                     >
                       Create {searchValue}

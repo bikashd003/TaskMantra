@@ -73,7 +73,7 @@ export const RightSidebar = ({
               stiffness: 200,
             }}
             className={cn(
-              'fixed right-4 top-4 bottom-4 w-[450px] max-w-[calc(100vw-32px)] bg-white shadow-[0_0_15px_rgba(0,0,0,0.1)] border-l border-gray-200/70 rounded-lg',
+              'fixed right-4 top-4 bottom-4 w-[450px] max-w-[calc(100vw-32px)] theme-surface-elevated rounded-lg',
               className
             )}
             onClick={e => e.stopPropagation()}
@@ -82,9 +82,9 @@ export const RightSidebar = ({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="flex items-center justify-between px-6 py-4 border-b border-gray-200/70"
+              className="flex items-center justify-between px-6 py-4 theme-divider"
             >
-              <h2 className="text-lg font-medium text-gray-900">{title}</h2>
+              <h2 className="text-lg font-medium theme-text-primary">{title}</h2>
               <div className="flex items-center gap-2">
                 {onFavorite && (
                   <Button
@@ -92,7 +92,7 @@ export const RightSidebar = ({
                     size="icon"
                     onClick={handleFavorite}
                     className={cn(
-                      'hover:bg-gray-100/80 transition-colors',
+                      'theme-hover-surface theme-transition',
                       isFavorited && 'text-red-500'
                     )}
                   >
@@ -104,7 +104,7 @@ export const RightSidebar = ({
                     variant="ghost"
                     size="icon"
                     onClick={onEdit}
-                    className="hover:bg-gray-100/80 transition-colors"
+                    className="theme-hover-surface theme-transition"
                   >
                     <Edit className="h-5 w-5" />
                   </Button>
@@ -114,7 +114,7 @@ export const RightSidebar = ({
                     variant="ghost"
                     size="icon"
                     onClick={onDelete}
-                    className="hover:bg-gray-100/80 hover:text-red-500 transition-colors"
+                    className="theme-hover-surface hover:text-red-500 theme-transition"
                   >
                     <Trash2 className="h-5 w-5" />
                   </Button>
@@ -123,7 +123,7 @@ export const RightSidebar = ({
                   variant="ghost"
                   size="icon"
                   onClick={onClose}
-                  className="hover:bg-gray-100/80 transition-colors"
+                  className="theme-hover-surface theme-transition"
                 >
                   <X className="h-5 w-5" />
                 </Button>

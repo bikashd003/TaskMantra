@@ -16,6 +16,7 @@ export async function middleware(request: NextRequest) {
     '/calendar',
     '/feedback',
     '/settings',
+    '/notifications',
     '/onboarding',
     '/invite/accept',
   ];
@@ -62,6 +63,7 @@ export const config = {
     '/calendar',
     '/feedback',
     '/settings',
+    '/notifications',
     '/onboarding',
     '/onboarding/welcome',
     '/onboarding/organization',

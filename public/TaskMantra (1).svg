@@ -1,0 +1,26 @@
+<svg viewBox="0 0 64 64" id="TaskMantraIcon" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4A90E2"/>
+      <stop offset="100%" stop-color="#9013FE"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#grad)"/>
+  <g id="list-items">
+    <rect x="14" y="18" width="8" height="8" rx="2" fill="#FFFFFF" opacity="0.9"/>
+    <rect x="26" y="22" width="24" height="2" fill="#FFFFFF" opacity="0.9"/>
+    <rect x="14" y="30" width="8" height="8" rx="2" fill="#FFFFFF" opacity="0.9"/>
+    <rect x="26" y="34" width="24" height="2" fill="#FFFFFF" opacity="0.9"/>
+    <rect x="14" y="42" width="8" height="8" rx="2" fill="#FFFFFF" opacity="0.9"/>
+    <rect x="26" y="46" width="24" height="2" fill="#FFFFFF" opacity="0.9"/>
+  </g>
+  <g id="checkmark" opacity="0">
+    <path id="chk" d="M16 22 L18 26 L22 20" stroke="#7ED321" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="12" stroke-dashoffset="12"/>
+    <animate xlink:href="#checkmark" attributeName="opacity" from="0" to="1" begin="0.5s" dur="0.2s" fill="freeze"/>
+    <animate xlink:href="#chk" attributeName="stroke-dashoffset" from="12" to="0" begin="0.5s" dur="0.6s" fill="freeze"/>
+  </g>
+  <circle cx="18" cy="22" r="14" stroke="#FFFFFF" stroke-width="1.5" fill="none" opacity="0.5">
+    <animate attributeName="r" values="14;18" dur="1.2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.5;0" dur="1.2s" repeatCount="indefinite"/>
+  </circle>
+</svg>

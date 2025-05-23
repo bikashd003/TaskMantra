@@ -195,6 +195,31 @@ app.post('/test', async c => {
     return c.json({ error: error.message }, 500);
   }
 });
+// Get a specific notification
+app.get('/:id', async c => {
+  try {
+    const user = c.get('user');
+    if (!user) {
+      return c.json({ error: 'User not authenticated' }, 401);
+    }
+
+    const notificationId = c.req.param('id');
+
+    const notification = await Notification.findOne({
+      _id: notificationId,
+      userId: user.id,
+    });
+
+    if (!notification) {
+      return c.json({ error: 'Notification not found' }, 404);
+    }
+
+    return c.json({ notification });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // Mark a notification as read
 app.patch('/:id/read', async c => {
   try {
@@ -209,6 +234,31 @@ app.patch('/:id/read', async c => {
       { _id: notificationId, userId: user.id },
       { read: true }
     );
+
+    return c.json({ success: true, notification: result });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Delete a specific notification
+app.delete('/:id', async c => {
+  try {
+    const user = c.get('user');
+    if (!user) {
+      return c.json({ error: 'User not authenticated' }, 401);
+    }
+
+    const notificationId = c.req.param('id');
+
+    const result = await Notification.findOneAndDelete({
+      _id: notificationId,
+      userId: user.id,
+    });
+
+    if (!result) {
+      return c.json({ error: 'Notification not found' }, 404);
+    }
 
     return c.json({ success: true, notification: result });
   } catch (error: any) {

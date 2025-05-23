@@ -10,6 +10,7 @@ import ClientProviders from '@/context/ClientProviders';
 import { PostHogProvider } from '@/components/Providers/PostHogProvider';
 import { NotificationProvider } from '@/components/Providers/NotificationProvider';
 import { ThemeProvider } from '@/components/Providers/ThemeProvider';
+import { ThemeSyncProvider } from '@/components/Providers/ThemeSyncProvider';
 import { Analytics } from '@vercel/analytics/react';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -43,20 +44,22 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <PostHogProvider>
-              <NextUiProviders>
-                <Providers>
-                  <NotificationProvider>
-                    <main>
-                      {children}
-                      <Analytics />
-                    </main>
-                    <Toaster />
-                    <Sonner richColors />
-                  </NotificationProvider>
-                </Providers>
-              </NextUiProviders>
-            </PostHogProvider>
+            <ThemeSyncProvider>
+              <PostHogProvider>
+                <NextUiProviders>
+                  <Providers>
+                    <NotificationProvider>
+                      <main>
+                        {children}
+                        <Analytics />
+                      </main>
+                      <Toaster />
+                      <Sonner richColors />
+                    </NotificationProvider>
+                  </Providers>
+                </NextUiProviders>
+              </PostHogProvider>
+            </ThemeSyncProvider>
           </ThemeProvider>
         </body>
       </ClientProviders>
