@@ -1,7 +1,10 @@
-import { Mail, X, Users, Loader2, Check } from 'lucide-react';
+import { Mail, X, Loader2, Check, Send, UserPlus } from 'lucide-react';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Button } from '../ui/button';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+import { Textarea } from '../ui/textarea';
+import Modal from '../Global/Modal';
+import ReactSelect from '../Global/ReactSelect';
+
 import {
   Command,
   CommandGroup,
@@ -11,9 +14,9 @@ import {
 } from '@/components/ui/command';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import { Select, SelectItem } from '@heroui/select';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { OrganizationService } from '@/services/Organization.service';
+import { InvitationService, type SendInvitationRequest } from '@/services/Invitation.service';
 
 const emailDomains = ['@gmail.com', '@outlook.com', '@yahoo.com', '@hotmail.com', '@company.com'];
 const commonEmailProviders = ['gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com'];
@@ -31,6 +34,8 @@ interface InviteModalProps {
 
 const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onOpenChange }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data: organization } = useQuery({
     queryKey: ['organizations'],
     queryFn: async () => {
@@ -46,14 +51,64 @@ const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onOpenChange }) => {
       }
     },
   });
+
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [role, setRole] = useState('Member');
   const [customMessage, setCustomMessage] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // TanStack mutation for sending invitations
+  const sendInvitationMutation = useMutation({
+    mutationFn: (data: SendInvitationRequest) => InvitationService.sendInvitations(data),
+    onSuccess: data => {
+      const successCount = data.results.filter(result => result.success).length;
+      const failedCount = selectedEmails.length - successCount;
+
+      if (successCount === selectedEmails.length) {
+        toast({
+          title: 'Success',
+          description: `All ${successCount} invitations sent successfully`,
+          variant: 'default',
+        });
+        // Reset form on complete success
+        setSelectedEmails([]);
+        setRole('Member');
+        setCustomMessage('');
+        onOpenChange(false);
+      } else if (successCount > 0) {
+        toast({
+          title: 'Partial Success',
+          description: `${successCount} of ${selectedEmails.length} invitations sent successfully. ${failedCount} failed.`,
+          variant: 'default',
+        });
+        // Remove successful emails from the list
+        const failedEmails = data.results
+          .filter(result => !result.success)
+          .map(result => result.email);
+        setSelectedEmails(failedEmails);
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to send any invitations. Please try again.',
+          variant: 'destructive',
+        });
+      }
+
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to send invitations',
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Improved email suggestions logic
   const emailSuggestions = useMemo(() => {
@@ -111,7 +166,7 @@ const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onOpenChange }) => {
     }
   }, [selectedEmails, searchTerm]);
 
-  const handleInvite = async () => {
+  const handleInvite = () => {
     // Validate organization
     if (!organization) {
       toast({
@@ -153,74 +208,13 @@ const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onOpenChange }) => {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      const response = await fetch('/api/invitations/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          emails: selectedEmails,
-          role,
-          customMessage: customMessage.trim() || undefined,
-          organizationId: organization._id,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to send invitations');
-      }
-
-      // Count successful invitations
-      const successCount = data.results.filter((result: any) => result.success).length;
-      const failedCount = selectedEmails.length - successCount;
-
-      // Show appropriate toast based on results
-      if (successCount === selectedEmails.length) {
-        toast({
-          title: 'Success',
-          description: `All ${successCount} invitations sent successfully`,
-          variant: 'default',
-        });
-
-        // Reset form on complete success
-        setSelectedEmails([]);
-        setRole('Member');
-        setCustomMessage('');
-        onOpenChange(false);
-      } else if (successCount > 0) {
-        toast({
-          title: 'Partial Success',
-          description: `${successCount} of ${selectedEmails.length} invitations sent successfully. ${failedCount} failed.`,
-          variant: 'default',
-        });
-
-        // Remove successful emails from the list
-        const failedEmails = data.results
-          .filter((result: any) => !result.success)
-          .map((result: any) => result.email);
-
-        setSelectedEmails(failedEmails);
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to send any invitations. Please try again.',
-          variant: 'destructive',
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to send invitations',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Use the mutation to send invitations
+    sendInvitationMutation.mutate({
+      emails: selectedEmails,
+      role,
+      customMessage: customMessage.trim() || undefined,
+      organizationId: organization._id,
+    });
   };
 
   const handleEmailSelect = (email: string) => {
@@ -258,193 +252,210 @@ const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onOpenChange }) => {
     setShowSuggestions(true);
   };
 
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRole(e.target.value);
+  const handleRoleChange = (selectedOption: any) => {
+    setRole(selectedOption?.value || 'Member');
   };
 
+  // Transform roles for ReactSelect
+  const roleOptions = commonRoles.map(role => ({
+    value: role.value,
+    label: role.label,
+    description: role.description,
+  }));
+
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange} className="backdrop-blur-sm">
-      <ModalContent className="max-w-lg bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border shadow-xl">
-        {onClose => (
-          <>
-            <ModalHeader className="flex flex-col gap-4 pb-6 border-b">
-              <div className="flex items-center gap-4">
-                <div className="p-3.5 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-xl shadow-inner backdrop-blur-sm">
-                  <Users className="h-6 w-6 text-primary" strokeWidth={2} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold tracking-tight">Invite Team Members</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Add people to collaborate with your team
-                  </p>
-                </div>
+    <Modal isOpen={isOpen} onClose={() => onOpenChange(false)} size="lg">
+      {/* Header */}
+      <div className="flex flex-col gap-4 pb-6 border-b theme-border">
+        <div className="flex items-center gap-4">
+          <div className="relative p-4 bg-gradient-to-br from-primary/20 via-primary/15 to-primary/5 rounded-2xl shadow-lg backdrop-blur-sm border border-primary/10">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent rounded-2xl"></div>
+            <UserPlus className="relative h-7 w-7 text-primary" strokeWidth={2} />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold tracking-tight theme-text-primary">
+              Invite Team Members
+            </h2>
+            <p className="text-sm theme-text-secondary mt-1.5">
+              Send invitations to collaborate with your team on{' '}
+              {organization?.name || 'your organization'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="py-6">
+        <div className="space-y-6">
+          {/* Email Input Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label htmlFor="email-input" className="text-sm font-semibold theme-text-primary">
+                Email Addresses
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs bg-gradient-to-r from-primary/10 to-primary/5 text-primary py-1.5 px-3 rounded-full font-medium border border-primary/20">
+                  {selectedEmails.length} selected
+                </span>
               </div>
-            </ModalHeader>
-            <ModalBody className="py-6">
-              <div className="space-y-6">
-                {/* Email Input Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="email-input" className="text-sm font-medium">
-                      Email Addresses
-                    </label>
-                    <span className="text-xs bg-primary/10 text-primary py-1.5 px-3 rounded-full font-medium">
-                      {selectedEmails.length} selected
-                    </span>
-                  </div>
-                  <div
-                    className="flex flex-wrap gap-2 p-3 border rounded-xl bg-white dark:bg-gray-800 shadow-sm min-h-[120px] relative focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/30 transition-all duration-200"
-                    onClick={() => inputRef.current?.focus()}
-                  >
-                    <AnimatePresence>
-                      {selectedEmails.map(email => (
-                        <motion.div
-                          key={email}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm"
-                        >
-                          <Mail className="h-4 w-4 mr-2" />
-                          <span className="max-w-[150px] truncate">{email}</span>
-                          <button
-                            onClick={() => removeEmail(email)}
-                            className="ml-2 hover:bg-blue-100 rounded-full p-1 transition-colors"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                    <div ref={commandRef} className="flex-1 relative min-w-[200px]">
-                      <Command className="border-0 p-0">
-                        <CommandInput
-                          id="email-input"
-                          ref={inputRef}
-                          placeholder={
-                            selectedEmails.length > 0
-                              ? 'Add more emails...'
-                              : 'Enter email addresses...'
-                          }
-                          value={searchTerm}
-                          onValueChange={setSearchTerm}
-                          onFocus={handleInputFocus}
-                          onKeyDown={handleKeyDown}
-                          className="border-0 focus:ring-0 px-1 text-sm placeholder:text-muted-foreground/60"
-                        />
-                        {showSuggestions && emailSuggestions.length > 0 && (
-                          <CommandList className="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border rounded-xl mt-2 shadow-lg overflow-hidden z-50 max-h-[200px]">
-                            <CommandGroup heading="Suggestions">
-                              {emailSuggestions.map(suggestion => (
-                                <CommandItem
-                                  key={suggestion}
-                                  onSelect={() => handleEmailSelect(suggestion)}
-                                  className="cursor-pointer hover:bg-accent hover:text-accent-foreground py-2 px-3 transition-colors flex items-center"
-                                >
-                                  <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
-                                  <span className="flex-1">{suggestion}</span>
-                                  <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                                    tab
-                                  </kbd>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        )}
-                      </Command>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground ml-1">
-                    Press Enter or comma to add multiple emails
-                  </p>
-                </div>
-
-                {/* Role Selection */}
-                <div className="space-y-3">
-                  <label htmlFor="role-select" className="text-sm font-medium">
-                    Role
-                  </label>
-                  <Select
-                    id="role-select"
-                    onChange={handleRoleChange}
-                    defaultSelectedKeys={[role]}
-                    selectedKeys={[role]}
-                    aria-label="Select member role"
-                    className="w-full"
-                  >
-                    {commonRoles.map(roleOption => (
-                      <SelectItem
-                        key={roleOption.value}
-                        value={roleOption.value}
-                        textValue={roleOption.label}
-                        className="cursor-pointer"
-                      >
-                        <div className="flex flex-col py-2">
-                          <span className="font-medium">{roleOption.label}</span>
-                          <span className="text-xs text-muted-foreground mt-0.5">
-                            {roleOption.description}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </Select>
-                </div>
-
-                {/* Custom Message */}
-                <div className="space-y-3">
-                  <label htmlFor="custom-message" className="text-sm font-medium">
-                    Custom Message (Optional)
-                  </label>
-                  <textarea
-                    id="custom-message"
-                    value={customMessage}
-                    onChange={e => setCustomMessage(e.target.value)}
-                    placeholder="Add a personal message to your invitation..."
-                    className="w-full min-h-[120px] p-4 rounded-xl border bg-white dark:bg-gray-800 text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all duration-200 placeholder:text-muted-foreground/60"
-                  />
-                </div>
-
-                {/* Status Message */}
-                {selectedEmails.length > 0 && (
+            </div>
+            <div
+              className="flex flex-wrap gap-2.5 p-4 border rounded-xl theme-bg-primary theme-border shadow-sm min-h-[120px] relative focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/30 transition-all duration-200 cursor-text"
+              onClick={() => inputRef.current?.focus()}
+            >
+              <AnimatePresence>
+                {selectedEmails.map(email => (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-3 p-4 bg-primary/5 border rounded-xl text-sm text-primary"
+                    key={email}
+                    initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20 px-3 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200"
                   >
-                    <Check className="h-5 w-5 flex-shrink-0" strokeWidth={2.5} />
-                    <span>
-                      {selectedEmails.length}{' '}
-                      {selectedEmails.length === 1 ? 'invitation' : 'invitations'} ready to send
-                    </span>
+                    <Mail className="h-4 w-4 mr-2 opacity-70" />
+                    <span className="max-w-[180px] truncate">{email}</span>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        removeEmail(email);
+                      }}
+                      className="ml-2 hover:bg-primary/20 rounded-full p-1 transition-colors duration-200 group"
+                      aria-label={`Remove ${email}`}
+                    >
+                      <X className="h-3.5 w-3.5 group-hover:scale-110 transition-transform duration-200" />
+                    </button>
                   </motion.div>
-                )}
+                ))}
+              </AnimatePresence>
+              <div ref={commandRef} className="flex-1 relative min-w-[200px]">
+                <Command className="border-0 p-0">
+                  <CommandInput
+                    id="email-input"
+                    ref={inputRef}
+                    placeholder={
+                      selectedEmails.length > 0 ? 'Add more emails...' : 'Enter email addresses...'
+                    }
+                    value={searchTerm}
+                    onValueChange={setSearchTerm}
+                    onFocus={handleInputFocus}
+                    onKeyDown={handleKeyDown}
+                    className="border-0 focus:ring-0 px-1 text-sm placeholder:text-muted-foreground/60"
+                  />
+                  {showSuggestions && emailSuggestions.length > 0 && (
+                    <CommandList className="absolute top-full left-0 right-0 theme-bg-primary theme-border border rounded-xl mt-2 shadow-xl backdrop-blur-sm overflow-hidden z-50 max-h-[200px]">
+                      <CommandGroup heading="Email Suggestions" className="p-2">
+                        {emailSuggestions.map(suggestion => (
+                          <CommandItem
+                            key={suggestion}
+                            onSelect={() => handleEmailSelect(suggestion)}
+                            className="cursor-pointer hover:bg-primary/10 hover:text-primary py-3 px-3 transition-all duration-200 flex items-center rounded-lg group"
+                          >
+                            <Mail className="mr-3 h-4 w-4 theme-text-secondary group-hover:text-primary transition-colors" />
+                            <span className="flex-1 font-medium">{suggestion}</span>
+                            <kbd className="pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded-md border theme-border bg-primary/5 px-2 font-mono text-[10px] font-medium theme-text-secondary">
+                              ↵
+                            </kbd>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  )}
+                </Command>
               </div>
-            </ModalBody>
-            <ModalFooter className="border-t pt-6 gap-3">
-              <Button variant="outline" onClick={onClose} className="flex-1 sm:flex-none h-11">
-                Cancel
-              </Button>
-              <Button
-                onClick={handleInvite}
-                disabled={selectedEmails.length === 0 || isLoading}
-                className="flex-1 sm:flex-none h-11 bg-primary hover:bg-primary/90"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Send {selectedEmails.length > 0 ? `(${selectedEmails.length})` : ''} Invites
-                  </>
-                )}
-              </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
+            </div>
+            <p className="text-xs theme-text-secondary ml-1 flex items-center gap-1.5">
+              <span>💡</span>
+              Press{' '}
+              <kbd className="px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded text-[10px] font-mono">
+                Enter
+              </kbd>{' '}
+              or{' '}
+              <kbd className="px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded text-[10px] font-mono">
+                ,
+              </kbd>{' '}
+              to add multiple emails
+            </p>
+          </div>
+
+          {/* Role Selection */}
+          <div className="space-y-3">
+            <ReactSelect
+              label="Role"
+              options={roleOptions}
+              value={roleOptions.find(option => option.value === role) || null}
+              onChange={handleRoleChange}
+              placeholder="Select a role"
+              isSearchable={false}
+              isClearable={false}
+              className="w-full"
+            />
+          </div>
+
+          {/* Custom Message */}
+          <div className="space-y-3">
+            <label htmlFor="custom-message" className="text-sm font-medium">
+              Custom Message (Optional)
+            </label>
+            <Textarea
+              id="custom-message"
+              value={customMessage}
+              onChange={e => setCustomMessage(e.target.value)}
+              placeholder="Add a personal message to your invitation..."
+              className="min-h-[120px] resize-none theme-bg-primary theme-border theme-text-primary"
+              rows={5}
+            />
+          </div>
+
+          {/* Status Message */}
+          {selectedEmails.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300 shadow-sm"
+            >
+              <div className="flex-shrink-0 p-1 bg-green-100 dark:bg-green-800/50 rounded-full">
+                <Check className="h-4 w-4" strokeWidth={2.5} />
+              </div>
+              <span className="font-medium">
+                {selectedEmails.length} {selectedEmails.length === 1 ? 'invitation' : 'invitations'}{' '}
+                ready to send
+              </span>
+            </motion.div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t theme-border pt-6 flex gap-3 bg-gradient-to-r from-transparent via-primary/5 to-transparent">
+        <Button
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          className="flex-1 sm:flex-none h-12 font-medium hover:bg-primary/5 transition-all duration-200"
+          disabled={sendInvitationMutation.isPending}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleInvite}
+          disabled={selectedEmails.length === 0 || sendInvitationMutation.isPending}
+          className="flex-1 sm:flex-none h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+        >
+          {sendInvitationMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Sending Invitations...
+            </>
+          ) : (
+            <>
+              <Send className="mr-2 h-4 w-4" />
+              Send {selectedEmails.length > 0 ? `${selectedEmails.length} ` : ''}Invitation
+              {selectedEmails.length !== 1 ? 's' : ''}
+            </>
+          )}
+        </Button>
+      </div>
     </Modal>
   );
 };

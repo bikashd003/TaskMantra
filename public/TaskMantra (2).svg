@@ -1,0 +1,29 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4facfe"/>
+      <stop offset="100%" stop-color="#00f2fe"/>
+    </linearGradient>
+    <linearGradient id="clipGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#f0f0f0" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  <!-- background circle -->
+  <circle cx="32" cy="32" r="32" fill="url(#bgGradient)"/>
+  <!-- clipboard body -->
+  <rect x="14" y="10" width="36" height="44" rx="4" ry="4" fill="url(#clipGradient)" stroke="#fff" stroke-width="1.5"/>
+  <!-- clipboard clip -->
+  <rect x="22" y="4" width="20" height="12" rx="2" ry="2" fill="#fff" stroke="#e0e0e0" stroke-width="1.2"/>
+  <!-- task lines -->
+  <line x1="20" y1="24" x2="44" y2="24" stroke="#c0c0c0" stroke-width="2" stroke-linecap="round"/>
+  <line x1="20" y1="32" x2="44" y2="32" stroke="#c0c0c0" stroke-width="2" stroke-linecap="round"/>
+  <line x1="20" y1="40" x2="34" y2="40" stroke="#c0c0c0" stroke-width="2" stroke-linecap="round"/>
+  <!-- animated checkmark -->
+  <path d="M20 40 L26 46 L38 34" fill="none" stroke="#4caf50" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="50" stroke-dashoffset="50">
+    <animate attributeName="stroke-dashoffset" from="50" to="0" dur="1s" begin="0.5s" fill="freeze"/>
+  </path>
+  <!-- subtle shadow -->
+  <ellipse cx="32" cy="60" rx="24" ry="4" fill="#000" fill-opacity="0.1"/>
+</svg>

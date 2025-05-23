@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthProvider';
 import { Playfair_Display } from 'next/font/google';
 import { Button } from '../ui/button';
 import { TeamLoggerPopover } from './TeamLogger';
-import { useDisclosure } from '@heroui/react';
 import InviteModal from './InviteModal';
 import { NotificationsPopover } from './NotificationsPopover';
 import { ThemeToggle } from '../ui/theme-toggle';
@@ -15,9 +14,17 @@ const playwrite = Playfair_Display({
 });
 
 const Header = () => {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [currentTime, setCurrentTime] = useState(new Date());
   const { session } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const onOpen = () => {
+    setIsOpen(true);
+  };
+
+  const onOpenChange = (open: boolean) => {
+    setIsOpen(open);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -49,7 +56,7 @@ const Header = () => {
         </h1>
         <p className="text-sm theme-text-secondary">{formatDate(currentTime)}</p>
       </div>
-      <div className="flex space-x-6 items-center">
+      <div className="flex gap-4 items-center">
         <NotificationsPopover />
         <ThemeToggle />
         <TeamLoggerPopover />
