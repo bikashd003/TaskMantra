@@ -128,25 +128,27 @@ export default function GeneralSettings() {
   return (
     <div className="space-y-6 px-4">
       <div>
-        <h3 className="text-lg font-medium">General Settings</h3>
-        <p className="text-sm text-muted-foreground">Customize your application experience</p>
+        <h3 className="text-lg font-medium theme-text-primary">General Settings</h3>
+        <p className="text-sm theme-text-secondary">Customize your application experience</p>
       </div>
-      <Separator />
+      <Separator className="theme-divider" />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Appearance Settings */}
-          <Card>
+          <Card className="theme-surface-elevated hover-reveal theme-transition">
             <CardHeader>
               {isLoading ? (
                 <>
-                  <Skeleton className="h-8 w-32 mb-1 rounded-sm" />
-                  <Skeleton className="h-4 w-64 rounded-sm" />
+                  <Skeleton className="h-8 w-32 mb-1 rounded-sm loading-skeleton" />
+                  <Skeleton className="h-4 w-64 rounded-sm loading-skeleton" />
                 </>
               ) : (
                 <>
-                  <CardTitle>Appearance</CardTitle>
-                  <CardDescription>Customize how the application looks and feels</CardDescription>
+                  <CardTitle className="theme-text-primary">Appearance</CardTitle>
+                  <CardDescription className="theme-text-secondary">
+                    Customize how the application looks and feels
+                  </CardDescription>
                 </>
               )}
             </CardHeader>
@@ -158,38 +160,44 @@ export default function GeneralSettings() {
                   <FormItem>
                     {isLoading ? (
                       <>
-                        <Skeleton className="h-4 w-32 mb-1 rounded-sm" />
+                        <Skeleton className="h-4 w-32 mb-1 rounded-sm loading-skeleton" />
                       </>
                     ) : (
-                      <FormLabel>Theme</FormLabel>
+                      <FormLabel className="theme-text-primary">Theme</FormLabel>
                     )}
                     {isLoading ? (
                       <>
-                        <Skeleton className="h-8 w-40 mb-1 rounded-sm" />
-                        <Skeleton className="h-4 w-64 rounded-sm" />
+                        <Skeleton className="h-8 w-40 mb-1 rounded-sm loading-skeleton" />
+                        <Skeleton className="h-4 w-64 rounded-sm loading-skeleton" />
                       </>
                     ) : (
                       <>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="w-[240px]">
+                            <SelectTrigger className="w-[240px] theme-input theme-focus">
                               <SelectValue placeholder="Select a theme" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="light">
+                          <SelectContent className="theme-surface-elevated theme-border">
+                            <SelectItem
+                              value="light"
+                              className="interactive-hover theme-transition"
+                            >
                               <div className="flex items-center gap-2">
                                 <Sun className="h-4 w-4" />
                                 <span>Light</span>
                               </div>
                             </SelectItem>
-                            <SelectItem value="dark">
+                            <SelectItem value="dark" className="interactive-hover theme-transition">
                               <div className="flex items-center gap-2">
                                 <Moon className="h-4 w-4" />
                                 <span>Dark</span>
                               </div>
                             </SelectItem>
-                            <SelectItem value="system">
+                            <SelectItem
+                              value="system"
+                              className="interactive-hover theme-transition"
+                            >
                               <div className="flex items-center gap-2">
                                 <Monitor className="h-4 w-4" />
                                 <span>System</span>
@@ -197,7 +205,9 @@ export default function GeneralSettings() {
                             </SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormDescription>Select your preferred theme appearance</FormDescription>
+                        <FormDescription className="theme-text-secondary">
+                          Select your preferred theme appearance
+                        </FormDescription>
                       </>
                     )}
                   </FormItem>
@@ -208,24 +218,28 @@ export default function GeneralSettings() {
                 control={form.control}
                 name="appearance.animations"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex items-center justify-between rounded-lg theme-border border p-4 interactive-hover theme-transition">
                     <div className="space-y-0.5">
                       {isLoading ? (
                         <>
-                          <Skeleton className="h-4 w-32 mb-1 rounded-sm" />
-                          <Skeleton className="h-4 w-64 rounded-sm" />
+                          <Skeleton className="h-4 w-32 mb-1 rounded-sm loading-skeleton" />
+                          <Skeleton className="h-4 w-64 rounded-sm loading-skeleton" />
                         </>
                       ) : (
                         <>
-                          <FormLabel className="text-base">Enable Animations</FormLabel>
-                          <FormDescription>Show animations and transitions</FormDescription>
+                          <FormLabel className="text-base theme-text-primary">
+                            Enable Animations
+                          </FormLabel>
+                          <FormDescription className="theme-text-secondary">
+                            Show animations and transitions
+                          </FormDescription>
                         </>
                       )}
                     </div>
                     <FormControl>
                       {isLoading ? (
                         <>
-                          <Skeleton className="h-4 w-12 rounded-sm" />
+                          <Skeleton className="h-4 w-12 rounded-sm loading-skeleton" />
                         </>
                       ) : (
                         <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -238,20 +252,22 @@ export default function GeneralSettings() {
           </Card>
 
           {/* Localization Settings */}
-          <Card>
+          <Card className="theme-surface-elevated hover-reveal theme-transition">
             <CardHeader>
               {isLoading ? (
                 <>
-                  <Skeleton className="h-8 w-32 mb-1 rounded-sm" />
-                  <Skeleton className="h-4 w-64 rounded-sm" />
+                  <Skeleton className="h-8 w-32 mb-1 rounded-sm loading-skeleton" />
+                  <Skeleton className="h-4 w-64 rounded-sm loading-skeleton" />
                 </>
               ) : (
                 <>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 theme-text-primary">
                     <Globe className="h-5 w-5" />
                     Localization
                   </CardTitle>
-                  <CardDescription>Configure language and regional preferences</CardDescription>
+                  <CardDescription className="theme-text-secondary">
+                    Configure language and regional preferences
+                  </CardDescription>
                 </>
               )}
             </CardHeader>
@@ -383,17 +399,19 @@ export default function GeneralSettings() {
           </Card>
 
           {/* Accessibility Settings */}
-          <Card>
+          <Card className="theme-surface-elevated hover-reveal theme-transition">
             <CardHeader>
               {isLoading ? (
                 <>
-                  <Skeleton className="h-8 w-32 mb-1 rounded-sm" />
-                  <Skeleton className="h-4 w-64 rounded-sm" />
+                  <Skeleton className="h-8 w-32 mb-1 rounded-sm loading-skeleton" />
+                  <Skeleton className="h-4 w-64 rounded-sm loading-skeleton" />
                 </>
               ) : (
                 <>
-                  <CardTitle>Accessibility</CardTitle>
-                  <CardDescription>Configure accessibility preferences</CardDescription>
+                  <CardTitle className="theme-text-primary">Accessibility</CardTitle>
+                  <CardDescription className="theme-text-secondary">
+                    Configure accessibility preferences
+                  </CardDescription>
                 </>
               )}
             </CardHeader>
@@ -489,7 +507,7 @@ export default function GeneralSettings() {
           </Card>
 
           <div className="flex justify-end">
-            <Button type="submit" size="lg">
+            <Button type="submit" size="lg" className="theme-button-primary theme-transition">
               {isPending ? <Spinner /> : null}
               Save Changes
             </Button>
