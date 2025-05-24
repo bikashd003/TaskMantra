@@ -137,15 +137,10 @@ const RingSpinner = ({ size, color }: { size: string; color: string }) => (
       className={cn(
         'absolute inset-0 rounded-full border-2 border-transparent',
         color.replace('text-', 'border-t-'),
-        'animate-spin'
+        'animate-spin theme-transition'
       )}
     />
-    <div
-      className={cn(
-        'absolute inset-0 rounded-full border-2',
-        color.replace('text-', 'border-').replace('border-', 'border-') + '/20'
-      )}
-    />
+    <div className={cn('absolute inset-0 rounded-full border-2 border-muted/20')} />
   </div>
 );
 
@@ -156,14 +151,14 @@ const DualRingSpinner = ({ size, color }: { size: string; color: string }) => (
       className={cn(
         'absolute inset-0 rounded-full border-2 border-transparent',
         color.replace('text-', 'border-t-'),
-        'animate-spin'
+        'animate-spin theme-transition'
       )}
     />
     <div
       className={cn(
         'absolute inset-1 rounded-full border-2 border-transparent',
         color.replace('text-', 'border-b-'),
-        'animate-spin',
+        'animate-spin theme-transition',
         '[animation-direction:reverse]'
       )}
     />
@@ -261,7 +256,13 @@ export function LoadingSpinner({
   const SpinnerComponent = spinnerComponents[variant];
 
   const spinnerContent = (
-    <div className={cn('flex flex-col items-center justify-center', sizeClasses.gap, className)}>
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center theme-transition',
+        sizeClasses.gap,
+        className
+      )}
+    >
       <SpinnerComponent size={sizeClasses.size} color={colorClass} />
       {showLabel && (
         <motion.p
@@ -280,14 +281,16 @@ export function LoadingSpinner({
     return (
       <motion.div
         className={cn(
-          'fixed inset-0 z-50 flex items-center justify-center',
-          overlay ? 'bg-background/80 backdrop-blur-sm' : 'bg-background'
+          'fixed inset-0 z-50 flex items-center justify-center theme-transition',
+          overlay ? 'theme-surface/80 backdrop-blur-sm' : 'theme-surface'
         )}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        {spinnerContent}
+        <div className="theme-surface-elevated rounded-lg p-8 theme-shadow-lg">
+          {spinnerContent}
+        </div>
       </motion.div>
     );
   }
@@ -295,12 +298,14 @@ export function LoadingSpinner({
   if (overlay) {
     return (
       <motion.div
-        className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg"
+        className="absolute inset-0 z-10 flex items-center justify-center theme-surface/80 backdrop-blur-sm rounded-lg theme-transition"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        {spinnerContent}
+        <div className="theme-surface-elevated rounded-lg p-6 theme-shadow-md">
+          {spinnerContent}
+        </div>
       </motion.div>
     );
   }
