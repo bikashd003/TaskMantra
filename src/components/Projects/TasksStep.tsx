@@ -90,27 +90,29 @@ const TasksStep: React.FC = () => {
     }
   };
   return (
-    <div className="p-6 max-h-[75vh] overflow-y-auto">
-      <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center gap-2">Add Tasks</h2>
+    <div className="p-6 max-h-[75vh] overflow-y-auto theme-surface">
+      <h2 className="text-2xl font-bold theme-text-primary mb-6 flex items-center gap-2">
+        Add Tasks
+      </h2>
       <div className="space-y-6">
         {values.tasks.map((task, taskIndex) => {
           return (
             <div
               key={taskIndex}
-              className="p-4 border border-gray-200 rounded-lg shadow-sm relative bg-white"
+              className="p-4 theme-border rounded-lg theme-shadow-sm relative theme-surface-elevated"
             >
               {taskIndex > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute top-2 right-2 text-red-500"
+                  className="absolute top-2 right-2 text-destructive hover:bg-destructive/10 theme-transition"
                   onClick={() => handleRemoveTask(taskIndex)}
                 >
                   <Trash2 className="w-5 h-5" />
                 </Button>
               )}
               <div className="mb-4">
-                <label className="text-sm font-medium text-blue-700">Task Name</label>
+                <label className="text-sm font-medium theme-text-primary">Task Name</label>
                 <Input
                   name={`tasks[${taskIndex}].name`}
                   value={task.name}
@@ -120,14 +122,14 @@ const TasksStep: React.FC = () => {
                     setFieldValue('tasks', updatedTasks);
                   }}
                   placeholder="Enter task name"
-                  className={`mt-1 ${
+                  className={`mt-1 theme-input theme-focus ${
                     errors.tasks &&
                     typeof errors.tasks !== 'string' &&
                     errors.tasks[taskIndex] &&
                     typeof errors.tasks[taskIndex] !== 'string' &&
                     errors.tasks[taskIndex].name
-                      ? 'border-red-500'
-                      : 'border-gray-300'
+                      ? 'border-destructive'
+                      : ''
                   }`}
                 />
                 {errors.tasks &&
@@ -135,11 +137,11 @@ const TasksStep: React.FC = () => {
                   errors.tasks[taskIndex] &&
                   typeof errors.tasks[taskIndex] !== 'string' &&
                   errors.tasks[taskIndex].name && (
-                    <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].name}</p>
+                    <p className="text-destructive text-sm mt-1">{errors.tasks[taskIndex].name}</p>
                   )}
               </div>
               <div className="mb-4">
-                <label className="text-sm font-medium text-blue-700">Description</label>
+                <label className="text-sm font-medium theme-text-primary">Description</label>
                 <Textarea
                   name={`tasks[${taskIndex}].description`}
                   value={task.description}
@@ -150,14 +152,14 @@ const TasksStep: React.FC = () => {
                   }}
                   placeholder="Enter task description"
                   rows={3}
-                  className={`mt-1 ${
+                  className={`mt-1 theme-input theme-focus ${
                     errors.tasks &&
                     typeof errors.tasks !== 'string' &&
                     errors.tasks[taskIndex] &&
                     typeof errors.tasks[taskIndex] !== 'string' &&
                     errors.tasks[taskIndex].description
-                      ? 'border-red-500'
-                      : 'border-gray-300'
+                      ? 'border-destructive'
+                      : ''
                   }`}
                 />
                 {errors.tasks &&
@@ -165,14 +167,14 @@ const TasksStep: React.FC = () => {
                   errors.tasks[taskIndex] &&
                   typeof errors.tasks[taskIndex] !== 'string' &&
                   errors.tasks[taskIndex].description && (
-                    <p className="text-red-500 text-sm mt-1">
+                    <p className="text-destructive text-sm mt-1">
                       {errors.tasks[taskIndex].description}
                     </p>
                   )}
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="text-sm font-medium text-blue-700">Priority</label>
+                  <label className="text-sm font-medium theme-text-primary">Priority</label>
                   <Select
                     value={task.priority}
                     onValueChange={value => {
@@ -181,14 +183,20 @@ const TasksStep: React.FC = () => {
                       setFieldValue('tasks', updatedTasks);
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="theme-input theme-focus">
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="theme-surface-elevated theme-border">
                       <SelectGroup>
-                        <SelectItem value="High">High</SelectItem>
-                        <SelectItem value="Medium">Medium</SelectItem>
-                        <SelectItem value="Low">Low</SelectItem>
+                        <SelectItem value="High" className="interactive-hover theme-transition">
+                          High
+                        </SelectItem>
+                        <SelectItem value="Medium" className="interactive-hover theme-transition">
+                          Medium
+                        </SelectItem>
+                        <SelectItem value="Low" className="interactive-hover theme-transition">
+                          Low
+                        </SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -197,13 +205,13 @@ const TasksStep: React.FC = () => {
                     errors.tasks[taskIndex] &&
                     typeof errors.tasks[taskIndex] !== 'string' &&
                     errors.tasks[taskIndex].priority && (
-                      <p className="text-red-500 text-sm mt-1">
+                      <p className="text-destructive text-sm mt-1">
                         {errors.tasks[taskIndex].priority}
                       </p>
                     )}
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-blue-700">Status</label>
+                  <label className="text-sm font-medium theme-text-primary">Status</label>
                   <Select
                     value={task.status}
                     onValueChange={value => {
@@ -216,15 +224,29 @@ const TasksStep: React.FC = () => {
                       setFieldValue('tasks', updatedTasks);
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="theme-input theme-focus">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="theme-surface-elevated theme-border">
                       <SelectGroup>
-                        <SelectItem value="To Do">To Do</SelectItem>
-                        <SelectItem value="In Progress">In Progress</SelectItem>
-                        <SelectItem value="Review">Review</SelectItem>
-                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="To Do" className="interactive-hover theme-transition">
+                          To Do
+                        </SelectItem>
+                        <SelectItem
+                          value="In Progress"
+                          className="interactive-hover theme-transition"
+                        >
+                          In Progress
+                        </SelectItem>
+                        <SelectItem value="Review" className="interactive-hover theme-transition">
+                          Review
+                        </SelectItem>
+                        <SelectItem
+                          value="Completed"
+                          className="interactive-hover theme-transition"
+                        >
+                          Completed
+                        </SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -233,13 +255,15 @@ const TasksStep: React.FC = () => {
                     errors.tasks[taskIndex] &&
                     typeof errors.tasks[taskIndex] !== 'string' &&
                     errors.tasks[taskIndex].status && (
-                      <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].status}</p>
+                      <p className="text-destructive text-sm mt-1">
+                        {errors.tasks[taskIndex].status}
+                      </p>
                     )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="text-sm font-medium text-blue-700">Due Date</label>
+                  <label className="text-sm font-medium theme-text-primary">Due Date</label>
                   <Input
                     type="date"
                     value={task.dueDate}
@@ -249,14 +273,14 @@ const TasksStep: React.FC = () => {
                       setFieldValue('tasks', updatedTasks);
                     }}
                     placeholder="Enter due date"
-                    className={`mt-1 ${
+                    className={`mt-1 theme-input theme-focus ${
                       errors.tasks &&
                       typeof errors.tasks !== 'string' &&
                       errors.tasks[taskIndex] &&
                       typeof errors.tasks[taskIndex] !== 'string' &&
                       errors.tasks[taskIndex].dueDate
-                        ? 'border-red-500'
-                        : 'border-gray-300'
+                        ? 'border-destructive'
+                        : ''
                     }`}
                   />
                   {errors.tasks &&
@@ -264,11 +288,13 @@ const TasksStep: React.FC = () => {
                     errors.tasks[taskIndex] &&
                     typeof errors.tasks[taskIndex] !== 'string' &&
                     errors.tasks[taskIndex].dueDate && (
-                      <p className="text-red-500 text-sm mt-1">{errors.tasks[taskIndex].dueDate}</p>
+                      <p className="text-destructive text-sm mt-1">
+                        {errors.tasks[taskIndex].dueDate}
+                      </p>
                     )}
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-blue-700">Start Date</label>
+                  <label className="text-sm font-medium theme-text-primary">Start Date</label>
                   <Input
                     type="date"
                     value={task.startDate}
@@ -278,14 +304,14 @@ const TasksStep: React.FC = () => {
                       setFieldValue('tasks', updatedTasks);
                     }}
                     placeholder="Enter start date"
-                    className={`mt-1 ${
+                    className={`mt-1 theme-input theme-focus ${
                       errors.tasks &&
                       typeof errors.tasks !== 'string' &&
                       errors.tasks[taskIndex] &&
                       typeof errors.tasks[taskIndex] !== 'string' &&
                       errors.tasks[taskIndex].startDate
-                        ? 'border-red-500'
-                        : 'border-gray-300'
+                        ? 'border-destructive'
+                        : ''
                     }`}
                   />
                   {errors.tasks &&
@@ -293,7 +319,7 @@ const TasksStep: React.FC = () => {
                     errors.tasks[taskIndex] &&
                     typeof errors.tasks[taskIndex] !== 'string' &&
                     errors.tasks[taskIndex].startDate && (
-                      <p className="text-red-500 text-sm mt-1">
+                      <p className="text-destructive text-sm mt-1">
                         {errors.tasks[taskIndex].startDate}
                       </p>
                     )}
@@ -301,7 +327,7 @@ const TasksStep: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-blue-700">Assigned To</label>
+                  <label className="text-sm font-medium theme-text-primary">Assigned To</label>
                   {users && (
                     <ReusableSelect
                       options={users.map(user => ({
@@ -368,7 +394,7 @@ const TasksStep: React.FC = () => {
                     )}
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-blue-700">Estimated Time</label>
+                  <label className="text-sm font-medium theme-text-primary">Estimated Time</label>
                   <Input
                     type="number"
                     value={task.estimatedTime}
@@ -378,14 +404,14 @@ const TasksStep: React.FC = () => {
                       setFieldValue('tasks', updatedTasks);
                     }}
                     placeholder="Enter estimated time"
-                    className={`mt-1 ${
+                    className={`mt-1 theme-input theme-focus ${
                       errors.tasks &&
                       typeof errors.tasks !== 'string' &&
                       errors.tasks[taskIndex] &&
                       typeof errors.tasks[taskIndex] !== 'string' &&
                       errors.tasks[taskIndex].estimatedTime
-                        ? 'border-red-500'
-                        : 'border-gray-300'
+                        ? 'border-destructive'
+                        : ''
                     }`}
                   />
                   {errors.tasks &&
@@ -393,32 +419,31 @@ const TasksStep: React.FC = () => {
                     errors.tasks[taskIndex] &&
                     typeof errors.tasks[taskIndex] !== 'string' &&
                     errors.tasks[taskIndex].estimatedTime && (
-                      <p className="text-red-500 text-sm mt-1">
+                      <p className="text-destructive text-sm mt-1">
                         {errors.tasks[taskIndex].estimatedTime}
                       </p>
                     )}
                 </div>
               </div>
               <div className="mb-4">
-                <h3 className="text-lg font-semibold text-blue-700 mb-2">Subtasks</h3>
+                <h3 className="text-lg font-semibold theme-text-primary mb-2">Subtasks</h3>
                 <div className="space-y-4">
                   {(task.subtasks || []).map((subtask, subtaskIndex) => (
-                    <div
-                      key={subtaskIndex}
-                      className="p-3 border border-gray-300 rounded-md bg-gray-50"
-                    >
+                    <div key={subtaskIndex} className="p-3 theme-border rounded-md theme-surface">
                       {task.subtasks.length > 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-500"
+                          className="text-destructive hover:bg-destructive/10 theme-transition"
                           onClick={() => handleRemoveSubtask(taskIndex, subtaskIndex)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
                       <div className="mb-2">
-                        <label className="text-sm font-medium text-blue-700">Subtask Name</label>
+                        <label className="text-sm font-medium theme-text-primary">
+                          Subtask Name
+                        </label>
                         <Input
                           value={subtask.name}
                           onChange={e => {
@@ -427,11 +452,11 @@ const TasksStep: React.FC = () => {
                             setFieldValue('tasks', updatedTasks);
                           }}
                           placeholder="Enter subtask name"
-                          className="mt-1"
+                          className="mt-1 theme-input theme-focus"
                         />
                       </div>
                       <div className="mb-2">
-                        <label className="text-sm font-medium text-blue-700">Completed</label>
+                        <label className="text-sm font-medium theme-text-primary">Completed</label>
                         <input
                           type="checkbox"
                           checked={subtask.completed}
@@ -441,7 +466,7 @@ const TasksStep: React.FC = () => {
                               e.target.checked;
                             setFieldValue('tasks', updatedTasks);
                           }}
-                          className="ml-2"
+                          className="ml-2 theme-focus"
                         />
                       </div>
                     </div>
@@ -450,7 +475,7 @@ const TasksStep: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-2 flex items-center gap-2"
+                  className="mt-2 flex items-center gap-2 theme-button-secondary theme-transition"
                   onClick={() => handleAddSubtask(taskIndex)}
                 >
                   <PlusCircle className="w-5 h-5" /> Add Subtask
@@ -460,7 +485,11 @@ const TasksStep: React.FC = () => {
           );
         })}
       </div>
-      <Button variant="outline" className="mt-6 flex items-center gap-2" onClick={handleAddTask}>
+      <Button
+        variant="outline"
+        className="mt-6 flex items-center gap-2 theme-button-secondary theme-transition"
+        onClick={handleAddTask}
+      >
         <PlusCircle className="w-5 h-5" /> Add Task
       </Button>
     </div>

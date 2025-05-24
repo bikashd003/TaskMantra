@@ -45,38 +45,40 @@ const FileStep: React.FC = () => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full theme-surface">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-blue-700 flex items-center gap-2">
+        <CardTitle className="text-2xl font-bold theme-text-primary flex items-center gap-2">
           <FilePlus className="w-6 h-6" /> Project Files
         </CardTitle>
-        <CardDescription>Upload and manage files for your project</CardDescription>
+        <CardDescription className="theme-text-secondary">
+          Upload and manage files for your project
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <FileUploader onChange={handleFileUpload} multiple={true} reset={resetUploader} />
 
         {values.files && values.files.length > 0 && (
           <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <h3 className="text-lg font-semibold mb-3">Uploaded Files</h3>
+            <h3 className="text-lg font-semibold mb-3 theme-text-primary">Uploaded Files</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <AnimatePresence>
                 {values.files.map((file, index) => (
                   <motion.div
                     key={index}
-                    className="bg-gray-50 p-3 rounded-lg border border-gray-200 relative flex items-center"
+                    className="theme-surface-elevated p-3 rounded-lg theme-border relative flex items-center hover-reveal theme-transition"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
                   >
                     <div className="flex-1 truncate">
-                      <p className="font-medium truncate">{file.name}</p>
-                      <p className="text-xs text-gray-500">{file.type}</p>
+                      <p className="font-medium truncate theme-text-primary">{file.name}</p>
+                      <p className="text-xs theme-text-secondary">{file.type}</p>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-500 h-8 w-8 p-0 ml-2"
+                      className="text-destructive h-8 w-8 p-0 ml-2 hover:bg-destructive/10 theme-transition"
                       onClick={() => removeFile(index)}
                     >
                       <X size={16} />

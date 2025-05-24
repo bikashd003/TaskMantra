@@ -66,7 +66,7 @@ const PageContent = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-white px-4 rounded-md py-2 h-full w-full"
+      className="theme-surface px-4 rounded-md py-2 h-full w-full"
     >
       {/* Progress Steps */}
       <div className="mb-8">
@@ -74,13 +74,13 @@ const PageContent = () => {
           {steps.map((step, index) => (
             <div key={step.id} className="flex flex-col items-center relative">
               <motion.div
-                className={`w-12 h-12 rounded-full flex items-center justify-center z-10
+                className={`w-12 h-12 rounded-full flex items-center justify-center z-10 theme-transition
                                         ${
                                           currentStep === step.id
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                                            ? 'bg-primary text-primary-foreground theme-shadow-md'
                                             : currentStep > step.id
-                                              ? 'bg-green-500 text-white'
-                                              : 'bg-white text-gray-400 border border-gray-200'
+                                              ? 'bg-success text-success-foreground'
+                                              : 'theme-surface-elevated theme-text-secondary theme-border'
                                         }`}
                 whileHover={{ scale: 1.05 }}
                 onClick={() => {
@@ -93,16 +93,16 @@ const PageContent = () => {
                 {step.icon}
               </motion.div>
               <p
-                className={`mt-2 text-sm font-medium ${currentStep === step.id ? 'text-blue-600' : 'text-gray-500'}`}
+                className={`mt-2 text-sm font-medium theme-transition ${currentStep === step.id ? 'text-primary' : 'theme-text-secondary'}`}
               >
                 {step.title}
               </p>
 
               {/* Connector line */}
               {index < steps.length - 1 && (
-                <div className="absolute top-6 left-12 w-[calc(100vw/4)] h-[2px] bg-gray-200 -z-10">
+                <div className="absolute top-6 left-12 w-[calc(100vw/4)] h-[2px] bg-border -z-10">
                   <motion.div
-                    className="h-full bg-blue-500"
+                    className="h-full bg-primary"
                     initial={{ width: '0%' }}
                     animate={{
                       width: currentStep > step.id ? '100%' : '0%',
@@ -125,7 +125,7 @@ const PageContent = () => {
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
         >
-          <Card className="w-full overflow-hidden shadow-lg border-0">
+          <Card className="w-full overflow-hidden theme-shadow-lg theme-border theme-surface-elevated">
             <div className="max-h-[70vh] overflow-y-auto">{renderStepContent()}</div>
           </Card>
         </motion.div>
@@ -142,7 +142,7 @@ const PageContent = () => {
             variant="outline"
             disabled={currentStep === 1}
             onClick={() => setCurrentStep(currentStep - 1)}
-            className="flex items-center gap-2 transition-all hover:translate-x-[-4px] shadow-sm"
+            className="flex items-center gap-2 theme-transition hover:translate-x-[-4px] theme-shadow-sm theme-button-secondary"
           >
             <ArrowLeft className="w-4 h-4" />
             Previous
@@ -157,7 +157,7 @@ const PageContent = () => {
           <Button
             onClick={handleNext}
             disabled={isProjectCreating}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all hover:translate-x-[4px] shadow-md"
+            className="flex items-center gap-2 theme-button-primary theme-transition hover:translate-x-[4px] theme-shadow-md"
           >
             {currentStep === steps.length ? (
               <>

@@ -27,12 +27,14 @@ const ProjectInfoStep = () => {
   const { values, handleChange, handleBlur, errors, touched } = formik;
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full theme-surface">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-blue-700 flex items-center gap-2">
+        <CardTitle className="text-2xl font-bold theme-text-primary flex items-center gap-2">
           <Folder className="w-6 h-6" /> Project Information
         </CardTitle>
-        <CardDescription>Fill in the details of your new project</CardDescription>
+        <CardDescription className="theme-text-secondary">
+          Fill in the details of your new project
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <motion.div
@@ -42,7 +44,7 @@ const ProjectInfoStep = () => {
           transition={{ duration: 0.3 }}
         >
           <div className="space-y-2">
-            <label className="text-sm font-medium text-blue-700 flex items-center gap-1">
+            <label className="text-sm font-medium theme-text-primary flex items-center gap-1">
               <Info className="w-4 h-4" /> Project Name
             </label>
             <Input
@@ -52,7 +54,7 @@ const ProjectInfoStep = () => {
               onChange={handleChange}
               onBlur={handleBlur}
               placeholder="Enter your project name"
-              className={`w-full ${touched.name && errors.name ? 'border-destructive' : ''}`}
+              className={`w-full theme-input theme-focus ${touched.name && errors.name ? 'border-destructive' : ''}`}
             />
             {touched.name && errors.name && (
               <motion.p
@@ -66,7 +68,7 @@ const ProjectInfoStep = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-blue-700 flex items-center gap-1">
+            <label className="text-sm font-medium theme-text-primary flex items-center gap-1">
               <Info className="w-4 h-4" /> Description
             </label>
             <Textarea
@@ -76,7 +78,7 @@ const ProjectInfoStep = () => {
               onChange={handleChange}
               onBlur={handleBlur}
               placeholder="Describe your project in detail"
-              className={`w-full ${touched.description && errors.description ? 'border-destructive' : ''}`}
+              className={`w-full theme-input theme-focus ${touched.description && errors.description ? 'border-destructive' : ''}`}
               rows={4}
             />
             {touched.description && errors.description && (
@@ -92,7 +94,7 @@ const ProjectInfoStep = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-blue-700 flex items-center gap-1">
+              <label className="text-sm font-medium theme-text-primary flex items-center gap-1">
                 <AlertTriangle className="w-4 h-4" /> Priority
               </label>
               <Select
@@ -100,14 +102,20 @@ const ProjectInfoStep = () => {
                 value={values.priority}
                 onValueChange={value => formik.setFieldValue('priority', value)}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full theme-input theme-focus">
                   <SelectValue placeholder="Select the priority" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="theme-surface-elevated theme-border">
                   <SelectGroup>
-                    <SelectItem value="High">High</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Low">Low</SelectItem>
+                    <SelectItem value="High" className="interactive-hover theme-transition">
+                      High
+                    </SelectItem>
+                    <SelectItem value="Medium" className="interactive-hover theme-transition">
+                      Medium
+                    </SelectItem>
+                    <SelectItem value="Low" className="interactive-hover theme-transition">
+                      Low
+                    </SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -123,7 +131,7 @@ const ProjectInfoStep = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-blue-700 flex items-center gap-1">
+              <label className="text-sm font-medium theme-text-primary flex items-center gap-1">
                 <Clock className="w-4 h-4" /> Status
               </label>
               <Select
@@ -131,38 +139,38 @@ const ProjectInfoStep = () => {
                 value={values.status}
                 onValueChange={value => formik.setFieldValue('status', value)}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full theme-input theme-focus">
                   <SelectValue placeholder="Select the status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="theme-surface-elevated theme-border">
                   <SelectGroup>
-                    <SelectItem value="Planning">
+                    <SelectItem value="Planning" className="interactive-hover theme-transition">
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-blue-500" />
+                        <Clock className="w-4 h-4 text-primary" />
                         Planning
                       </div>
                     </SelectItem>
-                    <SelectItem value="In Progress">
+                    <SelectItem value="In Progress" className="interactive-hover theme-transition">
                       <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                        <AlertTriangle className="w-4 h-4 text-warning" />
                         In Progress
                       </div>
                     </SelectItem>
-                    <SelectItem value="Completed">
+                    <SelectItem value="Completed" className="interactive-hover theme-transition">
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        <CheckCircle2 className="w-4 h-4 text-success" />
                         Completed
                       </div>
                     </SelectItem>
-                    <SelectItem value="On Hold">
+                    <SelectItem value="On Hold" className="interactive-hover theme-transition">
                       <div className="flex items-center gap-2">
-                        <PauseCircle className="w-4 h-4 text-orange-500" />
+                        <PauseCircle className="w-4 h-4 text-warning" />
                         On Hold
                       </div>
                     </SelectItem>
-                    <SelectItem value="Cancelled">
+                    <SelectItem value="Cancelled" className="interactive-hover theme-transition">
                       <div className="flex items-center gap-2">
-                        <XCircle className="w-4 h-4 text-red-500" />
+                        <XCircle className="w-4 h-4 text-destructive" />
                         Cancelled
                       </div>
                     </SelectItem>
