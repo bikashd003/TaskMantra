@@ -1,16 +1,22 @@
-'use client'
-import React, { useState } from 'react'
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+'use client';
+import React, { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -18,26 +24,26 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Check, MoreVertical, Plus, Search, Shield, UserPlus } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
-import { Skeleton } from '@heroui/skeleton'
+} from '@/components/ui/dropdown-menu';
+import { Check, MoreVertical, Plus, Search, Shield, UserPlus } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { Skeleton } from '@heroui/skeleton';
 
 const inviteFormSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  role: z.enum(["admin", "member", "viewer"]),
-})
+  email: z.string().email({ message: 'Please enter a valid email address.' }),
+  role: z.enum(['admin', 'member', 'viewer']),
+});
 
 export default function MembersSettings() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [roleFilter, setRoleFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
 
   const { data: teamMembers, isLoading } = useQuery({
     queryKey: ['teamMembers', searchQuery, roleFilter],
@@ -45,58 +51,56 @@ export default function MembersSettings() {
       const { data } = await axios.get('/api/settings/member', {
         params: {
           search: searchQuery,
-          role: roleFilter !== 'all' ? roleFilter : undefined
-        }
-      })
-      return data.teamMembers
+          role: roleFilter !== 'all' ? roleFilter : undefined,
+        },
+      });
+      return data.teamMembers;
     },
-  })
+  });
 
   // Debounce search to avoid too many API calls
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+    const value = e.target.value;
     const timeoutId = setTimeout(() => {
-      setSearchQuery(value)
-    }, 500)
+      setSearchQuery(value);
+    }, 500);
 
-    return () => clearTimeout(timeoutId)
-  }
+    return () => clearTimeout(timeoutId);
+  };
 
   const handleRoleFilter = (value: string) => {
-    setRoleFilter(value)
-  }
+    setRoleFilter(value);
+  };
 
   const form = useForm<z.infer<typeof inviteFormSchema>>({
     resolver: zodResolver(inviteFormSchema),
     defaultValues: {
-      email: "",
-      role: "member",
+      email: '',
+      role: 'member',
     },
-  })
+  });
 
   function onSubmit(values: z.infer<typeof inviteFormSchema>) {
-    console.log(values)
+    console.log(values);
     // TODO: Implement invite member logic
   }
 
   return (
     <div className="space-y-6 px-4">
       <div>
-        <h3 className="text-lg font-medium">Team Members</h3>
-        <p className="text-sm text-muted-foreground">
-          Manage your team members and their roles
-        </p>
+        <h3 className="text-lg font-medium theme-text-primary">Team Members</h3>
+        <p className="text-sm theme-text-secondary">Manage your team members and their roles</p>
       </div>
-      <Separator />
+      <Separator className="theme-divider" />
 
       {/* Invite Members Form */}
-      <Card>
+      <Card className="theme-surface-elevated hover-reveal theme-transition">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 theme-text-primary">
             <UserPlus className="h-5 w-5" />
             Invite Team Members
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="theme-text-secondary">
             Invite new members to join your team
           </CardDescription>
         </CardHeader>
@@ -109,7 +113,11 @@ export default function MembersSettings() {
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormControl>
-                      <Input placeholder="Enter email address" {...field} />
+                      <Input
+                        placeholder="Enter email address"
+                        className="theme-input theme-focus"
+                        {...field}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -122,21 +130,25 @@ export default function MembersSettings() {
                   <FormItem>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[140px] theme-input theme-focus">
                           <SelectValue placeholder="Select role" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="theme-surface-elevated theme-border">
                         {/* <SelectItem value="admin">Admin</SelectItem> */}
-                        <SelectItem value="member">Member</SelectItem>
-                        <SelectItem value="viewer">Viewer</SelectItem>
+                        <SelectItem value="member" className="interactive-hover theme-transition">
+                          Member
+                        </SelectItem>
+                        <SelectItem value="viewer" className="interactive-hover theme-transition">
+                          Viewer
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
                 )}
               />
 
-              <Button type="submit">
+              <Button type="submit" className="theme-button-primary theme-transition">
                 <Plus className="h-4 w-4 mr-2" />
                 Invite
               </Button>
@@ -148,47 +160,52 @@ export default function MembersSettings() {
       {/* Search and Filter */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2 top-2.5 h-4 w-4 theme-text-secondary" />
           <Input
             placeholder="Search members..."
-            className="pl-8"
+            className="pl-8 theme-input theme-focus"
             onChange={handleSearch}
             defaultValue={searchQuery}
           />
         </div>
-        <Select
-          defaultValue={roleFilter}
-          onValueChange={handleRoleFilter}
-        >
-          <SelectTrigger className="w-[160px]">
+        <Select defaultValue={roleFilter} onValueChange={handleRoleFilter}>
+          <SelectTrigger className="w-[160px] theme-input theme-focus">
             <SelectValue placeholder="Filter by role" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
+          <SelectContent className="theme-surface-elevated theme-border">
+            <SelectItem value="all" className="interactive-hover theme-transition">
+              All Roles
+            </SelectItem>
             {/* <SelectItem value="admin">Admin</SelectItem> */}
-            <SelectItem value="member">Member</SelectItem>
-            <SelectItem value="viewer">Viewer</SelectItem>
-            <SelectItem value="Owner">Owner</SelectItem>
+            <SelectItem value="member" className="interactive-hover theme-transition">
+              Member
+            </SelectItem>
+            <SelectItem value="viewer" className="interactive-hover theme-transition">
+              Viewer
+            </SelectItem>
+            <SelectItem value="Owner" className="interactive-hover theme-transition">
+              Owner
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Members Table */}
-      <Card>
+      <Card className="theme-surface-elevated hover-reveal theme-transition">
         <CardHeader>
-          <CardTitle>Team Members</CardTitle>
-          <CardDescription>
+          <CardTitle className="theme-text-primary">Team Members</CardTitle>
+          <CardDescription className="theme-text-secondary">
             Manage roles and access for your team members
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Member</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="theme-border border-b">
+                <TableHead className="theme-text-primary">Member</TableHead>
+                <TableHead className="theme-text-primary">Role</TableHead>
+                <TableHead className="theme-text-primary">Status</TableHead>
+                <TableHead className="text-right theme-text-primary">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -214,8 +231,8 @@ export default function MembersSettings() {
                   </TableRow>
                 ))
               ) : teamMembers && teamMembers.length > 0 ? (
-                teamMembers.map((team) => (
-                  team.members.map((member) => (
+                teamMembers.map(team =>
+                  team.members.map(member => (
                     <TableRow key={member.userId._id}>
                       <TableCell className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
@@ -228,8 +245,11 @@ export default function MembersSettings() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={member.role === "Owner" ? "default" : "secondary"} className="flex w-fit items-center gap-1">
-                          {member.role === "Owner" && <Shield className="h-3 w-3" />}
+                        <Badge
+                          variant={member.role === 'Owner' ? 'default' : 'secondary'}
+                          className="flex w-fit items-center gap-1"
+                        >
+                          {member.role === 'Owner' && <Shield className="h-3 w-3" />}
                           {member.role}
                         </Badge>
                       </TableCell>
@@ -257,7 +277,7 @@ export default function MembersSettings() {
                       </TableCell>
                     </TableRow>
                   ))
-                ))
+                )
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-6">
@@ -270,5 +290,5 @@ export default function MembersSettings() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

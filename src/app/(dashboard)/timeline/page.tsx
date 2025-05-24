@@ -306,32 +306,32 @@ export default function TimelinePage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-white px-4 rounded-md py-2 h-full w-full"
+      className="theme-surface px-4 rounded-md py-2 h-full w-full"
     >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-bold">Project Timeline</h2>
+          <h2 className="text-xl font-bold theme-text-primary">Project Timeline</h2>
         </div>
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setIsCreateOpen(true)}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
+            className="theme-button-primary theme-shadow-md hover:theme-shadow-lg theme-transition"
           >
             <Plus className="mr-2 h-4 w-4" /> Add Timeline Item
           </Button>
         </div>
       </div>
 
-      <Card className="border shadow-xl rounded-xl overflow-hidden">
-        <CardHeader className="pb-3 bg-gray-50 dark:bg-gray-900">
+      <Card className="theme-border theme-shadow-lg rounded-xl overflow-hidden theme-surface">
+        <CardHeader className="pb-3 theme-surface-elevated theme-border-b">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-2">
               <Tabs defaultValue="timeline" className="w-[400px]">
-                <TabsList className="bg-white/20 backdrop-blur-sm">
+                <TabsList className="glass theme-border">
                   <TabsTrigger
                     value="timeline"
                     onClick={() => setViewMode('timeline')}
-                    className="flex items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-white"
+                    className="flex items-center gap-1 theme-transition data-[state=active]:theme-active-primary"
                   >
                     <List className="h-4 w-4" />
                     Timeline
@@ -339,7 +339,7 @@ export default function TimelinePage() {
                   <TabsTrigger
                     value="gantt"
                     onClick={() => setViewMode('gantt')}
-                    className="flex items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-white"
+                    className="flex items-center gap-1 theme-transition data-[state=active]:theme-active-primary"
                   >
                     <LayoutGrid className="h-4 w-4" />
                     Gantt Chart
@@ -350,18 +350,18 @@ export default function TimelinePage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative w-full sm:w-auto">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 theme-text-secondary" />
                 <Input
                   placeholder="Search timeline items..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full sm:w-[220px] rounded-full border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="pl-10 w-full sm:w-[220px] rounded-full theme-input theme-focus theme-transition"
                 />
                 {searchQuery && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full theme-button-ghost"
                     onClick={() => setSearchQuery('')}
                   >
                     <X className="h-3 w-3" />
@@ -374,17 +374,14 @@ export default function TimelinePage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex items-center gap-1 rounded-full border-gray-200 hover:border-primary hover:bg-primary/5"
+                    className="flex items-center gap-1 rounded-full theme-border theme-hover-primary theme-transition"
                   >
                     <Filter className="h-4 w-4" />
                     Filter
                     {(selectedFilter !== 'all' ||
                       selectedProject ||
                       (dateRange.from && dateRange.to)) && (
-                      <Badge
-                        variant="secondary"
-                        className="ml-1 h-5 px-1 bg-primary/10 text-primary"
-                      >
+                      <Badge variant="secondary" className="ml-1 h-5 px-1 theme-badge-primary">
                         {(selectedFilter !== 'all' ? 1 : 0) +
                           (selectedProject ? 1 : 0) +
                           (dateRange.from && dateRange.to ? 1 : 0)}
@@ -394,53 +391,58 @@ export default function TimelinePage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-64 p-2 rounded-xl shadow-xl border-gray-100"
+                  className="w-64 p-2 rounded-xl theme-surface-elevated theme-shadow-lg theme-border"
                 >
-                  <div className="px-2 py-1.5 text-sm font-semibold text-primary">Status</div>
+                  <div className="px-2 py-1.5 text-sm font-semibold theme-text-primary">Status</div>
                   <DropdownMenuRadioGroup value={selectedFilter} onValueChange={setSelectedFilter}>
-                    <DropdownMenuRadioItem value="all" className="rounded-lg my-1 cursor-pointer">
+                    <DropdownMenuRadioItem
+                      value="all"
+                      className="rounded-lg my-1 cursor-pointer theme-hover-surface theme-transition"
+                    >
                       All Statuses
                     </DropdownMenuRadioItem>
                     <DropdownMenuRadioItem
                       value="planned"
-                      className="rounded-lg my-1 cursor-pointer"
+                      className="rounded-lg my-1 cursor-pointer theme-hover-surface theme-transition"
                     >
                       Planned
                     </DropdownMenuRadioItem>
                     <DropdownMenuRadioItem
                       value="in_progress"
-                      className="rounded-lg my-1 cursor-pointer"
+                      className="rounded-lg my-1 cursor-pointer theme-hover-surface theme-transition"
                     >
                       In Progress
                     </DropdownMenuRadioItem>
                     <DropdownMenuRadioItem
                       value="completed"
-                      className="rounded-lg my-1 cursor-pointer"
+                      className="rounded-lg my-1 cursor-pointer theme-hover-surface theme-transition"
                     >
                       Completed
                     </DropdownMenuRadioItem>
                     <DropdownMenuRadioItem
                       value="delayed"
-                      className="rounded-lg my-1 cursor-pointer"
+                      className="rounded-lg my-1 cursor-pointer theme-hover-surface theme-transition"
                     >
                       Delayed
                     </DropdownMenuRadioItem>
                   </DropdownMenuRadioGroup>
 
-                  <DropdownMenuSeparator className="my-2" />
+                  <DropdownMenuSeparator className="my-2 theme-divider" />
 
-                  <div className="px-2 py-1.5 text-sm font-semibold text-primary">Projects</div>
+                  <div className="px-2 py-1.5 text-sm font-semibold theme-text-primary">
+                    Projects
+                  </div>
                   {projectsLoading ? (
                     <div className="px-2 py-2">
-                      <Skeleton className="h-5 w-full rounded-md" />
-                      <Skeleton className="h-5 w-full mt-2 rounded-md" />
-                      <Skeleton className="h-5 w-3/4 mt-2 rounded-md" />
+                      <Skeleton className="h-5 w-full rounded-md loading-skeleton" />
+                      <Skeleton className="h-5 w-full mt-2 rounded-md loading-skeleton" />
+                      <Skeleton className="h-5 w-3/4 mt-2 rounded-md loading-skeleton" />
                     </div>
                   ) : (
-                    <div className="max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                    <div className="max-h-40 overflow-y-auto pr-1 theme-scrollbar">
                       <DropdownMenuItem
                         onClick={() => setSelectedProject(null)}
-                        className="rounded-lg my-1 cursor-pointer"
+                        className="rounded-lg my-1 cursor-pointer theme-hover-surface theme-transition"
                       >
                         All Projects
                       </DropdownMenuItem>
@@ -448,36 +450,38 @@ export default function TimelinePage() {
                         <DropdownMenuItem
                           key={project._id || project.id}
                           onClick={() => setSelectedProject(project._id || project.id)}
-                          className="rounded-lg my-1 cursor-pointer"
+                          className="rounded-lg my-1 cursor-pointer theme-hover-surface theme-transition"
                         >
                           <div className="flex items-center gap-2">
                             <div
                               className="w-3 h-3 rounded-full"
                               style={{ backgroundColor: project.color }}
                             />
-                            <span className="truncate">{project.name}</span>
+                            <span className="truncate theme-text-primary">{project.name}</span>
                           </div>
                         </DropdownMenuItem>
                       ))}
                     </div>
                   )}
 
-                  <DropdownMenuSeparator className="my-2" />
+                  <DropdownMenuSeparator className="my-2 theme-divider" />
 
-                  <div className="px-2 py-1.5 text-sm font-semibold text-primary">Date Range</div>
+                  <div className="px-2 py-1.5 text-sm font-semibold theme-text-primary">
+                    Date Range
+                  </div>
                   <div className="px-2 py-1.5">
                     <DateRangePicker
                       value={dateRange}
                       onChange={handleDateRangeChange}
-                      className="w-full"
+                      className="w-full theme-input theme-focus"
                     />
                   </div>
 
-                  <DropdownMenuSeparator className="my-2" />
+                  <DropdownMenuSeparator className="my-2 theme-divider" />
 
                   <DropdownMenuItem
                     onClick={clearFilters}
-                    className="rounded-lg mt-1 cursor-pointer bg-gray-50 hover:bg-gray-100 justify-center font-medium"
+                    className="rounded-lg mt-1 cursor-pointer theme-surface-elevated theme-hover-surface justify-center font-medium theme-transition"
                   >
                     Clear All Filters
                   </DropdownMenuItem>
@@ -487,7 +491,7 @@ export default function TimelinePage() {
           </div>
         </CardHeader>
 
-        <CardContent className="p-0 relative">
+        <CardContent className="p-0 relative theme-surface">
           <AnimatePresence mode="wait">
             <motion.div
               key={viewMode}

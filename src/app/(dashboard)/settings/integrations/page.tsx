@@ -1,70 +1,87 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { AlertCircle, Check, ExternalLink, Github, Gitlab, Slack, Trello, Calendar, FileText } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import {
+  AlertCircle,
+  Check,
+  ExternalLink,
+  Github,
+  Gitlab,
+  Slack,
+  Trello,
+  Calendar,
+  FileText,
+} from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function IntegrationsPage() {
-  const [activeTab, setActiveTab] = useState("available");
-  
+  const [activeTab, setActiveTab] = useState('available');
+
   // Mock data for connected and available integrations
   const connectedIntegrations = [
     {
-      id: "slack",
-      name: "Slack",
-      description: "Send notifications and updates to your Slack channels.",
+      id: 'slack',
+      name: 'Slack',
+      description: 'Send notifications and updates to your Slack channels.',
       icon: Slack,
-      status: "Connected",
-      lastSync: "2 hours ago",
-      workspace: "TaskMantra Team",
+      status: 'Connected',
+      lastSync: '2 hours ago',
+      workspace: 'TaskMantra Team',
     },
     {
-      id: "github",
-      name: "GitHub",
-      description: "Link GitHub issues and pull requests to your tasks.",
+      id: 'github',
+      name: 'GitHub',
+      description: 'Link GitHub issues and pull requests to your tasks.',
       icon: Github,
-      status: "Connected",
-      lastSync: "1 day ago",
-      repository: "taskmantra/app",
+      status: 'Connected',
+      lastSync: '1 day ago',
+      repository: 'taskmantra/app',
     },
     {
-      id: "trello",
-      name: "Trello",
-      description: "Import boards and cards from Trello.",
+      id: 'trello',
+      name: 'Trello',
+      description: 'Import boards and cards from Trello.',
       icon: Trello,
-      status: "Connected",
-      lastSync: "3 days ago",
+      status: 'Connected',
+      lastSync: '3 days ago',
       boards: 2,
     },
   ];
 
   const availableIntegrations = [
     {
-      id: "gitlab",
-      name: "GitLab",
-      description: "Link GitLab issues and merge requests to your tasks.",
+      id: 'gitlab',
+      name: 'GitLab',
+      description: 'Link GitLab issues and merge requests to your tasks.',
       icon: Gitlab,
       popular: true,
     },
     {
-      id: "google-calendar",
-      name: "Google Calendar",
-      description: "Sync your tasks with Google Calendar.",
+      id: 'google-calendar',
+      name: 'Google Calendar',
+      description: 'Sync your tasks with Google Calendar.',
       icon: Calendar,
       popular: true,
     },
     {
-      id: "notion",
-      name: "Notion",
-      description: "Import pages and databases from Notion.",
+      id: 'notion',
+      name: 'Notion',
+      description: 'Import pages and databases from Notion.',
       icon: FileText,
       popular: false,
     },
@@ -73,40 +90,49 @@ export default function IntegrationsPage() {
   return (
     <div className="container mx-auto py-6 space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Integrations</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-3xl font-bold tracking-tight theme-text-primary">Integrations</h2>
+        <p className="theme-text-secondary">
           Connect TaskMantra with your favorite tools and services
         </p>
       </div>
 
-      <Alert>
+      <Alert className="theme-surface-elevated theme-border">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Integration Limit</AlertTitle>
-        <AlertDescription>
+        <AlertTitle className="theme-text-primary">Integration Limit</AlertTitle>
+        <AlertDescription className="theme-text-secondary">
           Your current plan allows up to 5 integrations. You are using 3 of 5.
         </AlertDescription>
       </Alert>
 
       <Tabs defaultValue={activeTab} className="space-y-4" onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="connected">Connected ({connectedIntegrations.length})</TabsTrigger>
-          <TabsTrigger value="available">Available ({availableIntegrations.length})</TabsTrigger>
+        <TabsList className="theme-surface theme-border">
+          <TabsTrigger value="connected" className="interactive-hover theme-transition">
+            Connected ({connectedIntegrations.length})
+          </TabsTrigger>
+          <TabsTrigger value="available" className="interactive-hover theme-transition">
+            Available ({availableIntegrations.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="connected" className="space-y-4">
-          {connectedIntegrations.map((integration) => (
-            <Card key={integration.id}>
+          {connectedIntegrations.map(integration => (
+            <Card
+              key={integration.id}
+              className="theme-surface-elevated hover-reveal theme-transition"
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center space-x-4">
-                  <div className="bg-slate-100 p-2 rounded-md">
+                  <div className="theme-surface p-2 rounded-md">
                     <integration.icon className="h-6 w-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">{integration.name}</CardTitle>
-                    <CardDescription>{integration.description}</CardDescription>
+                    <CardTitle className="text-xl theme-text-primary">{integration.name}</CardTitle>
+                    <CardDescription className="theme-text-secondary">
+                      {integration.description}
+                    </CardDescription>
                   </div>
                 </div>
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="theme-badge-success">
                   {integration.status}
                 </Badge>
               </CardHeader>
@@ -131,14 +157,24 @@ export default function IntegrationsPage() {
                   {integration.boards && (
                     <div>
                       <p className="text-sm font-medium">Boards</p>
-                      <p className="text-sm text-muted-foreground">{integration.boards} boards connected</p>
+                      <p className="text-sm text-muted-foreground">
+                        {integration.boards} boards connected
+                      </p>
                     </div>
                   )}
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between border-t pt-4">
-                <Button variant="outline" size="sm">Configure</Button>
-                <Button variant="destructive" size="sm">Disconnect</Button>
+              <CardFooter className="flex justify-between theme-border border-t pt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="theme-button-ghost interactive-hover theme-transition"
+                >
+                  Configure
+                </Button>
+                <Button variant="destructive" size="sm" className="theme-transition">
+                  Disconnect
+                </Button>
               </CardFooter>
             </Card>
           ))}
@@ -146,31 +182,40 @@ export default function IntegrationsPage() {
 
         <TabsContent value="available" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {availableIntegrations.map((integration) => (
-              <Card key={integration.id} className="flex flex-col">
+            {availableIntegrations.map(integration => (
+              <Card
+                key={integration.id}
+                className="flex flex-col theme-surface-elevated hover-reveal theme-transition"
+              >
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <div className="bg-slate-100 p-2 rounded-md">
+                      <div className="theme-surface p-2 rounded-md">
                         <integration.icon className="h-5 w-5" />
                       </div>
-                      <CardTitle className="text-lg">{integration.name}</CardTitle>
+                      <CardTitle className="text-lg theme-text-primary">
+                        {integration.name}
+                      </CardTitle>
                     </div>
                     {integration.popular && (
-                      <Badge variant="secondary" className="text-xs">Popular</Badge>
+                      <Badge variant="secondary" className="text-xs theme-badge-secondary">
+                        Popular
+                      </Badge>
                     )}
                   </div>
-                  <CardDescription className="mt-2">{integration.description}</CardDescription>
+                  <CardDescription className="mt-2 theme-text-secondary">
+                    {integration.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow">
-                  <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
+                  <ul className="list-disc list-inside text-sm space-y-1 theme-text-secondary">
                     <li>Automatic synchronization</li>
                     <li>Two-way updates</li>
                     <li>Custom notifications</li>
                   </ul>
                 </CardContent>
                 <CardFooter className="pt-2">
-                  <Button className="w-full">Connect</Button>
+                  <Button className="w-full theme-button-primary theme-transition">Connect</Button>
                 </CardFooter>
               </Card>
             ))}
@@ -180,14 +225,14 @@ export default function IntegrationsPage() {
 
       <div className="mt-8 space-y-6">
         <div>
-          <h3 className="text-xl font-bold">Integration Settings</h3>
-          <p className="text-muted-foreground">Configure global settings for all integrations</p>
+          <h3 className="text-xl font-bold theme-text-primary">Integration Settings</h3>
+          <p className="theme-text-secondary">Configure global settings for all integrations</p>
         </div>
 
-        <Card>
+        <Card className="theme-surface-elevated hover-reveal theme-transition">
           <CardHeader>
-            <CardTitle>Synchronization</CardTitle>
-            <CardDescription>
+            <CardTitle className="theme-text-primary">Synchronization</CardTitle>
+            <CardDescription className="theme-text-secondary">
               Control how and when your integrations sync data
             </CardDescription>
           </CardHeader>
@@ -201,9 +246,9 @@ export default function IntegrationsPage() {
               </div>
               <Switch id="auto-sync" defaultChecked />
             </div>
-            
+
             <Separator />
-            
+
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="sync-frequency">Sync Frequency</Label>
@@ -226,9 +271,9 @@ export default function IntegrationsPage() {
                 </select>
               </div>
             </div>
-            
+
             <Separator />
-            
+
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="notifications">Integration Notifications</Label>
@@ -241,10 +286,10 @@ export default function IntegrationsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="theme-surface-elevated hover-reveal theme-transition">
           <CardHeader>
-            <CardTitle>API Access</CardTitle>
-            <CardDescription>
+            <CardTitle className="theme-text-primary">API Access</CardTitle>
+            <CardDescription className="theme-text-secondary">
               Manage API keys for custom integrations
             </CardDescription>
           </CardHeader>
@@ -266,18 +311,15 @@ export default function IntegrationsPage() {
                 Use this key to access the TaskMantra API from your custom integrations.
               </p>
             </div>
-            
+
             <Separator />
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="webhook-url">Webhook URL</Label>
                 <Badge variant="outline">Pro Feature</Badge>
               </div>
-              <Input
-                id="webhook-url"
-                placeholder="https://your-app.com/webhook"
-              />
+              <Input id="webhook-url" placeholder="https://your-app.com/webhook" />
               <p className="text-sm text-muted-foreground">
                 Receive real-time updates when changes occur in TaskMantra.
               </p>
@@ -285,17 +327,22 @@ export default function IntegrationsPage() {
           </CardContent>
         </Card>
 
-        <div className="bg-slate-50 rounded-lg p-4 border">
+        <div className="theme-surface-elevated rounded-lg p-4 theme-border border">
           <div className="flex items-start space-x-4">
-            <div className="bg-slate-100 p-2 rounded-full">
+            <div className="theme-surface p-2 rounded-full">
               <Check className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <h4 className="font-medium">Need a custom integration?</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                We can build custom integrations for your specific needs. Contact our team to discuss your requirements.
+              <h4 className="font-medium theme-text-primary">Need a custom integration?</h4>
+              <p className="text-sm theme-text-secondary mt-1">
+                We can build custom integrations for your specific needs. Contact our team to
+                discuss your requirements.
               </p>
-              <Button variant="link" className="p-0 h-auto mt-2 flex items-center" asChild>
+              <Button
+                variant="link"
+                className="p-0 h-auto mt-2 flex items-center theme-button-ghost interactive-hover theme-transition"
+                asChild
+              >
                 <a href="#" target="_blank" rel="noopener noreferrer">
                   Learn more <ExternalLink className="ml-1 h-3 w-3" />
                 </a>
