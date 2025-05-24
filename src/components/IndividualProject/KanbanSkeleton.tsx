@@ -7,7 +7,7 @@ export function KanbanSkeleton() {
 
   // Column configurations to match real kanban columns
   const columnConfigs = [
-    { id: 'todo', borderColor: 'hsl(var(--muted-foreground))' },
+    { id: 'todo', borderColor: 'hsl(var(--theme-text-secondary))' },
     { id: 'inprogress', borderColor: 'hsl(var(--primary))' },
     { id: 'review', borderColor: 'hsl(var(--warning))' },
     { id: 'completed', borderColor: 'hsl(var(--success))' },
@@ -66,7 +66,7 @@ export function KanbanSkeleton() {
   );
 
   const QuickTaskFormSkeleton = () => (
-    <div className="px-2 py-1 mx-3 mb-2 border border-border/40 rounded-xl bg-card/95 backdrop-blur-md shadow-lg relative">
+    <div className="px-2 py-1 mx-3 mb-2 border border-border rounded-xl bg-card/95 backdrop-blur-md shadow-lg relative">
       <Skeleton className="h-7 w-7 rounded-full loading-skeleton absolute top-[-0.5rem] right-[-0.5rem]" />
       <Skeleton className="h-9 w-full my-2 rounded loading-skeleton" />
       <Skeleton className="h-9 w-full mb-2 rounded loading-skeleton" />
@@ -79,7 +79,7 @@ export function KanbanSkeleton() {
 
   return (
     <div className="h-[calc(100vh-12rem)] overflow-hidden flex flex-col theme-surface">
-      <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar">
+      <div className="flex-1 overflow-x-auto overflow-y-auto scrollbar-custom scrollbar-dark">
         <div className="flex gap-6 h-full p-4 pb-6 min-w-max">
           {columns.map(index => {
             const config = columnConfigs[index] || columnConfigs[0];
@@ -118,7 +118,7 @@ export function KanbanSkeleton() {
                 {showQuickForm && <QuickTaskFormSkeleton />}
 
                 {/* Column Content */}
-                <div className="flex-grow p-2 overflow-y-auto custom-scrollbar">
+                <div className="flex-grow p-2 overflow-y-auto scrollbar-custom scrollbar-dark">
                   {isEmpty ? (
                     /* Empty State */
                     <div className="flex items-center justify-center h-20 border-2 border-dashed border-border rounded-md theme-transition mx-3 mb-4">

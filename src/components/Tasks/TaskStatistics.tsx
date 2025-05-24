@@ -151,7 +151,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-sm font-medium theme-text-secondary">
                     Total Tasks
                   </CardTitle>
                 </CardHeader>
@@ -162,7 +162,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
 
               <Card>
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-sm font-medium theme-text-secondary">
                     Completion Rate
                   </CardTitle>
                 </CardHeader>
@@ -174,7 +174,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
 
               <Card>
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-sm font-medium theme-text-secondary">
                     Overdue
                   </CardTitle>
                 </CardHeader>
@@ -185,7 +185,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
 
               <Card>
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-sm font-medium theme-text-secondary">
                     Due Today
                   </CardTitle>
                 </CardHeader>
@@ -210,7 +210,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">{item.value}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs theme-text-secondary">
                             ({stats.total > 0 ? Math.round((item.value / stats.total) * 100) : 0}%)
                           </span>
                         </div>
@@ -234,7 +234,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">{item.value}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs theme-text-secondary">
                             ({stats.total > 0 ? Math.round((item.value / stats.total) * 100) : 0}%)
                           </span>
                         </div>
@@ -254,21 +254,21 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <Clock className="h-4 w-4 text-muted-foreground mr-2" />
+                        <Clock className="h-4 w-4 theme-text-secondary mr-2" />
                         <span className="text-sm">Due Soon (3 days)</span>
                       </div>
                       <span className="text-sm font-medium">{stats.dueSoon}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
+                        <Calendar className="h-4 w-4 theme-text-secondary mr-2" />
                         <span className="text-sm">This Week</span>
                       </div>
                       <span className="text-sm font-medium">{stats.tasksThisWeek}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
+                        <Calendar className="h-4 w-4 theme-text-secondary mr-2" />
                         <span className="text-sm">This Month</span>
                       </div>
                       <span className="text-sm font-medium">{stats.tasksThisMonth}</span>
@@ -301,7 +301,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{item.value}</span>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs theme-text-secondary">
                                 (
                                 {stats.total > 0 ? Math.round((item.value / stats.total) * 100) : 0}
                                 %)
@@ -351,7 +351,7 @@ const TaskStatistics: React.FC<TaskStatisticsProps> = ({ tasks }) => {
                           </div>
                           <div className="mt-2 text-center">
                             <div className="font-medium">{item.name}</div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-xs theme-text-secondary">
                               {stats.total > 0 ? Math.round((item.value / stats.total) * 100) : 0}%
                             </div>
                           </div>

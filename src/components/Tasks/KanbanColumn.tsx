@@ -217,7 +217,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         >
           {/* Empty column state */}
           {tasks.length === 0 && !isAddingTask ? (
-            <div className="h-full p-4 flex flex-col items-center justify-center text-center text-muted-foreground text-sm animate-in fade-in">
+            <div className="h-full p-4 flex flex-col items-center justify-center text-center theme-text-secondary text-sm animate-in fade-in">
               <p className="mb-2">Drop tasks here</p>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button

@@ -185,22 +185,22 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   const showLoading = isLoading;
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full theme-surface">
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-xl font-bold">Task Board</h2>
+        <h2 className="text-xl font-bold theme-text-primary">Task Board</h2>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 onClick={onCreateTask}
                 size="sm"
-                className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                className="gap-2 theme-button-primary hover-reveal theme-transition btn-primary theme-shadow-sm"
               >
                 <Plus className="h-4 w-4" /> New Task
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
-              <p>Create a new task</p>
+            <TooltipContent className="theme-surface-elevated">
+              <p className="theme-text-primary">Create a new task</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -209,7 +209,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       {/* View Mode Toggle and Filters Container */}
       <div className="flex flex-col md:flex-row gap-4 items-start justify-between w-full">
         {/* View Mode Toggle */}
-        <div className="flex items-center border rounded-md overflow-hidden shadow-sm hover:shadow transition-all duration-300">
+        <div className="flex items-center theme-border rounded-md overflow-hidden theme-transition">
           <TooltipProvider>
             {[
               { mode: 'list', icon: List, label: 'List View' },
@@ -222,17 +222,17 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
                   <Button
                     variant={viewMode === item.mode ? 'default' : 'ghost'}
                     size="sm"
-                    className={`rounded-none transition-all duration-200 ${viewMode === item.mode ? 'border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-800'}`}
+                    className={`rounded-none theme-transition ${viewMode === item.mode ? 'theme-button-primary border-b-2 border-primary' : 'theme-button-ghost theme-text-secondary hover:theme-text-primary'}`}
                     onClick={() => handleViewModeChange(item.mode as any)}
                   >
                     <item.icon
-                      className={`h-4 w-4 mr-1 ${viewMode === item.mode ? 'text-blue-600' : ''}`}
+                      className={`h-4 w-4 mr-1 ${viewMode === item.mode ? 'text-primary-foreground' : ''}`}
                     />
                     {item.mode.charAt(0).toUpperCase() + item.mode.slice(1)}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>{item.label}</p>
+                <TooltipContent className="theme-surface-elevated">
+                  <p className="theme-text-primary">{item.label}</p>
                 </TooltipContent>
               </Tooltip>
             ))}
@@ -252,20 +252,24 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
           <div className="flex space-x-2">
             <Popover open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="theme-button-secondary theme-border theme-transition"
+                >
                   <Settings className="h-4 w-4 mr-1" /> Settings
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-80">
+              <PopoverContent className="w-80 theme-surface-elevated theme-border theme-shadow-lg">
                 <div className="space-y-4">
-                  <h4 className="font-medium">Board Settings</h4>
+                  <h4 className="font-medium theme-text-primary">Board Settings</h4>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="column-width" className="text-sm">
+                      <Label htmlFor="column-width" className="text-sm theme-text-primary">
                         Column Width
                       </Label>
-                      <span className="text-xs text-muted-foreground">{columnWidth}px</span>
+                      <span className="text-xs theme-text-secondary">{columnWidth}px</span>
                     </div>
                     <Slider
                       id="column-width"
@@ -274,20 +278,22 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
                       step={10}
                       value={[columnWidth]}
                       onValueChange={handleColumnWidthChange}
+                      className="theme-transition"
                     />
                   </div>
 
                   <div className="flex items-center justify-between space-y-0">
                     <div className="space-y-0.5">
-                      <Label htmlFor="compact-view" className="text-sm">
+                      <Label htmlFor="compact-view" className="text-sm theme-text-primary">
                         Compact View
                       </Label>
-                      <p className="text-xs text-muted-foreground">Show less details on cards</p>
+                      <p className="text-xs theme-text-secondary">Show less details on cards</p>
                     </div>
                     <Switch
                       id="compact-view"
                       checked={compactView}
                       onCheckedChange={handleCompactViewToggle}
+                      className="theme-transition"
                     />
                   </div>
                 </div>
@@ -298,9 +304,9 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 h-[calc(100vh-20rem)]">
+      <div className="flex-1 h-[calc(100vh-20rem)] theme-surface">
         {viewMode === 'list' && (
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full scrollbar-custom scrollbar-dark">
             <TaskList
               tasks={filteredTasks}
               renderPriorityBadge={renderPriorityBadge as any}
@@ -327,7 +333,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         )}
 
         {viewMode === 'calendar' && (
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full scrollbar-custom scrollbar-dark">
             <BigCalendarView
               tasks={filteredTasks}
               onAddTask={handleAddTaskFromCalendar}
@@ -337,7 +343,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         )}
 
         {viewMode === 'dependencies' && (
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full scrollbar-custom scrollbar-dark">
             <TaskDependencyGraph
               tasks={filteredTasks}
               onTaskClick={(taskId: string) => {

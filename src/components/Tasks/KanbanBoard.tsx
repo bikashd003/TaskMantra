@@ -577,7 +577,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         modifiers={[restrictToWindowEdges]}
       >
         <div className="flex-1 min-h-0 min-w-0 flex flex-col">
-          <div className="flex-1 min-h-0 min-w-0 overflow-x-auto overflow-y-auto custom-scrollbar">
+          <div className="flex-1 min-h-0 min-w-0 overflow-x-auto overflow-y-auto scrollbar-custom scrollbar-dark">
             <SortableContext items={columns.map(col => `column-${col.id}`)}>
               <div className="flex gap-2 min-w-max pb-6">
                 {columns.map(column => (

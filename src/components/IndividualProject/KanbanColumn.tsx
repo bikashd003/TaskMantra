@@ -115,14 +115,14 @@ export function Column({
         height: compactView ? 'calc(100vh - 16rem)' : 'calc(100vh - 14rem)',
         borderTop: `4px solid ${
           column.id === 'todo'
-            ? 'hsl(var(--muted-foreground))'
+            ? 'hsl(var(--theme-text-secondary))'
             : column.id === 'inprogress' || column.id === 'inProgress'
               ? 'hsl(var(--primary))'
               : column.id === 'review'
                 ? 'hsl(var(--warning))'
                 : column.id === 'completed'
                   ? 'hsl(var(--success))'
-                  : 'hsl(var(--muted-foreground))'
+                  : 'hsl(var(--theme-text-secondary))'
         }`,
         transformOrigin: 'center',
       }}
@@ -146,7 +146,7 @@ export function Column({
             }`}
           />
           <span className="font-semibold theme-text-primary">{column.title}</span>
-          <span className="ml-2 bg-muted text-muted-foreground font-medium text-xs px-2 py-1 rounded-full">
+          <span className="ml-2 bg-muted theme-text-secondary font-medium text-xs px-2 py-1 rounded-full">
             {cards.length}
           </span>
           {column.isLocked && <Lock className="h-4 w-4 ml-2 theme-text-secondary" />}
@@ -201,7 +201,7 @@ export function Column({
         />
       )}
 
-      <div className="flex-grow p-2 overflow-y-auto custom-scrollbar">
+      <div className="flex-grow p-2 overflow-y-auto scrollbar-custom scrollbar-dark">
         <SortableContext items={cards.map(card => card.id)} strategy={verticalListSortingStrategy}>
           {cards.length > 0 ? (
             <div className="flex flex-col gap-2">
