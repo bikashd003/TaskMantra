@@ -8,6 +8,7 @@ import { useProject } from '@/context/ProjectContext';
 import { FileUp, Layers, FolderPlus, ArrowLeft, CheckCircle, ArrowRight } from 'lucide-react';
 import { Spinner } from '@heroui/spinner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 
 const steps = [
   { id: 1, title: 'Project Info', icon: <FolderPlus className="w-6 h-6" /> },
@@ -17,13 +18,14 @@ const steps = [
 
 const PageContent = () => {
   const { currentStep, setCurrentStep, formik, isProjectCreating } = useProject()!;
+  const [stepValidationAttempted, setStepValidationAttempted] = useState(new Set());
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <ProjectInfoStep />;
+        return <ProjectInfoStep stepValidationAttempted={stepValidationAttempted.has(1)} />;
       case 2:
-        return <TasksStep />;
+        return <TasksStep stepValidationAttempted={stepValidationAttempted.has(2)} />;
       case 3:
         return <FilesStep />;
       default:
@@ -34,20 +36,46 @@ const PageContent = () => {
   const handleNext = async () => {
     let isValid = true;
 
+    const newValidationAttempted = new Set(stepValidationAttempted);
+    newValidationAttempted.add(currentStep);
+    setStepValidationAttempted(newValidationAttempted);
+
     switch (currentStep) {
-      case 1:
-        await formik.validateForm();
-        isValid = !(
-          formik.errors.name ||
-          formik.errors.description ||
-          formik.errors.priority ||
-          formik.errors.status
-        );
+      case 1: {
+        const errors = await formik.validateForm();
+
+        formik.setTouched({
+          ...formik.touched,
+          name: true,
+          description: true,
+          priority: true,
+          status: true,
+        });
+
+        isValid = !(errors.name || errors.description || errors.priority || errors.status);
         break;
-      case 2:
-        await formik.validateForm();
-        isValid = !formik.errors.tasks;
+      }
+      case 2: {
+        const taskErrors = await formik.validateForm();
+
+        if (formik.values.tasks && formik.values.tasks.length > 0) {
+          const touchedTasks = formik.values.tasks.map(() => ({
+            title: true,
+            description: true,
+            priority: true,
+            status: true,
+            dueDate: true,
+          }));
+
+          formik.setTouched({
+            ...formik.touched,
+            tasks: touchedTasks,
+          });
+        }
+
+        isValid = !taskErrors.tasks;
         break;
+      }
       case 3:
         break;
     }
@@ -61,6 +89,10 @@ const PageContent = () => {
     }
   };
 
+  const handlePrevious = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -68,54 +100,6 @@ const PageContent = () => {
       transition={{ duration: 0.3 }}
       className="theme-surface px-4 rounded-md py-2 h-full w-full"
     >
-      {/* Progress Steps */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex flex-col items-center relative">
-              <motion.div
-                className={`w-12 h-12 rounded-full flex items-center justify-center z-10 theme-transition
-                                        ${
-                                          currentStep === step.id
-                                            ? 'bg-primary text-primary-foreground theme-shadow-md'
-                                            : currentStep > step.id
-                                              ? 'bg-success text-success-foreground'
-                                              : 'theme-surface-elevated theme-text-secondary theme-border'
-                                        }`}
-                whileHover={{ scale: 1.05 }}
-                onClick={() => {
-                  if (currentStep > step.id) {
-                    setCurrentStep(step.id);
-                  }
-                }}
-                style={{ cursor: currentStep > step.id ? 'pointer' : 'default' }}
-              >
-                {step.icon}
-              </motion.div>
-              <p
-                className={`mt-2 text-sm font-medium theme-transition ${currentStep === step.id ? 'text-primary' : 'theme-text-secondary'}`}
-              >
-                {step.title}
-              </p>
-
-              {/* Connector line */}
-              {index < steps.length - 1 && (
-                <div className="absolute top-6 left-12 w-[calc(100vw/4)] h-[2px] bg-border -z-10">
-                  <motion.div
-                    className="h-full bg-primary"
-                    initial={{ width: '0%' }}
-                    animate={{
-                      width: currentStep > step.id ? '100%' : '0%',
-                    }}
-                    transition={{ duration: 0.5 }}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Content Card */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -141,7 +125,7 @@ const PageContent = () => {
           <Button
             variant="outline"
             disabled={currentStep === 1}
-            onClick={() => setCurrentStep(currentStep - 1)}
+            onClick={handlePrevious}
             className="flex items-center gap-2 theme-transition hover:translate-x-[-4px] theme-shadow-sm theme-button-secondary"
           >
             <ArrowLeft className="w-4 h-4" />

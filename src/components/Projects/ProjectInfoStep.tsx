@@ -22,9 +22,13 @@ import {
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 
-const ProjectInfoStep = () => {
+const ProjectInfoStep = ({ stepValidationAttempted = false }) => {
   const { formik } = useProject()!;
   const { values, handleChange, handleBlur, errors, touched } = formik;
+
+  const shouldShowError = fieldName => {
+    return stepValidationAttempted || touched[fieldName];
+  };
 
   return (
     <div className="w-full theme-surface">
@@ -54,13 +58,14 @@ const ProjectInfoStep = () => {
               onChange={handleChange}
               onBlur={handleBlur}
               placeholder="Enter your project name"
-              className={`w-full theme-input theme-focus ${touched.name && errors.name ? 'border-destructive' : ''}`}
+              className={`w-full theme-input theme-focus ${shouldShowError('name') && errors.name ? 'border-destructive' : ''}`}
             />
-            {touched.name && errors.name && (
+            {shouldShowError('name') && errors.name && (
               <motion.p
                 className="text-destructive text-sm"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
+                transition={{ duration: 0.2 }}
               >
                 {errors.name}
               </motion.p>
@@ -78,14 +83,16 @@ const ProjectInfoStep = () => {
               onChange={handleChange}
               onBlur={handleBlur}
               placeholder="Describe your project in detail"
-              className={`w-full theme-input theme-focus ${touched.description && errors.description ? 'border-destructive' : ''}`}
+              className={`w-full theme-input theme-focus ${shouldShowError('description') && errors.description ? 'border-destructive' : ''}`}
               rows={4}
+              maxLength={500}
             />
-            {touched.description && errors.description && (
+            {shouldShowError('description') && errors.description && (
               <motion.p
                 className="text-destructive text-sm"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
+                transition={{ duration: 0.2 }}
               >
                 {errors.description}
               </motion.p>
@@ -100,9 +107,14 @@ const ProjectInfoStep = () => {
               <Select
                 name="priority"
                 value={values.priority}
-                onValueChange={value => formik.setFieldValue('priority', value)}
+                onValueChange={value => {
+                  formik.setFieldValue('priority', value);
+                  formik.setFieldTouched('priority', true);
+                }}
               >
-                <SelectTrigger className="w-full theme-input theme-focus">
+                <SelectTrigger
+                  className={`w-full theme-input theme-focus ${shouldShowError('priority') && errors.priority ? 'border-destructive' : ''}`}
+                >
                   <SelectValue placeholder="Select the priority" />
                 </SelectTrigger>
                 <SelectContent className="theme-surface-elevated theme-border">
@@ -119,11 +131,12 @@ const ProjectInfoStep = () => {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              {touched.priority && errors.priority && (
+              {shouldShowError('priority') && errors.priority && (
                 <motion.p
                   className="text-destructive text-sm"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
+                  transition={{ duration: 0.2 }}
                 >
                   {errors.priority}
                 </motion.p>
@@ -137,9 +150,14 @@ const ProjectInfoStep = () => {
               <Select
                 name="status"
                 value={values.status}
-                onValueChange={value => formik.setFieldValue('status', value)}
+                onValueChange={value => {
+                  formik.setFieldValue('status', value);
+                  formik.setFieldTouched('status', true);
+                }}
               >
-                <SelectTrigger className="w-full theme-input theme-focus">
+                <SelectTrigger
+                  className={`w-full theme-input theme-focus ${shouldShowError('status') && errors.status ? 'border-destructive' : ''}`}
+                >
                   <SelectValue placeholder="Select the status" />
                 </SelectTrigger>
                 <SelectContent className="theme-surface-elevated theme-border">
@@ -177,11 +195,12 @@ const ProjectInfoStep = () => {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              {touched.status && errors.status && (
+              {shouldShowError('status') && errors.status && (
                 <motion.p
                   className="text-destructive text-sm"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
+                  transition={{ duration: 0.2 }}
                 >
                   {errors.status}
                 </motion.p>
