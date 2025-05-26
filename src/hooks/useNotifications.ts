@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
-import { NotificationService } from '@/services/Notifications.service';
+import { NotificationService } from '@/services/Notification.service';
 
 export type NotificationType = {
   _id: string;
@@ -28,7 +28,7 @@ export function useNotifications() {
   const { data: notificationsData } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const response = await NotificationService.getNotifications();
+      const response = await NotificationService.getNotificationsClient();
       return response;
     },
     enabled: !!session?.user,
@@ -38,7 +38,7 @@ export function useNotifications() {
   const { data: unreadCountData } = useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: async () => {
-      const count = await NotificationService.getUnreadCount();
+      const count = await NotificationService.getUnreadCountClient();
       return count;
     },
     enabled: !!session?.user,
@@ -47,7 +47,7 @@ export function useNotifications() {
   // Mutation to mark a notification as read
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      return await NotificationService.markAsRead(notificationId);
+      return await NotificationService.markAsReadClient(notificationId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -58,7 +58,7 @@ export function useNotifications() {
   // Mutation to mark all notifications as read
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      return await NotificationService.markAllAsRead();
+      return await NotificationService.markAllAsReadClient();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -69,7 +69,7 @@ export function useNotifications() {
   // Mutation to clear all notifications
   const clearAllNotificationsMutation = useMutation({
     mutationFn: async () => {
-      return await NotificationService.clearAllNotifications();
+      return await NotificationService.clearAllNotificationsClient();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -350,7 +350,7 @@ export function useNotifications() {
   // For backward compatibility and pagination support
   const fetchNotifications = useCallback(async (page = 0) => {
     try {
-      const response = await NotificationService.getNotifications(page);
+      const response = await NotificationService.getNotificationsClient(page);
       return {
         notifications: response.notifications || [],
         hasMore: response.pagination?.page < response.pagination?.pages - 1,
