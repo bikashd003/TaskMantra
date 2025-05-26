@@ -75,97 +75,94 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     >
       <div
         {...getRootProps()}
-        className={`relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-xl theme-transition group cursor-pointer ${
+        className={`relative flex items-center gap-4 w-full p-4 border-2 border-dashed rounded-lg theme-transition group cursor-pointer ${
           isDragActive
-            ? 'border-primary bg-primary/10 scale-[1.02] shadow-lg'
-            : 'border-border hover:border-primary hover:bg-primary/5 hover:shadow-md'
+            ? 'border-primary bg-primary/10 scale-[1.01] shadow-md'
+            : 'border-border hover:border-primary hover:bg-primary/5 hover:shadow-sm'
         }`}
       >
         <input {...getInputProps()} className="hidden" />
 
-        {/* Upload Icon with Animation */}
+        {/* Upload Icon - Compact */}
         <div
-          className={`relative mb-4 theme-transition ${isDragActive ? 'scale-110' : 'group-hover:scale-105'}`}
+          className={`flex-shrink-0 theme-transition ${isDragActive ? 'scale-105' : 'group-hover:scale-105'}`}
         >
-          <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 theme-transition"></div>
-          <div className="relative p-4 theme-surface-elevated rounded-full border theme-border">
+          <div className="relative p-2 theme-surface-elevated rounded-lg border theme-border">
             <Upload
-              className={`w-8 h-8 theme-text-secondary theme-transition ${isDragActive ? 'text-primary' : 'group-hover:text-primary'}`}
+              className={`w-5 h-5 theme-text-secondary theme-transition ${isDragActive ? 'text-primary' : 'group-hover:text-primary'}`}
             />
           </div>
         </div>
 
-        {/* Main Text */}
-        <div className="text-center mb-4">
-          <p
-            className={`text-lg font-medium mb-2 theme-transition ${isDragActive ? 'theme-text-primary' : 'theme-text-secondary group-hover:theme-text-primary'}`}
-          >
-            {isDragActive ? 'Drop your files here' : 'Upload your files'}
-          </p>
-          <p className="text-sm theme-text-secondary">
-            Drag and drop files here, or click to browse
-          </p>
+        {/* Main Content - Horizontal Layout */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <p
+                className={`text-sm font-medium theme-transition ${isDragActive ? 'theme-text-primary' : 'theme-text-secondary group-hover:theme-text-primary'}`}
+              >
+                {isDragActive ? 'Drop your files here' : 'Upload your files'}
+              </p>
+              <p className="text-xs theme-text-secondary mt-0.5">
+                Drag & drop or click to browse • PNG, JPG, GIF, PDF • Max {maxSize / (1024 * 1024)}
+                MB
+              </p>
+            </div>
+
+            {/* Choose Files Button - Compact */}
+            <button
+              onClick={open}
+              className="flex-shrink-0 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium theme-transition hover:bg-primary/90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-background"
+            >
+              Browse
+            </button>
+          </div>
         </div>
 
-        {/* Choose Files Button */}
-        <button
-          onClick={open}
-          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium theme-transition hover:bg-primary/90 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-        >
-          Choose Files
-        </button>
-
-        {/* File Info */}
-        <div className="mt-4 text-center">
-          <p className="text-xs theme-text-secondary">
-            Supports: <span className="font-medium">PNG, JPG, GIF, PDF</span>
-          </p>
-          <p className="text-xs theme-text-secondary mt-1">
-            Maximum size: <span className="font-medium">{maxSize / (1024 * 1024)}MB per file</span>
-          </p>
-        </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute top-4 right-4 w-2 h-2 bg-primary/30 rounded-full opacity-0 group-hover:opacity-100 theme-transition delay-100"></div>
-        <div className="absolute bottom-4 left-4 w-1 h-1 bg-primary/20 rounded-full opacity-0 group-hover:opacity-100 theme-transition delay-200"></div>
+        {/* Subtle Decorative Element */}
+        <div className="absolute top-2 right-2 w-1 h-1 bg-primary/30 rounded-full opacity-0 group-hover:opacity-100 theme-transition"></div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {previews.map((preview, index) => (
-          <div
-            key={index}
-            className="relative group hover-reveal"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="relative overflow-hidden rounded-xl theme-surface-elevated border theme-border theme-shadow-sm hover:theme-shadow-md theme-transition group-hover:scale-[1.02]">
-              {preview.file.type.startsWith('image/') ? (
-                <div className="relative aspect-square">
-                  <Image src={preview.url} alt={preview.file.name} fill className="object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 theme-transition"></div>
+      {/* File Previews - Compact List */}
+      {previews.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {previews.map((preview, index) => (
+            <div key={index} className="relative group" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-3 p-3 theme-surface-elevated border theme-border rounded-lg theme-shadow-sm hover:theme-shadow-md theme-transition group-hover:scale-[1.01]">
+                {/* File Icon/Thumbnail */}
+                <div className="flex-shrink-0">
+                  {preview.file.type.startsWith('image/') ? (
+                    <div className="relative w-10 h-10 rounded-md overflow-hidden">
+                      <Image
+                        src={preview.url}
+                        alt={preview.file.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 flex items-center justify-center theme-surface rounded-md border theme-border">
+                      <FileIcon className="w-5 h-5 theme-text-secondary" />
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="aspect-square flex flex-col items-center justify-center p-4">
-                  <div className="p-3 theme-surface rounded-full mb-3">
-                    <FileIcon className="w-8 h-8 theme-text-secondary" />
-                  </div>
-                  <p className="text-xs theme-text-secondary text-center font-medium">
-                    PDF Document
+
+                {/* File Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium theme-text-primary truncate">
+                    {preview.file.name}
+                  </p>
+                  <p className="text-xs theme-text-secondary">
+                    {preview.file.type.startsWith('image/') ? 'Image' : 'PDF Document'} •{' '}
+                    {(preview.file.size / 1024).toFixed(1)} KB
                   </p>
                 </div>
-              )}
 
-              {/* File name overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent">
-                <p className="text-xs text-white font-medium truncate">{preview.file.name}</p>
-                <p className="text-xs text-white/70">{(preview.file.size / 1024).toFixed(1)} KB</p>
-              </div>
-
-              {/* Action buttons overlay */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 theme-transition bg-black/40 backdrop-blur-sm">
-                <div className="flex gap-2">
+                {/* Action Buttons */}
+                <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 theme-transition">
                   <button
                     onClick={() => setSelectedPreview(preview)}
-                    className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-full theme-transition hover:scale-110 backdrop-blur-sm"
+                    className="p-1.5 theme-surface hover:theme-surface-elevated text-primary rounded-md theme-transition hover:scale-105"
                     title="Preview"
                   >
                     <Eye className="w-4 h-4" />
@@ -177,7 +174,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
                       setSelectedPreview(null);
                       removeFile(index);
                     }}
-                    className="p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-full theme-transition hover:scale-110 backdrop-blur-sm"
+                    className="p-1.5 theme-surface hover:bg-red-500/10 text-red-500 rounded-md theme-transition hover:scale-105"
                     title="Remove"
                   >
                     <X className="w-4 h-4" />
@@ -185,9 +182,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {selectedPreview && (
         <div
