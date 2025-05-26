@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 interface UserProfileProps {
   isExpanded: boolean;
-  setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsExpanded: (isExpanded: boolean) => void;
 }
 
 export function UserProfile({ isExpanded }: UserProfileProps) {

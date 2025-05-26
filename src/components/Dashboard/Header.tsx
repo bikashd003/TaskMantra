@@ -1,4 +1,4 @@
-import { UserPlus } from 'lucide-react';
+import { UserPlus, PanelRightOpen, PanelLeftOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthProvider';
 import { Playfair_Display } from 'next/font/google';
@@ -7,6 +7,7 @@ import { TeamLoggerPopover } from './TeamLogger';
 import InviteModal from './InviteModal';
 import { NotificationsPopover } from './NotificationsPopover';
 import { ThemeToggle } from '../ui/theme-toggle';
+import { useSidebarStore } from '@/stores/sidebarStore';
 
 const playwrite = Playfair_Display({
   subsets: ['latin'],
@@ -17,6 +18,7 @@ const Header = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const { session } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const { isExpanded, setIsExpanded } = useSidebarStore();
 
   const onOpen = () => {
     setIsOpen(true);
@@ -50,11 +52,23 @@ const Header = () => {
 
   return (
     <header className="flex justify-between items-center px-4 py-2 theme-surface-elevated theme-shadow-lg rounded-lg">
-      <div>
-        <h1 className={`${playwrite.className} text-xl font-bold mb-1 theme-text-primary`}>
-          {getGreeting()}, {session?.user?.name}
-        </h1>
-        <p className="text-sm theme-text-secondary">{formatDate(currentTime)}</p>
+      <div className="flex items-center gap-4">
+        <button
+          className={`hidden md:flex items-center justify-center w-6 h-6 rounded-lg logo-toggle-btn hover:bg-primary/10 transition-all duration-300`}
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? (
+            <PanelLeftOpen className="h-4 w-4 logo-toggle-icon" />
+          ) : (
+            <PanelRightOpen className="h-4 w-4 logo-toggle-icon" />
+          )}
+        </button>
+        <div>
+          <h1 className={`${playwrite.className} text-xl font-bold mb-1 theme-text-primary`}>
+            {getGreeting()}, {session?.user?.name}
+          </h1>
+          <p className="text-sm theme-text-secondary">{formatDate(currentTime)}</p>
+        </div>
       </div>
       <div className="flex gap-4 items-center">
         <NotificationsPopover />

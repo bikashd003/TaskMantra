@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Building2, Sparkles } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { OrganizationService } from '@/services/Organization.service';
@@ -7,24 +7,21 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface LogoProps {
   isExpanded: boolean;
-  setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const Logo = ({ isExpanded, setIsExpanded }: LogoProps) => {
+const Logo = ({ isExpanded }: LogoProps) => {
   const [showOrgBranding, setShowOrgBranding] = useState(true);
 
-  // Fetch organization data
   const { data: organization } = useQuery({
     queryKey: ['organizations'],
     queryFn: async () => {
       try {
         return await OrganizationService.getOrganizations();
       } catch (error) {
-        // Silently handle error and return null
         return null;
       }
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
     retry: 1,
   });
 
@@ -40,7 +37,8 @@ const Logo = ({ isExpanded, setIsExpanded }: LogoProps) => {
 
   return (
     <div className="flex items-center justify-between px-3 py-3 logo-container border-b">
-      <div className="flex items-center min-w-0 flex-1">
+      {/* Logo and Text Container */}
+      <div className="flex items-center min-w-0 overflow-hidden">
         {/* Logo Icon */}
         <div className="relative group flex-shrink-0">
           <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
@@ -87,7 +85,8 @@ const Logo = ({ isExpanded, setIsExpanded }: LogoProps) => {
                     <AvatarImage
                       src="/logo_transparent.png"
                       alt="TaskMantra"
-                      className="object-contain p-1"
+                      style={{ objectFit: 'contain' }}
+                      className="object-contain"
                     />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-purple-500 text-white font-bold text-xs">
                       TM
@@ -96,32 +95,14 @@ const Logo = ({ isExpanded, setIsExpanded }: LogoProps) => {
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Sparkle effect for interactive logo */}
-            {hasOrganization && (
-              <motion.div
-                className="absolute -top-1 -right-1 w-3 h-3"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 180, 360],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              >
-                <Sparkles className="w-3 h-3 text-primary/60" />
-              </motion.div>
-            )}
           </div>
         </div>
 
         {/* Logo Text */}
         <div
           className={`
-            ml-3 overflow-hidden transition-all duration-300 ease-in-out min-w-0
-            ${isExpanded ? 'w-40 opacity-100' : 'w-0 opacity-0'}
+            ml-3 overflow-hidden transition-all duration-300 ease-in-out
+            ${isExpanded ? 'w-40 opacity-100' : 'w-0 opacity-0 h-0'}
           `}
         >
           <AnimatePresence mode="wait">
@@ -158,18 +139,6 @@ const Logo = ({ isExpanded, setIsExpanded }: LogoProps) => {
           </AnimatePresence>
         </div>
       </div>
-
-      {/* Toggle Button */}
-      <button
-        className={`hidden md:flex items-center justify-center w-6 h-6 rounded-lg logo-toggle-btn flex-shrink-0 ${isExpanded ? '' : '-ml-1'}`}
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        {isExpanded ? (
-          <ChevronLeft className="h-4 w-4 logo-toggle-icon" />
-        ) : (
-          <ChevronRight className="h-4 w-4 logo-toggle-icon" />
-        )}
-      </button>
     </div>
   );
 };

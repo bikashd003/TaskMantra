@@ -3,11 +3,13 @@
 import * as React from 'react';
 import { Moon, Sun, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import { useThemeSync } from '@/hooks/useThemeSync';
 
 export function ThemeToggle() {
   const [mounted, setMounted] = React.useState(false);
-  const { theme, isLoading, changeTheme } = useThemeSync();
+  const { theme, resolvedTheme } = useTheme();
+  const { isLoading, changeTheme } = useThemeSync();
 
   React.useEffect(() => {
     setMounted(true);
@@ -17,8 +19,11 @@ export function ThemeToggle() {
     return <div className="w-9 h-9 rounded-full bg-white/10 animate-pulse" />;
   }
 
+  const currentTheme = resolvedTheme || theme;
+  const isDark = currentTheme === 'dark';
+
   const handleThemeToggle = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
     changeTheme(newTheme);
   };
 
@@ -38,8 +43,8 @@ export function ThemeToggle() {
           <motion.div
             initial={false}
             animate={{
-              scale: theme === 'dark' ? 0 : 1,
-              rotate: theme === 'dark' ? 90 : 0,
+              scale: isDark ? 0 : 1,
+              rotate: isDark ? 90 : 0,
             }}
             transition={{ duration: 0.2 }}
             className="absolute"
@@ -49,8 +54,8 @@ export function ThemeToggle() {
           <motion.div
             initial={false}
             animate={{
-              scale: theme === 'dark' ? 1 : 0,
-              rotate: theme === 'dark' ? 0 : -90,
+              scale: isDark ? 1 : 0,
+              rotate: isDark ? 0 : -90,
             }}
             transition={{ duration: 0.2 }}
             className="absolute"
