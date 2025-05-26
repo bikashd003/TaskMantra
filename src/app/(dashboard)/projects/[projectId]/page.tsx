@@ -47,45 +47,48 @@ export default function ProjectPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-96px)] bg-white">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="flex items-center justify-center h-[calc(100vh-96px)] theme-surface">
+        <div className="loading-skeleton w-8 h-8 rounded-full"></div>
       </div>
     );
   }
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-background">
-      <header className="py-4 px-2 border-b">
+    <div className="h-full w-full flex flex-col overflow-hidden theme-surface">
+      <header className="py-4 px-2 theme-border-bottom">
         <Breadcrumb className="text-sm">
           <BreadcrumbList>
             <BreadcrumbItem>
               <Link
                 href="/home"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="theme-text-secondary hover:text-primary theme-transition"
               >
                 Home
               </Link>
             </BreadcrumbItem>
             <BreadcrumbSeparator>
-              <Slash className="h-4 w-4 text-muted-foreground" />
+              <Slash className="h-4 w-4 theme-text-secondary" />
             </BreadcrumbSeparator>
             <BreadcrumbItem>
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors">
+                <DropdownMenuTrigger className="flex items-center gap-1 theme-text-secondary hover:text-primary theme-transition">
                   Projects
                   <ChevronDownIcon className="h-4 w-4" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="shadow-lg">
-                  <DropdownMenuItem className="flex items-center gap-2 font-medium">
+                <DropdownMenuContent
+                  align="start"
+                  className="theme-surface-elevated theme-shadow-lg"
+                >
+                  <DropdownMenuItem className="flex items-center gap-2 font-medium theme-button-ghost">
                     Create Project +
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </BreadcrumbItem>
             <BreadcrumbSeparator>
-              <Slash className="h-4 w-4 text-muted-foreground" />
+              <Slash className="h-4 w-4 theme-text-secondary" />
             </BreadcrumbSeparator>
             <BreadcrumbItem>
-              <BreadcrumbPage className="font-semibold text-primary">
+              <BreadcrumbPage className="font-semibold theme-text-primary">
                 {project?.name}
               </BreadcrumbPage>
             </BreadcrumbItem>
@@ -94,18 +97,18 @@ export default function ProjectPage() {
       </header>
       <div className="flex-1 p-2 w-full">
         <Tabs defaultValue="kanban" className="w-full h-full flex flex-col space-y-4">
-          <TabsList className="w-fit border bg-card">
-            <TabsTrigger value="kanban" className="px-6">
+          <TabsList className="w-fit theme-border theme-surface-elevated">
+            <TabsTrigger value="kanban" className="px-6 theme-button-ghost">
               Kanban
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="px-6">
+            <TabsTrigger value="analytics" className="px-6 theme-button-ghost">
               Analytics
             </TabsTrigger>
           </TabsList>
           <TabsContent value="kanban" className="w-full h-full">
             <ProjectKanban project={project} />
           </TabsContent>
-          <TabsContent value="analytics" className="w-full ">
+          <TabsContent value="analytics" className="w-full">
             <ProjectAnalytics project={project} />
           </TabsContent>
         </Tabs>

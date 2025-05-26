@@ -50,13 +50,13 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   // We're using our custom implementation, so we don't need the ToolbarProps
 }) => {
   return (
-    <div className="flex flex-col space-y-4 mb-4">
+    <div className="flex flex-col space-y-4 mb-4 theme-surface">
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-3">
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2 rounded-lg shadow-md">
-            <CalendarIcon className="h-5 w-5 text-white" />
+          <div className="theme-button-primary p-2 rounded-lg theme-shadow-md glow-on-hover theme-transition">
+            <CalendarIcon className="h-5 w-5 text-primary-foreground" />
           </div>
-          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+          <h2 className="text-2xl font-bold theme-text-primary">
             {format(currentDate, 'MMMM yyyy')}
           </h2>
         </div>
@@ -69,17 +69,20 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
                 variant="outline"
                 size="sm"
                 className={cn(
-                  'gap-1.5 bg-white/80 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm',
+                  'gap-1.5 theme-button-secondary theme-border hover-reveal theme-transition theme-shadow-sm',
                   'flex items-center justify-center'
                 )}
               >
-                <CalendarIcon className="h-4 w-4 text-blue-500" />
-                <span className="hidden md:inline">
+                <CalendarIcon className="h-4 w-4 text-primary" />
+                <span className="hidden md:inline theme-text-primary">
                   {selectedDate ? format(selectedDate, 'MMM d, yyyy') : 'Pick a date'}
                 </span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="center">
+            <PopoverContent
+              className="w-auto p-0 theme-surface-elevated theme-border theme-shadow-lg"
+              align="center"
+            >
               <Calendar
                 mode="single"
                 selected={selectedDate || undefined}
@@ -96,15 +99,15 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           </Popover>
 
           {/* View Mode Toggle */}
-          <div className="flex bg-slate-100/80 rounded-xl overflow-hidden p-1 shadow-inner">
+          <div className="flex theme-surface-elevated rounded-xl overflow-hidden p-1 theme-shadow-inner">
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                'rounded-lg transition-all duration-200',
+                'rounded-lg theme-transition',
                 view === 'month'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-slate-600 hover:text-blue-500'
+                  ? 'theme-button-primary theme-shadow-sm'
+                  : 'theme-text-secondary hover:theme-text-primary theme-button-ghost'
               )}
               onClick={() => handleViewChange(Views.MONTH)}
             >
@@ -114,10 +117,10 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
               variant="ghost"
               size="sm"
               className={cn(
-                'rounded-lg transition-all duration-200',
+                'rounded-lg theme-transition',
                 view === 'week'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-slate-600 hover:text-blue-500'
+                  ? 'theme-button-primary theme-shadow-sm'
+                  : 'theme-text-secondary hover:theme-text-primary theme-button-ghost'
               )}
               onClick={() => handleViewChange(Views.WEEK)}
             >
@@ -127,10 +130,10 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
               variant="ghost"
               size="sm"
               className={cn(
-                'rounded-lg transition-all duration-200',
+                'rounded-lg theme-transition',
                 view === 'day'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-slate-600 hover:text-blue-500'
+                  ? 'theme-button-primary theme-shadow-sm'
+                  : 'theme-text-secondary hover:theme-text-primary theme-button-ghost'
               )}
               onClick={() => handleViewChange(Views.DAY)}
             >
@@ -144,37 +147,37 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1 bg-white/80 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm"
+                className="gap-1 theme-button-secondary theme-border hover-reveal theme-transition theme-shadow-sm"
               >
-                <Filter className="h-4 w-4 text-blue-500" /> Filters
+                <Filter className="h-4 w-4 text-primary" /> Filters
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-56 rounded-xl border-slate-200 shadow-lg bg-white/95 backdrop-blur-sm"
+              className="w-56 rounded-xl theme-surface-elevated theme-border theme-shadow-lg glass"
             >
               <div className="p-3 flex flex-col space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Show Completed</span>
+                  <span className="text-sm font-medium theme-text-primary">Show Completed</span>
                   <div
-                    className="relative inline-flex h-5 w-10 items-center rounded-full bg-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white cursor-pointer"
+                    className="relative inline-flex h-5 w-10 items-center rounded-full theme-surface theme-transition theme-focus cursor-pointer"
                     onClick={() => toggleTaskFilter('showCompleted', !taskFilter.showCompleted)}
                   >
                     <span
                       className={cn(
-                        'absolute mx-0.5 h-4 w-4 rounded-full bg-white transition-transform',
-                        taskFilter.showCompleted ? 'translate-x-5 shadow-md' : 'translate-x-0'
+                        'absolute mx-0.5 h-4 w-4 rounded-full theme-surface-elevated theme-transition theme-shadow-sm',
+                        taskFilter.showCompleted ? 'translate-x-5 theme-shadow-md' : 'translate-x-0'
                       )}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <span className="text-sm font-medium">Priority</span>
+                  <span className="text-sm font-medium theme-text-primary">Priority</span>
                   <select
                     value={taskFilter.priorityFilter}
                     onChange={e => toggleTaskFilter('priorityFilter', e.target.value)}
-                    className="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white/80 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    className="w-full text-sm p-2 theme-input theme-border rounded-lg theme-focus theme-transition"
                   >
                     <option value="all">All Priorities</option>
                     <option value="High">High</option>
@@ -183,18 +186,18 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
                   </select>
                 </div>
 
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="theme-border" />
 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Overdue Only</span>
+                  <span className="text-sm font-medium theme-text-primary">Overdue Only</span>
                   <div
-                    className="relative inline-flex h-5 w-10 items-center rounded-full bg-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white cursor-pointer"
+                    className="relative inline-flex h-5 w-10 items-center rounded-full theme-surface theme-transition theme-focus cursor-pointer"
                     onClick={() => toggleTaskFilter('overdueOnly', !taskFilter.overdueOnly)}
                   >
                     <span
                       className={cn(
-                        'absolute mx-0.5 h-4 w-4 rounded-full bg-white transition-transform',
-                        taskFilter.overdueOnly ? 'translate-x-5 shadow-md' : 'translate-x-0'
+                        'absolute mx-0.5 h-4 w-4 rounded-full theme-surface-elevated theme-transition theme-shadow-sm',
+                        taskFilter.overdueOnly ? 'translate-x-5 theme-shadow-md' : 'translate-x-0'
                       )}
                     />
                   </div>
@@ -208,7 +211,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
               variant="outline"
               size="sm"
               onClick={goToToday}
-              className="bg-white/80 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm font-medium"
+              className="theme-button-secondary theme-border hover-reveal theme-transition theme-shadow-sm font-medium"
             >
               Today
             </Button>
@@ -216,17 +219,17 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
               variant="outline"
               size="icon"
               onClick={goToPrevious}
-              className="bg-white/80 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm h-8 w-8"
+              className="theme-button-secondary theme-border hover-reveal theme-transition theme-shadow-sm h-8 w-8"
             >
-              <ChevronLeft className="h-4 w-4 text-slate-600" />
+              <ChevronLeft className="h-4 w-4 theme-text-secondary" />
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={goToNext}
-              className="bg-white/80 border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 shadow-sm h-8 w-8"
+              className="theme-button-secondary theme-border hover-reveal theme-transition theme-shadow-sm h-8 w-8"
             >
-              <ChevronRight className="h-4 w-4 text-slate-600" />
+              <ChevronRight className="h-4 w-4 theme-text-secondary" />
             </Button>
           </div>
 

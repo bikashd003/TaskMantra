@@ -26,8 +26,6 @@ export interface ReactSelectProps {
   label?: string;
   helperText?: string;
 }
-
-// Custom dropdown indicator
 const DropdownIndicator = (props: any) => {
   return (
     <components.DropdownIndicator {...props}>
@@ -36,7 +34,6 @@ const DropdownIndicator = (props: any) => {
   );
 };
 
-// Custom clear indicator
 const ClearIndicator = (props: any) => {
   return (
     <components.ClearIndicator {...props}>
@@ -45,7 +42,6 @@ const ClearIndicator = (props: any) => {
   );
 };
 
-// Custom no options message
 const NoOptionsMessage = (props: any) => (
   <components.NoOptionsMessage {...props}>
     <div className="flex items-center justify-center gap-2 theme-text-secondary py-2">
@@ -55,7 +51,6 @@ const NoOptionsMessage = (props: any) => (
   </components.NoOptionsMessage>
 );
 
-// Main component
 const ReactSelect = ({
   options,
   value,
@@ -71,7 +66,6 @@ const ReactSelect = ({
   label,
   helperText,
 }: ReactSelectProps) => {
-  // Custom styles using CSS variables for theme compatibility
   const customStyles = {
     control: (base: any, state: any) => ({
       ...base,
@@ -144,7 +138,6 @@ const ReactSelect = ({
     }),
   };
 
-  // Custom components
   const customComponents = {
     DropdownIndicator,
     ClearIndicator,

@@ -122,7 +122,7 @@ export default function TasksPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-white px-4 rounded-md py-2 h-full w-full"
+      className="theme-surface px-4 rounded-md py-2 h-full w-full"
     >
       <TaskBoard
         tasks={filteredTasks}

@@ -221,7 +221,7 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({ tasks, onAddTask, onT
   };
 
   return (
-    <div className="bg-white rounded shadow-md border border-gray-200 p-4 w-full relative">
+    <div className="theme-surface rounded shadow-md border border-border p-4 w-full relative">
       {/* Task Creation/Edit Modal */}
       <CreateTaskModal
         isOpen={isCreateModalOpen}
@@ -231,7 +231,7 @@ const BigCalendarView: React.FC<BigCalendarViewProps> = ({ tasks, onAddTask, onT
       />
 
       {/* Calendar */}
-      <div className="h-[700px]">
+      <div className="h-[700px] theme-surface">
         <BigCalendar
           localizer={localizer}
           events={events}

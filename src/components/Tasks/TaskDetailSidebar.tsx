@@ -172,26 +172,26 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
       onEdit={() => toast({ title: 'Edit mode', description: 'Not implemented yet' })}
       onDelete={() => toast({ title: 'Delete option', description: 'Not implemented yet' })}
     >
-      <div className="flex flex-col">
+      <div className="flex flex-col theme-surface">
         {/* Header Section */}
         <div className="space-y-6 p-6">
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-900">{task.name}</h2>
-            <p className="text-base text-gray-600">{task.description}</p>
+            <h2 className="text-2xl font-bold theme-text-primary">{task.name}</h2>
+            <p className="text-base theme-text-secondary">{task.description}</p>
           </div>
 
-          <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+          <div className="flex items-center justify-between theme-surface-elevated p-4 rounded-lg theme-shadow-sm hover-reveal theme-transition">
             <div className="flex items-center gap-4">
-              <Clock className="h-6 w-6 text-blue-500" />
+              <Clock className="h-6 w-6 text-primary" />
               <div>
-                <p className="text-sm font-medium text-gray-700">Created</p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm font-medium theme-text-primary">Created</p>
+                <p className="text-sm theme-text-secondary">
                   {task.createdAt ? formatDate(task.createdAt) : 'Recently'}
                 </p>
               </div>
             </div>
             <Badge
-              className={`capitalize px-4 py-2 text-sm font-semibold ${getStatusColor(task.status)} text-white rounded-full`}
+              className={`capitalize px-4 py-2 text-sm font-semibold ${getStatusColor(task.status)} text-white rounded-full theme-shadow-sm`}
             >
               {task.status}
             </Badge>
@@ -204,11 +204,14 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
               { icon: Timer, label: 'Estimated', value: `${task.estimatedTime || 0} hours` },
               { icon: Timer, label: 'Logged', value: `${task.loggedTime || 0} hours` },
             ].map((item, index) => (
-              <div key={index} className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
-                <item.icon className="h-5 w-5 text-blue-500" />
+              <div
+                key={index}
+                className="flex items-center gap-3 theme-surface-elevated p-4 rounded-lg hover-reveal theme-transition theme-shadow-sm"
+              >
+                <item.icon className="h-5 w-5 text-primary" />
                 <div>
-                  <p className="text-sm font-medium text-gray-700">{item.label}</p>
-                  <p className="text-sm text-gray-900">{item.value}</p>
+                  <p className="text-sm font-medium theme-text-primary">{item.label}</p>
+                  <p className="text-sm theme-text-primary">{item.value}</p>
                 </div>
               </div>
             ))}
@@ -217,58 +220,58 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
           {/* Progress bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="font-medium text-gray-700">Progress</span>
-              <span className="font-bold text-blue-600">{Math.round(progress)}%</span>
+              <span className="font-medium theme-text-primary">Progress</span>
+              <span className="font-bold text-primary">{Math.round(progress)}%</span>
             </div>
-            <Progress value={progress} className="h-2 bg-gray-200" />
+            <Progress value={progress} className="h-2 theme-surface" />
           </div>
 
           {/* Dependencies */}
           {task.dependencies && task.dependencies.length > 0 && (
-            <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
-              <LinkIcon className="h-5 w-5 text-blue-500" />
+            <div className="flex items-center gap-3 theme-surface-elevated p-4 rounded-lg hover-reveal theme-transition theme-shadow-sm">
+              <LinkIcon className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm font-medium text-gray-700">Dependencies</p>
-                <p className="text-sm text-gray-900">{task.dependencies.length} tasks</p>
+                <p className="text-sm font-medium theme-text-primary">Dependencies</p>
+                <p className="text-sm theme-text-primary">{task.dependencies.length} tasks</p>
               </div>
             </div>
           )}
 
           {/* Assigned Users */}
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="theme-surface-elevated p-4 rounded-lg theme-shadow-sm">
             <div className="flex items-center gap-3 mb-3">
-              <Users className="h-5 w-5 text-blue-500" />
-              <p className="text-sm font-medium text-gray-700">Assigned to</p>
+              <Users className="h-5 w-5 text-primary" />
+              <p className="text-sm font-medium theme-text-primary">Assigned to</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {task.assignedTo && task.assignedTo.length > 0 ? (
                 task.assignedTo.map((user, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2 bg-white rounded-full pl-1 pr-3 py-1 shadow-sm"
+                    className="flex items-center gap-2 theme-surface rounded-full pl-1 pr-3 py-1 theme-shadow-sm hover-reveal theme-transition"
                   >
                     <Avatar className="h-6 w-6">
                       <AvatarImage src={user.image} alt={user.name} />
-                      <AvatarFallback className="text-xs bg-blue-500 text-white">
+                      <AvatarFallback className="text-xs theme-button-primary text-primary-foreground">
                         {user?.name?.charAt(0) || ''}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium">{user.name}</span>
+                    <span className="text-sm font-medium theme-text-primary">{user.name}</span>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500">No users assigned</p>
+                <p className="text-sm theme-text-secondary">No users assigned</p>
               )}
             </div>
           </div>
 
-          <Separator className="bg-gray-200" />
+          <Separator className="theme-border" />
         </div>
 
         {/* Tabs Section */}
         <div className="flex-1 overflow-hidden">
           <Tabs defaultValue="subtasks" className="h-full">
-            <TabsList className="flex w-full border-b bg-gray-50">
+            <TabsList className="flex w-full theme-border theme-surface-elevated">
               {[
                 { value: 'subtasks', icon: CheckSquare, label: 'Subtasks' },
                 { value: 'comments', icon: MessageSquare, label: 'Comments' },
@@ -277,7 +280,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="flex-1 gap-2 data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500"
+                  className="flex-1 gap-2 theme-transition data-[state=active]:theme-surface data-[state=active]:border-b-2 data-[state=active]:border-primary theme-text-secondary data-[state=active]:theme-text-primary"
                 >
                   <tab.icon className="h-4 w-4" />
                   {tab.label}
@@ -285,36 +288,40 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
               ))}
             </TabsList>
 
-            <ScrollArea className="h-[calc(100%-48px)] p-6">
+            <ScrollArea className="h-[calc(100%-48px)] p-6 scrollbar-custom scrollbar-dark">
               <TabsContent value="subtasks" className="space-y-4">
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     placeholder="Add a new subtask..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-4 py-2 theme-input theme-border rounded-md text-sm theme-focus theme-transition"
                     value={newSubtask}
                     onChange={e => setNewSubtask(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddSubtask()}
                   />
-                  <Button size="sm" onClick={handleAddSubtask}>
+                  <Button
+                    size="sm"
+                    onClick={handleAddSubtask}
+                    className="theme-button-primary theme-transition"
+                  >
                     Add
                   </Button>
                 </div>
 
                 {task?.subtasks?.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <CheckSquare className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                    <p className="text-gray-600 font-medium">No subtasks yet</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Add subtasks to break down this task
-                    </p>
+                  <div className="empty-state-container">
+                    <div className="empty-state-icon">
+                      <CheckSquare className="h-12 w-12 theme-text-secondary" />
+                    </div>
+                    <p className="empty-state-title">No subtasks yet</p>
+                    <p className="empty-state-description">Add subtasks to break down this task</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {task?.subtasks?.map((subtask, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="flex items-center gap-3 p-3 theme-surface-elevated hover-reveal rounded-lg theme-transition"
                       >
                         <Checkbox
                           checked={subtask.completed}
@@ -324,7 +331,7 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
                           className="h-5 w-5"
                         />
                         <span
-                          className={`text-sm flex-1 ${subtask.completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}
+                          className={`text-sm flex-1 ${subtask.completed ? 'theme-text-secondary line-through' : 'theme-text-primary'}`}
                         >
                           {subtask.name}
                         </span>
@@ -340,43 +347,55 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
                     placeholder="Add a comment..."
                     value={newComment}
                     onChange={e => setNewComment(e.target.value)}
-                    className="min-h-[100px] text-sm p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="min-h-[100px] text-sm p-3 theme-input theme-border rounded-md theme-focus theme-transition"
                   />
                   <div className="flex justify-end">
-                    <Button onClick={handleAddComment}>Post Comment</Button>
+                    <Button
+                      onClick={handleAddComment}
+                      className="theme-button-primary theme-transition"
+                    >
+                      Post Comment
+                    </Button>
                   </div>
                 </div>
 
                 {task?.comments?.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                    <p className="text-gray-600 font-medium">No comments yet</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Be the first to comment on this task
-                    </p>
+                  <div className="empty-state-container">
+                    <div className="empty-state-icon">
+                      <MessageSquare className="h-12 w-12 theme-text-secondary" />
+                    </div>
+                    <p className="empty-state-title">No comments yet</p>
+                    <p className="empty-state-description">Be the first to comment on this task</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {task?.comments?.map((comment, index) => (
-                      <div key={index} className="flex gap-4 bg-gray-50 p-4 rounded-lg">
+                      <div
+                        key={index}
+                        className="flex gap-4 theme-surface-elevated p-4 rounded-lg hover-reveal theme-transition theme-shadow-sm"
+                      >
                         <Avatar className="h-10 w-10 flex-shrink-0">
-                          <AvatarFallback className="bg-blue-500 text-white text-sm">
+                          <AvatarFallback className="theme-button-primary text-primary-foreground text-sm">
                             U
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-gray-900">User</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-sm font-medium theme-text-primary">User</p>
+                            <p className="text-xs theme-text-secondary">
                               {format(new Date(comment.timestamp), 'MMM dd, h:mm a')}
                             </p>
                           </div>
-                          <p className="text-sm text-gray-700">{comment.text}</p>
+                          <p className="text-sm theme-text-primary">{comment.text}</p>
 
                           {comment?.attachments?.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
                               {comment?.attachments?.map((attachment, idx) => (
-                                <Badge key={idx} variant="outline" className="text-xs px-2 py-1">
+                                <Badge
+                                  key={idx}
+                                  variant="outline"
+                                  className="text-xs px-2 py-1 theme-border theme-text-secondary"
+                                >
                                   {attachment.filename}
                                 </Badge>
                               ))}
@@ -390,10 +409,12 @@ export function TaskDetailSidebar({ task, isOpen, onClose, onTaskUpdate }: TaskD
               </TabsContent>
 
               <TabsContent value="activity" className="mt-2">
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                  <ActivityIcon className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                  <p className="text-gray-600 font-medium">Activity tracking coming soon</p>
-                  <p className="text-sm text-gray-500 mt-1">This feature is under development</p>
+                <div className="empty-state-container">
+                  <div className="empty-state-icon">
+                    <ActivityIcon className="h-12 w-12 theme-text-secondary" />
+                  </div>
+                  <p className="empty-state-title">Activity tracking coming soon</p>
+                  <p className="empty-state-description">This feature is under development</p>
                 </div>
               </TabsContent>
             </ScrollArea>

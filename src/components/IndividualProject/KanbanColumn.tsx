@@ -98,15 +98,15 @@ export function Column({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col select-none bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300
+      className={`flex flex-col select-none theme-surface-elevated rounded-lg theme-shadow-md hover-reveal theme-transition
         ${
           currentlyDragging
-            ? 'opacity-70 scale-105 z-50 rotate-1 shadow-xl'
+            ? 'opacity-70 scale-105 z-50 rotate-1 theme-shadow-lg'
             : isHighlighted
-              ? 'ring-2 ring-primary/50 shadow-lg'
+              ? 'ring-2 ring-primary/50 theme-shadow-lg'
               : ''
         }
-        ease-out border border-gray-200`}
+        ease-out border border-border`}
       style={{
         ...style,
         width: `${columnWidth}px`,
@@ -115,48 +115,48 @@ export function Column({
         height: compactView ? 'calc(100vh - 16rem)' : 'calc(100vh - 14rem)',
         borderTop: `4px solid ${
           column.id === 'todo'
-            ? '#94a3b8'
+            ? 'hsl(var(--theme-text-secondary))'
             : column.id === 'inprogress' || column.id === 'inProgress'
-              ? '#3b82f6'
+              ? 'hsl(var(--primary))'
               : column.id === 'review'
-                ? '#f59e0b'
+                ? 'hsl(var(--warning))'
                 : column.id === 'completed'
-                  ? '#22c55e'
-                  : '#94a3b8'
+                  ? 'hsl(var(--success))'
+                  : 'hsl(var(--theme-text-secondary))'
         }`,
         transformOrigin: 'center',
       }}
     >
       <div
         {...(column.isLocked ? {} : { ...attributes, ...listeners })}
-        className={`flex items-center justify-between sticky top-0 backdrop-blur-sm bg-white/95 z-10 py-3 px-4 mb-3 rounded-t-lg border-b ${column.isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
+        className={`flex items-center justify-between sticky top-0 backdrop-blur-sm theme-surface/95 z-10 py-3 px-4 mb-3 rounded-t-lg border-b border-border ${column.isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
       >
         <div className="font-medium flex items-center">
           <div
             className={`w-3 h-3 rounded-full mr-2 ${
               column.id === 'todo'
-                ? 'bg-blue-400'
+                ? 'status-indicator-todo'
                 : column.id === 'inprogress'
-                  ? 'bg-amber-400'
+                  ? 'status-indicator-in-progress'
                   : column.id === 'review'
-                    ? 'bg-purple-400'
+                    ? 'bg-warning'
                     : column.id === 'completed'
-                      ? 'bg-green-400'
-                      : 'bg-gray-400'
+                      ? 'status-indicator-completed'
+                      : 'bg-muted'
             }`}
           />
-          <span className="font-semibold text-gray-800">{column.title}</span>
-          <span className="ml-2 bg-gray-100 text-gray-700 font-medium text-xs px-2 py-1 rounded-full">
+          <span className="font-semibold theme-text-primary">{column.title}</span>
+          <span className="ml-2 bg-muted theme-text-secondary font-medium text-xs px-2 py-1 rounded-full">
             {cards.length}
           </span>
-          {column.isLocked && <Lock className="h-4 w-4 ml-2 text-gray-500" />}
+          {column.isLocked && <Lock className="h-4 w-4 ml-2 theme-text-secondary" />}
         </div>
         <div className="flex items-center space-x-1">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors"
+              className="h-8 w-8 p-0 theme-button-ghost theme-transition"
               title="Add task"
               onClick={() => setIsAddingTask(true)}
             >
@@ -171,14 +171,14 @@ export function Column({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 p-0 hover:bg-gray-100 rounded-full transition-colors"
+                    className="h-7 w-7 p-0 theme-button-ghost rounded-full theme-transition"
                   >
-                    <MoreVertical className="h-4 w-4 text-gray-500" />
+                    <MoreVertical className="h-4 w-4 theme-text-secondary" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="theme-surface-elevated border-border">
                   <DropdownMenuItem
-                    className="text-red-500 focus:text-red-500 cursor-pointer"
+                    className="text-destructive focus:text-destructive cursor-pointer theme-transition"
                     onClick={() => onDeleteColumn(column.id)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -201,7 +201,7 @@ export function Column({
         />
       )}
 
-      <div className="flex-grow p-2 overflow-y-auto custom-scrollbar">
+      <div className="flex-grow p-2 overflow-y-auto scrollbar-custom scrollbar-dark">
         <SortableContext items={cards.map(card => card.id)} strategy={verticalListSortingStrategy}>
           {cards.length > 0 ? (
             <div className="flex flex-col gap-2">
@@ -212,10 +212,10 @@ export function Column({
           ) : (
             <div
               className={`flex items-center justify-center h-20 border-2 border-dashed
-                ${currentlyDragging ? 'border-primary/30 bg-gray-50' : 'border-gray-200'}
-                rounded-md transition-all duration-300 hover:border-primary/30 hover:bg-gray-50 mx-3 mb-4`}
+                ${currentlyDragging ? 'border-primary/30 theme-surface' : 'border-border'}
+                rounded-md theme-transition hover:border-primary/30 hover:theme-surface mx-3 mb-4`}
             >
-              <p className="text-gray-500 text-sm">Drop cards here</p>
+              <p className="theme-text-secondary text-sm">Drop cards here</p>
             </div>
           )}
         </SortableContext>
