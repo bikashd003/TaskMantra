@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   Home,
   MessageSquare,
@@ -10,6 +10,7 @@ import {
   Calendar,
   ServerCog,
   Bell,
+  BarChart3,
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { UserProfile } from './UserProfile';
@@ -18,6 +19,7 @@ import Logo from './Logo';
 import { useQuery } from '@tanstack/react-query';
 import { ProjectService } from '@/services/Project.service';
 import { useProjectStore } from '@/stores/projectsStore';
+import { useSidebarStore } from '@/stores/sidebarStore';
 
 interface SidebarProps {
   isMobileOpen: boolean;
@@ -25,7 +27,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const { isExpanded, setIsExpanded } = useSidebarStore();
   const pathname = usePathname();
   const { projects, setProjects } = useProjectStore();
 
@@ -69,6 +71,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
         { icon: ClipboardCheck, label: 'Tasks', path: '/tasks' },
         { icon: Calendar, label: 'Calendar', path: '/calendar' },
         { icon: SquareChartGantt, label: 'Timeline', path: '/timeline' },
+        { icon: BarChart3, label: 'Analytics', path: '/analytics' },
       ],
     },
     {
@@ -112,7 +115,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
         >
           <X className="h-5 w-5 theme-text-secondary" />
         </button>
-        <Logo isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
+        <Logo isExpanded={isExpanded} />
 
         {/* Navigation Items */}
         <div className="flex-1 px-3 py-4 space-y-5 overflow-y-auto theme-scrollbar">

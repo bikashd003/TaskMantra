@@ -39,13 +39,13 @@ export function useThemeSync() {
           await updateThemeInDB(newTheme);
         }
       } catch (error) {
-        const fallbackTheme = dbTheme || 'system';
+        const fallbackTheme = dbTheme || nextTheme || 'dark';
         setNextTheme(fallbackTheme);
         setStoreTheme(fallbackTheme);
         toast.error('Failed to update theme');
       }
     },
-    [setNextTheme, setStoreTheme, updateThemeInDB, dbTheme, isAuthenticated]
+    [setNextTheme, setStoreTheme, updateThemeInDB, dbTheme, nextTheme, isAuthenticated]
   );
 
   return {

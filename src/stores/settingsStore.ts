@@ -11,7 +11,7 @@ interface SettingsStore {
 }
 
 export const useSettingsStore = create<SettingsStore>(set => ({
-  theme: 'system',
+  theme: 'dark',
   isLoading: false,
   setTheme: (theme: string) => set({ theme }),
   setLoading: (loading: boolean) => set({ isLoading: loading }),
@@ -20,11 +20,10 @@ export const useSettingsStore = create<SettingsStore>(set => ({
     try {
       set({ isLoading: true });
       const response = await SettingService.getGeneralSettings();
-      const theme = response?.general?.appearance?.theme || 'system';
+      const theme = response?.general?.appearance?.theme || 'dark';
       set({ theme, isLoading: false });
     } catch (error) {
-      // Silent error handling - theme will fallback to default
-      set({ isLoading: false });
+      set({ theme: 'dark', isLoading: false });
     }
   },
 

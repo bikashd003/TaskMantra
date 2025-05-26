@@ -22,6 +22,12 @@ export interface TimeLog {
   __v?: number;
 }
 
+export interface CheckOutResponse {
+  log: TimeLog;
+  timeSpent: number;
+  message: string;
+}
+
 export class TeamLoggerService {
   static async getMyLogs(date?: string): Promise<TimeLog[]> {
     try {
@@ -42,10 +48,10 @@ export class TeamLoggerService {
     }
   }
 
-  static async checkOut(logId: string): Promise<TimeLog> {
+  static async checkOut(logId: string): Promise<CheckOutResponse> {
     try {
       const response = await axios.post(`/api/teamlogger/check-out/${logId}`);
-      return response.data?.log;
+      return response.data;
     } catch (error) {
       throw new Error('Failed to check out');
     }
