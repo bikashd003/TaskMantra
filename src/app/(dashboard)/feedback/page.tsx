@@ -231,6 +231,7 @@ export default function Page() {
           >
             <label className="block text-sm font-medium theme-text-primary mb-3">
               Tell us more about your experience
+              <span className="text-red-500 ml-1">*</span>
             </label>
             <Textarea
               value={comment}
@@ -270,7 +271,7 @@ export default function Page() {
             <Button
               type="submit"
               className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl theme-transition btn-primary"
-              disabled={isPending}
+              disabled={isPending || comment.trim() === ''}
             >
               {isPending ? (
                 <div className="flex items-center justify-center gap-2">
