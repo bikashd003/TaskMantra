@@ -54,17 +54,15 @@ export class NotificationService {
 
     const skip = page * limit;
 
-    // Build query based on filters
     const query: any = { userId };
 
     // Apply filter
     if (filter === 'unread') {
       query.read = false;
     } else if (filter !== 'all') {
-      query.type = filter; // For 'mention', 'task', 'team', etc.
+      query.type = filter;
     }
 
-    // Apply search if provided
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -131,9 +129,6 @@ export class NotificationService {
     return count;
   }
 
-  /**
-   * Create a task assignment notification
-   */
   static async createTaskAssignedNotification(
     userId: string,
     taskId: string,
@@ -150,9 +145,6 @@ export class NotificationService {
     });
   }
 
-  /**
-   * Create an onboarding notification
-   */
   static async createOnboardingNotification(
     userId: string,
     organizationName: string
@@ -167,9 +159,6 @@ export class NotificationService {
     });
   }
 
-  /**
-   * Create a task status change notification
-   */
   static async createTaskStatusChangeNotification(
     userId: string,
     taskId: string,
@@ -187,9 +176,6 @@ export class NotificationService {
     });
   }
 
-  /**
-   * Create a task comment notification
-   */
   static async createTaskCommentNotification(
     userId: string,
     taskId: string,
@@ -206,14 +192,6 @@ export class NotificationService {
     });
   }
 
-  // ============================================================================
-  // CLIENT-SIDE METHODS (for frontend components)
-  // These methods make HTTP requests to API endpoints
-  // ============================================================================
-
-  /**
-   * Client-side method to get notifications via API
-   */
   static async getNotificationsClient(
     page = 0,
     limit = 10,
@@ -226,49 +204,31 @@ export class NotificationService {
     return response.data;
   }
 
-  /**
-   * Client-side method to mark notification as read via API
-   */
   static async markAsReadClient(notificationId: string): Promise<any> {
     const response = await axios.patch(`/api/notifications/${notificationId}/read`);
     return response.data.notification;
   }
 
-  /**
-   * Client-side method to mark all notifications as read via API
-   */
   static async markAllAsReadClient(): Promise<any> {
     const response = await axios.patch('/api/notifications/mark-all-read');
     return response.data.result;
   }
 
-  /**
-   * Client-side method to delete notification via API
-   */
   static async deleteNotificationClient(notificationId: string): Promise<any> {
     const response = await axios.delete(`/api/notifications/${notificationId}`);
     return response.data.result;
   }
 
-  /**
-   * Client-side method to clear all notifications via API
-   */
   static async clearAllNotificationsClient(): Promise<any> {
     const response = await axios.delete('/api/notifications/clear-all');
     return response.data.result;
   }
 
-  /**
-   * Client-side method to get unread count via API
-   */
   static async getUnreadCountClient(): Promise<number> {
     const response = await axios.get('/api/notifications/unread-count');
     return response.data.count;
   }
 
-  /**
-   * Client-side method to create notification via API
-   */
   static async createNotificationClient(data: Omit<NotificationData, 'userId'>): Promise<any> {
     const notification = {
       title: data.title,

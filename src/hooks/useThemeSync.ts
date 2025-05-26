@@ -3,10 +3,12 @@
 import { useEffect, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useAuth } from '@/context/AuthProvider';
 import { toast } from 'sonner';
 
 export function useThemeSync() {
   const { theme: nextTheme, setTheme: setNextTheme } = useTheme();
+  const { isAuthenticated } = useAuth();
   const {
     theme: dbTheme,
     isLoading,
@@ -16,8 +18,10 @@ export function useThemeSync() {
   } = useSettingsStore();
 
   useEffect(() => {
-    fetchThemeFromDB();
-  }, [fetchThemeFromDB]);
+    if (isAuthenticated) {
+      fetchThemeFromDB();
+    }
+  }, [fetchThemeFromDB, isAuthenticated]);
 
   useEffect(() => {
     if (dbTheme && dbTheme !== nextTheme) {
@@ -30,14 +34,18 @@ export function useThemeSync() {
       try {
         setNextTheme(newTheme);
         setStoreTheme(newTheme);
-        await updateThemeInDB(newTheme);
+
+        if (isAuthenticated) {
+          await updateThemeInDB(newTheme);
+        }
       } catch (error) {
-        setNextTheme(dbTheme);
-        setStoreTheme(dbTheme);
+        const fallbackTheme = dbTheme || 'system';
+        setNextTheme(fallbackTheme);
+        setStoreTheme(fallbackTheme);
         toast.error('Failed to update theme');
       }
     },
-    [setNextTheme, setStoreTheme, updateThemeInDB, dbTheme]
+    [setNextTheme, setStoreTheme, updateThemeInDB, dbTheme, isAuthenticated]
   );
 
   return {
