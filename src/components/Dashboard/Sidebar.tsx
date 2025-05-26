@@ -10,6 +10,7 @@ import {
   Calendar,
   ServerCog,
   Bell,
+  BarChart3,
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { UserProfile } from './UserProfile';
@@ -69,6 +70,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
         { icon: ClipboardCheck, label: 'Tasks', path: '/tasks' },
         { icon: Calendar, label: 'Calendar', path: '/calendar' },
         { icon: SquareChartGantt, label: 'Timeline', path: '/timeline' },
+        { icon: BarChart3, label: 'Analytics', path: '/analytics' },
       ],
     },
     {

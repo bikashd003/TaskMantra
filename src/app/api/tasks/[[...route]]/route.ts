@@ -153,7 +153,7 @@ app.get('/my-tasks', async c => {
   try {
     await connectDB();
     const tasks = await Task.find({
-      assignedTo: user.id,
+      assignedTo: { $in: [user.id] },
       organizationId: user.organizationId,
     }).populate('assignedTo');
 

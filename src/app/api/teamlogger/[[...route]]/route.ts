@@ -4,6 +4,7 @@ import { logger } from 'hono/logger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/options';
 import { Teamlogger } from '@/models/Teamlogger';
+import { Task } from '@/models/Task';
 import { connectDB } from '@/Utility/db';
 
 type Variables = {
@@ -19,6 +20,13 @@ type Variables = {
 const app = new Hono<{ Variables: Variables }>().basePath('/api/teamlogger');
 
 app.use('*', logger());
+
+// Utility function to calculate time difference in hours
+const calculateTimeInHours = (checkIn: Date, checkOut: Date): number => {
+  const timeDifferenceMs = checkOut.getTime() - checkIn.getTime();
+  const timeInHours = timeDifferenceMs / (1000 * 60 * 60); // Convert milliseconds to hours
+  return Math.round(timeInHours * 100) / 100; // Round to 2 decimal places
+};
 
 app.use('*', async (c, next) => {
   try {
@@ -176,12 +184,40 @@ app.post('/check-out/:logId', async c => {
     }
 
     // Update the log with checkout time
-    log.checkOut = new Date();
+    const checkOutTime = new Date();
+    log.checkOut = checkOutTime;
     await log.save();
+
+    // Calculate time spent in hours
+    const timeSpentHours = calculateTimeInHours(log.checkIn, checkOutTime);
+
+    // Update loggedTime for all associated tasks
+    if (log.task && Array.isArray(log.task) && log.task.length > 0) {
+      await Promise.all(
+        log.task.map(async (taskId: any) => {
+          try {
+            const task = await Task.findById(taskId);
+            if (task) {
+              const currentLoggedTime = task.loggedTime || 0;
+              const newLoggedTime = currentLoggedTime + timeSpentHours;
+              await Task.findByIdAndUpdate(taskId, {
+                loggedTime: Math.round(newLoggedTime * 100) / 100, // Round to 2 decimal places
+              });
+            }
+          } catch (error) {
+            // Silently handle individual task update errors to prevent blocking the checkout
+          }
+        })
+      );
+    }
 
     const populatedLog = await Teamlogger.findById(log._id).populate('task', 'name');
 
-    return c.json({ log: populatedLog });
+    return c.json({
+      log: populatedLog,
+      timeSpent: timeSpentHours,
+      message: `Successfully checked out. Time logged: ${timeSpentHours} hours`,
+    });
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
   }

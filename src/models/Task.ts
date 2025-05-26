@@ -10,8 +10,8 @@ const taskSchema = new Schema(
     priority: { type: String, enum: ['High', 'Medium', 'Low'], default: 'Medium' },
     dueDate: Date,
     startDate: Date,
-    estimatedTime: Number,
-    loggedTime: Number,
+    estimatedTime: Number, // Estimated time for the task in hours
+    loggedTime: Number, // Total time logged for the task in hours
     dependencies: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Task' }],
     subtasks: [
       { name: { type: String, required: true }, completed: { type: Boolean, default: false } },
