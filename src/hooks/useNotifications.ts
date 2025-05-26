@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
-import { NotificationService } from '@/services/Notification.service';
+import { NotificationClientService } from '@/services/NotificationClient.service';
 
 export type NotificationType = {
   _id: string;
@@ -27,7 +27,7 @@ export function useNotifications() {
   const { data: notificationsData } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const response = await NotificationService.getNotificationsClient();
+      const response = await NotificationClientService.getNotificationsClient();
       return response;
     },
     enabled: !!session?.user,
@@ -36,7 +36,7 @@ export function useNotifications() {
   const { data: unreadCountData } = useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: async () => {
-      const count = await NotificationService.getUnreadCountClient();
+      const count = await NotificationClientService.getUnreadCountClient();
       return count;
     },
     enabled: !!session?.user,
@@ -44,7 +44,7 @@ export function useNotifications() {
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      return await NotificationService.markAsReadClient(notificationId);
+      return await NotificationClientService.markAsReadClient(notificationId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -54,7 +54,7 @@ export function useNotifications() {
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      return await NotificationService.markAllAsReadClient();
+      return await NotificationClientService.markAllAsReadClient();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -64,7 +64,7 @@ export function useNotifications() {
 
   const clearAllNotificationsMutation = useMutation({
     mutationFn: async () => {
-      return await NotificationService.clearAllNotificationsClient();
+      return await NotificationClientService.clearAllNotificationsClient();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -311,7 +311,7 @@ export function useNotifications() {
   // For backward compatibility and pagination support
   const fetchNotifications = useCallback(async (page = 0) => {
     try {
-      const response = await NotificationService.getNotificationsClient(page);
+      const response = await NotificationClientService.getNotificationsClient(page);
       return {
         notifications: response.notifications || [],
         hasMore: response.pagination?.page < response.pagination?.pages - 1,

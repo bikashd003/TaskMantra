@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { NotificationService } from '@/services/Notification.service';
+import { NotificationClientService } from '@/services/NotificationClient.service';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,7 +107,7 @@ export default function NotificationDetailPage() {
 
   const deleteNotificationMutation = useMutation({
     mutationFn: async () => {
-      return await NotificationService.deleteNotification(notificationId);
+      return await NotificationClientService.deleteNotificationClient(notificationId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications-infinite'] });
