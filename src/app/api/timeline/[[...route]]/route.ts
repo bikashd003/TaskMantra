@@ -7,7 +7,7 @@ import { Timeline } from '@/models/Timeline';
 import { Project } from '@/models/Project';
 import { connectDB } from '@/Utility/db';
 import { User } from '@/models/User';
-import { NotificationService } from '@/services/Notifications.service';
+import { NotificationService } from '@/services/Notification.service';
 
 type Variables = {
   user?: {

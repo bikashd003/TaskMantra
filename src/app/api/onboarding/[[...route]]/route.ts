@@ -8,7 +8,7 @@ import { authOptions } from '../../auth/[...nextauth]/options';
 import { Organization } from '@/models/organization';
 import { uploadToCloudinary } from '@/Utility/cloudinary';
 import { User } from '@/models/User';
-import { NotificationService } from '@/services/Notifications.service';
+import { NotificationService } from '@/services/Notification.service';
 
 const app = new Hono().basePath('/api/onboarding');
 
@@ -50,7 +50,6 @@ app.get('/check-organization', async (c: any) => {
     const user = c.get('user');
     if (!user) return c.json({ message: 'Unauthorized' }, { status: 401 });
 
-    // Check if user is a member of any organization
     const organization = await Organization.findOne({
       'members.userId': user.id,
     });
@@ -92,7 +91,6 @@ app.post('/organization', async (c: any) => {
       logoUrl = uploadResult.secure_url;
     }
 
-    // Create the organization
     const organization = await Organization.create({
       name,
       location,
@@ -108,10 +106,8 @@ app.post('/organization', async (c: any) => {
       ],
     });
 
-    // Update the user's organizationId
     await User.findByIdAndUpdate(user.id, { organizationId: organization._id });
 
-    // Create onboarding notification for the user
     await NotificationService.createOnboardingNotification(user.id, name);
 
     return c.json({ message: 'Organization created' }, { organization }, { status: 200 });

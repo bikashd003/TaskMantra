@@ -6,7 +6,8 @@ import { authOptions } from '../../auth/[...nextauth]/options';
 import { Task } from '@/models/Task';
 import { User } from '@/models/User';
 import { Project } from '@/models/Project';
-import { NotificationService } from '@/services/Notifications.service';
+import { NotificationService } from '@/services/Notification.service';
+import { connectDB } from '@/Utility/db';
 
 type Variables = {
   user?: {
@@ -50,6 +51,7 @@ app.get('/', async c => {
   }
 
   try {
+    await connectDB();
     const searchQuery = c.req.query('search') || '';
     const status = c.req.query('status') || 'all';
     const priority = c.req.query('priority') || 'all';
@@ -149,6 +151,7 @@ app.get('/my-tasks', async c => {
   }
 
   try {
+    await connectDB();
     const tasks = await Task.find({
       assignedTo: user.id,
       organizationId: user.organizationId,
@@ -168,10 +171,10 @@ app.post('/', async c => {
   }
 
   try {
+    await connectDB();
     const taskData = await c.req.json();
     const task = new Task({ ...taskData, createdBy: user.id, organizationId: user.organizationId });
     await task.save();
-    //create notification for assignedTo
     await Promise.all(
       task.assignedTo.map(async (userId: string) => {
         const user = await User.findById(userId);
@@ -188,7 +191,6 @@ app.post('/', async c => {
       })
     );
 
-    // save task id to Project collection if projectId is provided
     if (taskData.projectId) {
       await Project.findByIdAndUpdate(taskData.projectId, {
         $push: { tasks: task._id },
@@ -206,27 +208,18 @@ const getDateRange = (period: string) => {
   const startDate = new Date(today);
   const endDate = new Date(today);
 
-  // Reset hours for consistent comparison
   startDate.setHours(0, 0, 0, 0);
   endDate.setHours(23, 59, 59, 999);
 
-  // Calculate date range based on period
-  if (period === 'today') {
-    // startDate is already today at 00:00:00
-    // endDate is already today at 23:59:59
-  } else if (period === 'week') {
-    // Set startDate to beginning of current week (Sunday)
-    const dayOfWeek = startDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const diff = startDate.getDate() - dayOfWeek; // Adjust to get to Sunday
+  if (period === 'week') {
+    const dayOfWeek = startDate.getDay();
+    const diff = startDate.getDate() - dayOfWeek;
     startDate.setDate(diff);
 
-    // Set endDate to end of week (Saturday)
     endDate.setDate(startDate.getDate() + 6);
   } else if (period === 'month') {
-    // Set startDate to first day of current month
     startDate.setDate(1);
 
-    // Set endDate to last day of current month
     endDate.setMonth(endDate.getMonth() + 1);
     endDate.setDate(0);
   }
@@ -242,13 +235,12 @@ app.get('/period/:period', async c => {
   if (!user) {
     return c.json({ error: 'User not authenticated' }, 401);
   }
-
-  // Validate period parameter
   if (!['today', 'week', 'month'].includes(period)) {
     return c.json({ error: 'Invalid time period. Use today, week, or month.' }, 400);
   }
 
   try {
+    await connectDB();
     const { startDate, endDate } = getDateRange(period);
 
     const tasks = await Task.find({
@@ -278,7 +270,6 @@ app.patch('/:taskId', async c => {
   try {
     const taskData = await c.req.json();
     const task = await Task.findByIdAndUpdate(taskId, taskData, { new: true });
-    // push task id to Project collection if projectId is provided
     if (taskData.projectId) {
       await Project.findByIdAndUpdate(taskData.projectId, {
         $addToSet: { tasks: task._id },
@@ -299,6 +290,7 @@ app.patch('/:taskId/status', async c => {
   }
 
   try {
+    await connectDB();
     const taskData = await c.req.json();
     const task = await Task.findByIdAndUpdate(taskId, taskData, { new: true });
     return c.json({ task });
@@ -307,7 +299,6 @@ app.patch('/:taskId/status', async c => {
   }
 });
 
-// This route should be last as it's a catch-all for taskId
 app.get('/:taskId', async c => {
   const taskId = c.req.param('taskId');
   const user = c.get('user');
@@ -317,11 +308,7 @@ app.get('/:taskId', async c => {
   }
 
   try {
-    // Check if taskId is a valid MongoDB ObjectId
-    if (!/^[0-9a-fA-F]{24}$/.test(taskId)) {
-      return c.json({ error: 'Invalid task ID format' }, 400);
-    }
-
+    await connectDB();
     const task = await Task.findById(taskId).populate('assignedTo');
     if (!task) {
       return c.json({ error: 'Task not found' }, 404);
