@@ -155,7 +155,7 @@ export default function Page() {
   }
 
   return (
-    <div className="bg-grid-pattern theme-surface flex items-center justify-center p-4">
+    <div className="bg-grid-pattern theme-surface flex items-center justify-center p-4 h-full">
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
