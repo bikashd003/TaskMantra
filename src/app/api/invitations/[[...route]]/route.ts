@@ -128,28 +128,47 @@ app.get('/accept', async (c: any) => {
 
     const token = c.req.query('token');
 
-    let invitation: any = null;
     if (token) {
-      invitation = await Invitation.findById(token).populate('organizationId invitedBy');
+      const invitation = await Invitation.findById(token).populate('organizationId invitedBy');
+
+      if (!invitation) {
+        return c.json({ message: 'Invitation not found' }, { status: 404 });
+      }
+
+      if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
+        return c.json(
+          { message: 'This invitation was sent to a different email address' },
+          { status: 403 }
+        );
+      }
+
+      return c.json({
+        invitation: {
+          id: invitation._id,
+          email: invitation.email,
+          role: invitation.role,
+          organization: {
+            id: invitation.organizationId._id,
+            name: invitation.organizationId.name,
+          },
+          inviter: {
+            id: invitation.invitedBy._id,
+            name: invitation.invitedBy.name,
+          },
+          invitedAt: invitation.invitedAt,
+        },
+      });
     } else {
-      invitation = await Invitation.findOne({ email: user.email, status: 'pending' }).populate(
-        'organizationId invitedBy'
-      );
-    }
+      const invitations = await Invitation.find({
+        email: user.email,
+        status: 'pending',
+      }).populate('organizationId invitedBy');
 
-    if (!invitation) {
-      return c.json({ message: 'Invitation not found' }, { status: 404 });
-    }
+      if (!invitations || invitations.length === 0) {
+        return c.json({ message: 'No pending invitations found' }, { status: 404 });
+      }
 
-    if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
-      return c.json(
-        { message: 'This invitation was sent to a different email address' },
-        { status: 403 }
-      );
-    }
-
-    return c.json({
-      invitation: {
+      const formattedInvitations = invitations.map(invitation => ({
         id: invitation._id,
         email: invitation.email,
         role: invitation.role,
@@ -162,8 +181,18 @@ app.get('/accept', async (c: any) => {
           name: invitation.invitedBy.name,
         },
         invitedAt: invitation.invitedAt,
-      },
-    });
+      }));
+
+      if (formattedInvitations.length === 1) {
+        return c.json({
+          invitation: formattedInvitations[0],
+        });
+      }
+
+      return c.json({
+        invitations: formattedInvitations,
+      });
+    }
   } catch (error: any) {
     return c.json({ message: error.message }, { status: 500 });
   }
