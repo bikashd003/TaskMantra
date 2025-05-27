@@ -613,7 +613,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   </div>
                 ))}
 
-                <div className="flex flex-col items-center justify-center w-16  rounded-md border-2 border-dashed border-gray-200 flex-shrink-0 hover:border-primary/50 hover:bg-gray-50 transition-all duration-300">
+                <div className="flex flex-col items-center justify-center w-16  rounded-md border-2 border-dashed border-gray-200 flex-shrink-0 theme-hover-surface transition-all duration-300">
                   <Button
                     variant="ghost"
                     size="icon"

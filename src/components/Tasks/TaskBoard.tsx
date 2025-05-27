@@ -185,7 +185,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   const showLoading = isLoading;
 
   return (
-    <div className="flex flex-col h-full w-full theme-surface">
+    <div className="flex flex-col h-full w-full">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-bold theme-text-primary">Task Board</h2>
         <TooltipProvider>
@@ -304,7 +304,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 h-[calc(100vh-20rem)] theme-surface">
+      <div className="flex-1 h-[calc(100vh-20rem)]">
         {viewMode === 'list' && (
           <ScrollArea className="h-full scrollbar-custom scrollbar-dark">
             <TaskList
