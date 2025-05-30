@@ -11,22 +11,18 @@ const connectNotion = async (c: any, userId: string) => {
     }
 
     await connectDB();
-
-    // Check if integration already exists
     const existingIntegration = await Integration.findOne({
       userId: userId,
       provider: 'notion',
     });
 
     if (existingIntegration) {
-      // Update existing integration
       existingIntegration.accessToken = accessToken;
       existingIntegration.workspaceId = workspaceId;
       existingIntegration.workspaceName = workspaceName;
       existingIntegration.lastSyncedAt = new Date();
       await existingIntegration.save();
 
-      // Create notification
       await NotificationService.createNotification({
         userId: userId,
         title: 'Notion Integration Updated',
@@ -46,7 +42,6 @@ const connectNotion = async (c: any, userId: string) => {
       });
     }
 
-    // Create new integration
     const newIntegration = new Integration({
       userId: userId,
       provider: 'notion',
@@ -58,7 +53,6 @@ const connectNotion = async (c: any, userId: string) => {
 
     await newIntegration.save();
 
-    // Create notification
     await NotificationService.createNotification({
       userId: userId,
       title: 'Notion Integration Connected',
@@ -85,7 +79,6 @@ const disconnectNotion = async (c: any, userId: string) => {
   try {
     await connectDB();
 
-    // Find and delete the integration
     const result = await Integration.findOneAndDelete({
       userId: userId,
       provider: 'notion',
@@ -95,7 +88,6 @@ const disconnectNotion = async (c: any, userId: string) => {
       return c.json({ error: 'Integration not found' }, { status: 404 });
     }
 
-    // Create notification
     await NotificationService.createNotification({
       userId: userId,
       title: 'Notion Integration Disconnected',
