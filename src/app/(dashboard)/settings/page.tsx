@@ -1,11 +1,22 @@
+'use client';
+
 import React from 'react';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Mail, Shield, Star } from 'lucide-react';
+import { Bell, Star, HardDrive, Users, Plus } from 'lucide-react';
+import { useStorage } from '@/hooks/useStorage';
+import { StorageWarning } from '@/components/Storage/StorageWarning';
+import { StoragePurchaseModal } from '@/components/Storage/StoragePurchaseModal';
+import { useState } from 'react';
+import Link from 'next/link';
 
 export default function SettingsPage() {
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+
+  const { storageInfo, isLoadingInfo, formatMB, getStorageStatus } = useStorage();
+
   return (
     <div className="space-y-6">
       <div>
@@ -15,6 +26,9 @@ export default function SettingsPage() {
         </p>
       </div>
       <Separator className="theme-divider" />
+
+      {/* Storage Warning */}
+      <StorageWarning showOnlyWhenNearLimit={true} />
       <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
         <div className="flex-1">
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
@@ -30,26 +44,49 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <Link href="/settings/notifications">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start theme-button-ghost interactive-hover"
+                  >
+                    <Bell className="mr-2 h-4 w-4" />
+                    Notification Settings
+                  </Button>
+                </Link>
+                <Link href="/settings/usage">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start theme-button-ghost interactive-hover"
+                  >
+                    <HardDrive className="mr-2 h-4 w-4" />
+                    Storage Management
+                  </Button>
+                </Link>
+                <Link href="/settings/members">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start theme-button-ghost interactive-hover"
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Team Members
+                  </Button>
+                </Link>
+                <Link href="/settings/email-templates">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start theme-button-ghost interactive-hover"
+                  >
+                    <Bell className="mr-2 h-4 w-4" />
+                    Email Templates
+                  </Button>
+                </Link>
                 <Button
                   variant="outline"
                   className="w-full justify-start theme-button-ghost interactive-hover"
+                  onClick={() => setShowPurchaseModal(true)}
                 >
-                  <Mail className="mr-2 h-4 w-4" />
-                  Update Email Preferences
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start theme-button-ghost interactive-hover"
-                >
-                  <Bell className="mr-2 h-4 w-4" />
-                  Notification Settings
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start theme-button-ghost interactive-hover"
-                >
-                  <Shield className="mr-2 h-4 w-4" />
-                  Security Settings
+                  <Plus className="mr-2 h-4 w-4" />
+                  Buy Storage
                 </Button>
               </CardContent>
             </Card>
@@ -59,26 +96,68 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="theme-text-primary">Account Status</CardTitle>
                 <CardDescription className="theme-text-secondary">
-                  Your current account information
+                  Your current storage subscription information
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium theme-text-primary">Account Type</span>
+                  <span className="text-sm font-medium theme-text-primary">Subscription Type</span>
                   <Badge variant="secondary" className="theme-badge-secondary">
-                    Free
+                    Storage-Based
                   </Badge>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium theme-text-primary">Storage Used</span>
-                  <Badge variant="outline" className="theme-badge-primary">
-                    2.5 GB / 5 GB
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium theme-text-primary">Active Projects</span>
-                  <Badge className="theme-badge-primary">3</Badge>
-                </div>
+                {isLoadingInfo ? (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium theme-text-primary">Storage Used</span>
+                    <div className="h-5 w-20 bg-gray-200 animate-pulse rounded"></div>
+                  </div>
+                ) : storageInfo ? (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium theme-text-primary">Storage Used</span>
+                      <Badge
+                        variant={storageInfo.usagePercentage >= 90 ? 'destructive' : 'outline'}
+                        className="theme-badge-primary"
+                      >
+                        {formatMB(storageInfo.totalUsed)}MB / {formatMB(storageInfo.totalLimit)}MB
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium theme-text-primary">Storage Status</span>
+                      <Badge
+                        variant={storageInfo.isOverLimit ? 'destructive' : 'default'}
+                        className={
+                          storageInfo.isOverLimit
+                            ? 'theme-badge-destructive'
+                            : 'theme-badge-primary'
+                        }
+                      >
+                        {getStorageStatus(storageInfo.usagePercentage)}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium theme-text-primary">Free Storage</span>
+                      <Badge variant="outline" className="theme-badge-secondary">
+                        {formatMB(storageInfo.freeStorageLimit)}MB
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium theme-text-primary">
+                        Purchased Storage
+                      </span>
+                      <Badge variant="outline" className="theme-badge-secondary">
+                        {formatMB(storageInfo.purchasedStorage)}MB
+                      </Badge>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium theme-text-primary">Storage Used</span>
+                    <Badge variant="outline" className="theme-badge-primary">
+                      Unable to load
+                    </Badge>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -87,25 +166,50 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="theme-text-primary">Recent Activity</CardTitle>
                 <CardDescription className="theme-text-secondary">
-                  Your recent account activities and changes
+                  Your recent storage and account activities
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {[
-                    { date: '2024-02-22', action: 'Password changed', type: 'security' },
-                    { date: '2024-02-21', action: 'Profile updated', type: 'profile' },
-                    { date: '2024-02-20', action: 'New project created', type: 'project' },
+                    {
+                      date: new Date().toLocaleDateString(),
+                      action: 'Storage usage calculated',
+                      type: 'storage',
+                      details: storageInfo
+                        ? `${formatMB(storageInfo.totalUsed)}MB used`
+                        : 'Loading...',
+                    },
+                    {
+                      date: new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString(),
+                      action: 'Settings accessed',
+                      type: 'account',
+                      details: 'Profile and preferences',
+                    },
+                    {
+                      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+                      action: 'Storage system initialized',
+                      type: 'storage',
+                      details: '50MB free storage allocated',
+                    },
                   ].map((activity, index) => (
                     <div
                       key={index}
-                      className="flex justify-between items-center py-2 theme-border border-b last:border-0 interactive-hover rounded-md px-2 theme-transition"
+                      className="flex justify-between items-center py-3 theme-border border-b last:border-0 interactive-hover rounded-md px-3 theme-transition"
                     >
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm font-medium theme-text-primary">{activity.action}</p>
-                        <p className="text-xs theme-text-secondary">{activity.date}</p>
+                        <p className="text-xs theme-text-secondary">{activity.details}</p>
+                        <p className="text-xs theme-text-secondary mt-1">{activity.date}</p>
                       </div>
-                      <Badge variant="outline" className="theme-badge-secondary">
+                      <Badge
+                        variant="outline"
+                        className={`theme-badge-secondary ${
+                          activity.type === 'storage'
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : ''
+                        }`}
+                      >
                         {activity.type}
                       </Badge>
                     </div>
@@ -116,6 +220,15 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Storage Purchase Modal */}
+      {storageInfo && (
+        <StoragePurchaseModal
+          isOpen={showPurchaseModal}
+          onClose={() => setShowPurchaseModal(false)}
+          currentStorage={storageInfo}
+        />
+      )}
     </div>
   );
 }
