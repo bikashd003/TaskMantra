@@ -29,15 +29,34 @@ const createProject = async (data: any, id: string, organizationId: string) => {
       };
     });
     const createdTasks = await Task.insertMany(formatedTasks);
-    // upload files to cloudinary
+    // upload files to cloudinary with storage tracking
     interface UploadedFile {
       secure_url: string;
       public_id: string;
     }
     const uploadedFiles: UploadedFile[] = [];
     for (const file of files) {
-      const { secure_url, public_id } = await uploadToCloudinary(file.data);
-      uploadedFiles.push({ secure_url, public_id });
+      const uploadResult = await uploadToCloudinary(file.data, 'taskmantra/projects', {
+        organizationId,
+        checkStorageLimit: true,
+        fileInfo: {
+          fileName: file.name,
+          fileSize: 0,
+          fileType: file.type || 'application/octet-stream',
+          uploadedBy: id,
+          resourceType: 'project',
+          resourceId: '',
+        },
+      });
+
+      if (uploadResult.error) {
+        throw new Error(`Failed to upload file ${file.name}: ${uploadResult.error}`);
+      }
+
+      uploadedFiles.push({
+        secure_url: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+      });
     }
     const formatedFiles = uploadedFiles.map((file, index: number) => ({
       url: file.secure_url,
@@ -77,7 +96,6 @@ const createProject = async (data: any, id: string, organizationId: string) => {
         );
       })
     );
-    // update those tasks with project id
     await Task.updateMany(
       { _id: { $in: createdTasks.map((task: any) => task._id) } },
       { $set: { projectId: res._id } }
@@ -85,7 +103,6 @@ const createProject = async (data: any, id: string, organizationId: string) => {
     const additionalMembers =
       tasks.length > 0
         ? formatedTasks.flatMap((task: any) => {
-            // Skip if assignedTo is empty or not an array
             if (!Array.isArray(task.assignedTo) || task.assignedTo.length === 0) {
               return [];
             }
@@ -121,9 +138,7 @@ const createProject = async (data: any, id: string, organizationId: string) => {
 const getAllProjects = async (userId: string) => {
   try {
     await connectDB();
-    // find userId on project members
     const projectMembers = await ProjectMembers.find({ members: { $elemMatch: { userId } } });
-    // find projectId on project
     const projects = await Project.find({
       _id: { $in: projectMembers.map((project: any) => project.projectId) },
     });

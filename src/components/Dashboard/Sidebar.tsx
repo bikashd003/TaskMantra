@@ -11,6 +11,7 @@ import {
   ServerCog,
   Bell,
   BarChart3,
+  FileText,
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { UserProfile } from './UserProfile';
@@ -69,6 +70,7 @@ export function Sidebar({ isMobileOpen, onMobileClose }: SidebarProps) {
       label: 'Work',
       items: [
         { icon: ClipboardCheck, label: 'Tasks', path: '/tasks' },
+        { icon: FileText, label: 'Notes', path: '/notes' },
         { icon: Calendar, label: 'Calendar', path: '/calendar' },
         { icon: SquareChartGantt, label: 'Timeline', path: '/timeline' },
         { icon: BarChart3, label: 'Analytics', path: '/analytics' },

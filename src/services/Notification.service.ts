@@ -7,6 +7,7 @@ export interface NotificationData {
   userId: string;
   title: string;
   description: string;
+  message?: string;
   type:
     | 'mention'
     | 'task'

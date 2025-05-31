@@ -1,19 +1,8 @@
 'use client';
 import React, { useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -31,19 +20,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Check, MoreVertical, Plus, Search, Shield, UserPlus } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Check, MoreVertical, Search, Shield } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Skeleton } from '@heroui/skeleton';
-
-const inviteFormSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address.' }),
-  role: z.enum(['admin', 'member', 'viewer']),
-});
+import { toast } from 'sonner';
+import ReactSelect from '@/components/Global/ReactSelect';
 
 export default function MembersSettings() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState({ value: 'all', label: 'All Roles' });
+  const queryClient = useQueryClient();
 
   const { data: teamMembers, isLoading } = useQuery({
     queryKey: ['teamMembers', searchQuery, roleFilter],
@@ -51,14 +38,41 @@ export default function MembersSettings() {
       const { data } = await axios.get('/api/settings/member', {
         params: {
           search: searchQuery,
-          role: roleFilter !== 'all' ? roleFilter : undefined,
+          role: roleFilter.value !== 'all' ? roleFilter.value : undefined,
         },
       });
       return data.teamMembers;
     },
   });
 
-  // Debounce search to avoid too many API calls
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ memberId, newRole }: { memberId: string; newRole: string }) => {
+      const response = await axios.put('/api/settings/member', { memberId, newRole });
+      return response.data;
+    },
+    onSuccess: data => {
+      toast.success(data.message || 'Member role updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to update member role');
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const response = await axios.delete(`/api/settings/member?memberId=${memberId}`);
+      return response.data;
+    },
+    onSuccess: data => {
+      toast.success(data.message || 'Member removed successfully');
+      queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to remove member');
+    },
+  });
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const timeoutId = setTimeout(() => {
@@ -68,22 +82,21 @@ export default function MembersSettings() {
     return () => clearTimeout(timeoutId);
   };
 
-  const handleRoleFilter = (value: string) => {
-    setRoleFilter(value);
+  const handleRoleFilter = option => {
+    setRoleFilter(
+      (option as { value: string; label: string }) || { value: 'all', label: 'All Roles' }
+    );
   };
 
-  const form = useForm<z.infer<typeof inviteFormSchema>>({
-    resolver: zodResolver(inviteFormSchema),
-    defaultValues: {
-      email: '',
-      role: 'member',
-    },
-  });
+  const handleUpdateRole = (memberId: string, newRole: string) => {
+    updateRoleMutation.mutate({ memberId, newRole });
+  };
 
-  function onSubmit(values: z.infer<typeof inviteFormSchema>) {
-    console.log(values);
-    // TODO: Implement invite member logic
-  }
+  const handleRemoveMember = (memberId: string) => {
+    if (confirm('Are you sure you want to remove this member?')) {
+      removeMemberMutation.mutate(memberId);
+    }
+  };
 
   return (
     <div className="space-y-6 px-4">
@@ -92,70 +105,6 @@ export default function MembersSettings() {
         <p className="text-sm theme-text-secondary">Manage your team members and their roles</p>
       </div>
       <Separator className="theme-divider" />
-
-      {/* Invite Members Form */}
-      <Card className="theme-surface-elevated hover-reveal theme-transition">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 theme-text-primary">
-            <UserPlus className="h-5 w-5" />
-            Invite Team Members
-          </CardTitle>
-          <CardDescription className="theme-text-secondary">
-            Invite new members to join your team
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex gap-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormControl>
-                      <Input
-                        placeholder="Enter email address"
-                        className="theme-input theme-focus"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-[140px] theme-input theme-focus">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="theme-surface-elevated theme-border">
-                        {/* <SelectItem value="admin">Admin</SelectItem> */}
-                        <SelectItem value="member" className="interactive-hover theme-transition">
-                          Member
-                        </SelectItem>
-                        <SelectItem value="viewer" className="interactive-hover theme-transition">
-                          Viewer
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit" className="theme-button-primary theme-transition">
-                <Plus className="h-4 w-4 mr-2" />
-                Invite
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
 
       {/* Search and Filter */}
       <div className="flex items-center gap-4">
@@ -168,26 +117,20 @@ export default function MembersSettings() {
             defaultValue={searchQuery}
           />
         </div>
-        <Select defaultValue={roleFilter} onValueChange={handleRoleFilter}>
-          <SelectTrigger className="w-[160px] theme-input theme-focus">
-            <SelectValue placeholder="Filter by role" />
-          </SelectTrigger>
-          <SelectContent className="theme-surface-elevated theme-border">
-            <SelectItem value="all" className="interactive-hover theme-transition">
-              All Roles
-            </SelectItem>
-            {/* <SelectItem value="admin">Admin</SelectItem> */}
-            <SelectItem value="member" className="interactive-hover theme-transition">
-              Member
-            </SelectItem>
-            <SelectItem value="viewer" className="interactive-hover theme-transition">
-              Viewer
-            </SelectItem>
-            <SelectItem value="Owner" className="interactive-hover theme-transition">
-              Owner
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <ReactSelect
+          options={[
+            { value: 'all', label: 'All Roles' },
+            { value: 'Member', label: 'Member' },
+            { value: 'viewer', label: 'Viewer' },
+            { value: 'Owner', label: 'Owner' },
+          ]}
+          value={roleFilter}
+          onChange={handleRoleFilter}
+          placeholder="Filter by role"
+          isSearchable={false}
+          isClearable={false}
+          className="w-48"
+        />
       </div>
 
       {/* Members Table */}
@@ -231,8 +174,8 @@ export default function MembersSettings() {
                   </TableRow>
                 ))
               ) : teamMembers && teamMembers.length > 0 ? (
-                teamMembers.map(team =>
-                  team.members.map(member => (
+                teamMembers.map((team: any) =>
+                  team.members.map((member: any) => (
                     <TableRow key={member.userId._id}>
                       <TableCell className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
@@ -267,11 +210,31 @@ export default function MembersSettings() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Change Role</DropdownMenuItem>
-                            <DropdownMenuItem>Resend Invitation</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              Remove Member
-                            </DropdownMenuItem>
+                            {member.role !== 'Owner' && (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleUpdateRole(
+                                      member.userId._id,
+                                      member.role === 'Member' ? 'Guest' : 'Member'
+                                    )
+                                  }
+                                  disabled={updateRoleMutation.isPending}
+                                >
+                                  Change to {member.role === 'Member' ? 'Guest' : 'Member'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => handleRemoveMember(member.userId._id)}
+                                  disabled={removeMemberMutation.isPending}
+                                >
+                                  Remove Member
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {member.role === 'Owner' && (
+                              <DropdownMenuItem disabled>Cannot modify owner</DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

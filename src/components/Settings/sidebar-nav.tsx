@@ -41,7 +41,7 @@ export function SidebarNav() {
   const billingItems = [
     { href: '/settings/billing', icon: Wallet, label: 'Billing & Plans' },
     { href: '/settings/usage', icon: Clock, label: 'Usage & Limits' },
-    { href: '/settings/emails', icon: Mail, label: 'Email Templates' },
+    { href: '/settings/email-templates', icon: Mail, label: 'Email Templates' },
   ];
 
   const NavContent = () => (
