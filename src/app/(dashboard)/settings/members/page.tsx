@@ -3,13 +3,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -32,10 +25,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Skeleton } from '@heroui/skeleton';
 import { toast } from 'sonner';
+import ReactSelect from '@/components/Global/ReactSelect';
 
 export default function MembersSettings() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState({ value: 'all', label: 'All Roles' });
   const queryClient = useQueryClient();
 
   const { data: teamMembers, isLoading } = useQuery({
@@ -44,7 +38,7 @@ export default function MembersSettings() {
       const { data } = await axios.get('/api/settings/member', {
         params: {
           search: searchQuery,
-          role: roleFilter !== 'all' ? roleFilter : undefined,
+          role: roleFilter.value !== 'all' ? roleFilter.value : undefined,
         },
       });
       return data.teamMembers;
@@ -88,8 +82,10 @@ export default function MembersSettings() {
     return () => clearTimeout(timeoutId);
   };
 
-  const handleRoleFilter = (value: string) => {
-    setRoleFilter(value);
+  const handleRoleFilter = option => {
+    setRoleFilter(
+      (option as { value: string; label: string }) || { value: 'all', label: 'All Roles' }
+    );
   };
 
   const handleUpdateRole = (memberId: string, newRole: string) => {
@@ -121,26 +117,20 @@ export default function MembersSettings() {
             defaultValue={searchQuery}
           />
         </div>
-        <Select defaultValue={roleFilter} onValueChange={handleRoleFilter}>
-          <SelectTrigger className="w-[160px] theme-input theme-focus">
-            <SelectValue placeholder="Filter by role" />
-          </SelectTrigger>
-          <SelectContent className="theme-surface-elevated theme-border">
-            <SelectItem value="all" className="interactive-hover theme-transition">
-              All Roles
-            </SelectItem>
-            {/* <SelectItem value="admin">Admin</SelectItem> */}
-            <SelectItem value="member" className="interactive-hover theme-transition">
-              Member
-            </SelectItem>
-            <SelectItem value="viewer" className="interactive-hover theme-transition">
-              Viewer
-            </SelectItem>
-            <SelectItem value="Owner" className="interactive-hover theme-transition">
-              Owner
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <ReactSelect
+          options={[
+            { value: 'all', label: 'All Roles' },
+            { value: 'Member', label: 'Member' },
+            { value: 'viewer', label: 'Viewer' },
+            { value: 'Owner', label: 'Owner' },
+          ]}
+          value={roleFilter}
+          onChange={handleRoleFilter}
+          placeholder="Filter by role"
+          isSearchable={false}
+          isClearable={false}
+          className="w-48"
+        />
       </div>
 
       {/* Members Table */}
